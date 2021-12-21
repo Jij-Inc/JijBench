@@ -1,5 +1,7 @@
-from jijmodeling import Problem, DecodedSamples
-from typing import Dict
+from jijmodeling import Problem
+from openjij import Response
+from dimod import SampleSet
+from typing import Dict, Union
 
 
 def make_initial_multipliers(problem: Problem):
@@ -10,12 +12,13 @@ def make_initial_multipliers(problem: Problem):
 
 
 def parameter_update(problem: Problem,
-                     decoded: DecodedSamples,
+                     response: Union[SampleSet, Response],
                      multipliers: Dict[str, float]):
     next_multipliers = {}
-    for key, value in decoded.constraint_violations[0].items():
-        if value > 0:
-            next_multipliers[key] = 5 * multipliers[key]
-        else:
-            next_multipliers[key] = multipliers[key]
-    return next_multipliers
+    # for key, value in decoded.constraint_violations[0].items():
+    #     if value > 0:
+    #         next_multipliers[key] = 5 * multipliers[key]
+    #     else:
+    #         next_multipliers[key] = multipliers[key]
+    return multipliers
+#     return next_multipliers

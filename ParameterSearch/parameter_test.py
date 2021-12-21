@@ -38,6 +38,6 @@ def parameter_test():
         # パラメータの更新
         multipliers = parameter_update(problem, decoded, multipliers)
 
-    ans[mul]
+#     ans[mul]
 
-parameter_test(5)
+parameter_test()
