@@ -1,0 +1,10 @@
+version: "3" # docker-compose.yamlの書き方バージョン　他には2がある
+services: # 起動するコンテナの定義する枠
+  python: # サービス名
+    image: python:3.9.6 # 使うイメージを指定
+    container_name: parameter_search_python # コンテナの名前
+    volumes:
+      - ./:/app #現在のフォルダをコンテナにマウント .:/app ./:/temp/work/
+    ports:
+      - 8000:8000
+    tty: true # コンテナを立ち上げた後、起動させたままにする(このオプションを付けないと起動しても、すぐ停止してしまう)
