@@ -26,6 +26,8 @@ python -m parameter_test
 
 # パラメータのアップデート (`update.py`)
 
+現状, 引数を `Problem`に設定していますが, 拡張ラグランジュ関数も引数になるように変更しておきます.
+
 `make_initial_multipliers(problem: Problem)`: 問題を受け取って, パラメータの初期値を設定してください. 今書かれていいるスクリプトは初期値が全て 1 になるようにしています. 適宜修正してください.
 
 `parameter_update(problem: Problem, response: Union[SampleSet, Response], multipliers: Dict[str, float]))`: 問題・解（response）・現在の multiliers を入力として, 次の multipliers を出力してください. 例えば今書かれているスクリプトでは, 制約を守らない項のパラメータを 5 倍にするようにしています.
