@@ -1,22 +1,10 @@
 import jijmodeling as jm
 
 
-def strip_packing_problem():
-    '''
-    :param I_n: 行数
-    :param J_n: 列数
-    :param K_n: 列内の行数
-    :param L_n: アイテム数
-    :param W: 素板幅寸法
-    :param width: 製品幅寸法
-    :param height: 製品高さ寸法
-    :return:
-    '''
-
+def travelling_salesman_problem():
     # 問題
-    problem = jm.Problem('strip packing')
+    problem = jm.Problem('tsp')
 
-    # 定数
     I_n = jm.Placeholder("I_n")  # 行数
     J_n = jm.Placeholder("J_n")  # 列数
     K_n = jm.Placeholder("K_n")  # 行内の行数

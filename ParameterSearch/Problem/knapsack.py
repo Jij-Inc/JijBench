@@ -1,33 +1,24 @@
 import jijmodeling as jm
 
 
-def make_problem():
-    w = jm.Placeholder("w", dim=1)
-    num_items = w.shape[0]
-    c = jm.Placeholder("c")
-
-    # y[j]: bin j を使用するかしないか
-    y = jm.Binary("y", shape=(num_items, ))
-    # x[i][j]: item i を bin j に入れるとき1
-    x = jm.Binary("x", shape=(num_items, num_items))
+def knapsack_problem():
+    w = jm.Placeholder("weights", dim=1)
+    v = jm.Placeholder("values", dim=1)
+    n = jm.Placeholder("num_items")
+    c = jm.Placeholder("capacity")
+    x = jm.Binary("x", shape=(n, ))
 
     # i: itemの添字
-    i = jm.Element("i", num_items)
-    # j: binの添字
-    j = jm.Element("j", num_items)
+    i = jm.Element("i", n)
 
-    problem = jm.Problem("bin packing")
+    problem = jm.Problem("knapsack packing")
 
     # objective function
-    obj = y[:]
+    obj = jm.Sum(i, v[i] * x[i])
     problem += obj
 
-    # Constraint1: 各itemをちょうど1つのbinにぶち込む
-    const1 = jm.Constraint("bin_items", jm.Sum(j, x[i, j]) - 1 == 0, forall=i)
-    problem += const1
-
-    # Constraint2: knapsack制約
-    const2 = jm.Constraint("knapsack", jm.Sum(i, w[i] * x[i, j]) - y[j] * c <= 0, forall=j)
-    problem += const2
+    # Constraint: knapsack 制約
+    const = jm.Constraint("knapsack", jm.Sum(i, w[i] * x[i]) - c <= 0)
+    problem += const
 
     return problem
