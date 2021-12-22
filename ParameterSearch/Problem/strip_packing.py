@@ -1,7 +1,7 @@
 import jijmodeling as jm
 
 
-def make_problem():
+def strip_packing_problem():
     '''
     :param I_n: 行数
     :param J_n: 列数

@@ -1,9 +1,9 @@
 import jijmodeling as jm
 
 
-def make_problem():
+def bin_packing_problem():
     w = jm.Placeholder("w", dim=1)
-    num_items = w.shape[0]
+    num_items = jm.Placeholder("num_items")
     c = jm.Placeholder("c")
 
     # y[j]: bin j を使用するかしないか
