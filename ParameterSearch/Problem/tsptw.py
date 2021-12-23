@@ -23,15 +23,15 @@ def travelling_salesman_with_time_windwos_problem():
 
     # Const1: 都市iから出る辺は1つ
     term1 = jm.Sum((j, j != i), x[i, j])
-    problem += jm.Constraint("out_deg", term1 == 1, forall=[i, ])
+    problem += jm.Constraint("onehot_constraint1", term1 == 1, forall=[i, ])
 
     # Const2: 都市iに入る辺は1つ
     term2 = jm.Sum((j, j != i), x[j, i])
-    problem += jm.Constraint("in_deg", term2 == 1, forall=[i, ])
+    problem += jm.Constraint("onehot_constraint2", term2 == 1, forall=[i, ])
 
     # Const3: Time Windows制約
     term3 = t[i] + dist[i, j] - t[j]
     forall_list = [(j, j != 0), (i, (i != 0) & (i != j))]
-    problem += jm.Constraint("time_windows", term3 <= 0, forall=forall_list)
+    problem += jm.Constraint("time_window_constraint", term3 <= 0, forall=forall_list)
 
     return problem

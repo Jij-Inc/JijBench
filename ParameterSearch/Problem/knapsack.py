@@ -18,7 +18,7 @@ def knapsack_problem():
     problem += -1 * obj
 
     # Constraint: knapsack 制約
-    const = jm.Constraint("knapsack", jm.Sum(i, w[i] * x[i]) - c <= 0)
+    const = jm.Constraint("knapsack_constraint", jm.Sum(i, w[i] * x[i]) - c <= 0)
     problem += const
 
     return problem

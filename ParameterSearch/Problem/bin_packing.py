@@ -23,11 +23,11 @@ def bin_packing_problem():
     problem += obj
 
     # Constraint1: 各itemをちょうど1つのbinにぶち込む
-    const1 = jm.Constraint("bin_items", jm.Sum(j, x[i, j]) - 1 == 0, forall=i)
+    const1 = jm.Constraint("onehot_constraint", jm.Sum(j, x[i, j]) - 1 == 0, forall=i)
     problem += const1
 
     # Constraint2: knapsack制約
-    const2 = jm.Constraint("knapsack", jm.Sum(i, w[i] * x[i, j]) - y[j] * c <= 0, forall=j)
+    const2 = jm.Constraint("knapsack_constraint", jm.Sum(i, w[i] * x[i, j]) - y[j] * c <= 0, forall=j)
     problem += const2
 
     return problem
