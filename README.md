@@ -26,7 +26,6 @@ python -m parameter_test
 
 # パラメータのアップデート (`user_script.py`)
 
-現状, 引数を `Problem`に設定していますが, 拡張ラグランジュ関数も引数になるように変更しておきます.
 
 `transpile_problem(problem: Problem)` : 問題の形式を変形したい場合はここで変更してください. 必ず class Problem を返してください.
 
