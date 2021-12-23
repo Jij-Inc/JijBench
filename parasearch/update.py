@@ -6,9 +6,9 @@ from alm import ALMModel
 from typing import Dict
 
 
-def generator_for_pyqubo_feeddict(almmodel: ALMModel,
-                                  ph_value: PH_VALUES_INTERFACE = {},
-                                  mu0_value: float = 1.0) -> Dict[str, float]:
+def generator_for_pyqubo_feeddict(
+    almmodel: ALMModel, ph_value: PH_VALUES_INTERFACE = {}, mu0_value: float = 1.0
+) -> Dict[str, float]:
     """Generate feed dict including linear and quad term's multipliers
     Args:
         almmodel (ALMModel): alm model
@@ -34,11 +34,13 @@ def generator_for_pyqubo_feeddict(almmodel: ALMModel,
     return alm_multipliers
 
 
-def alm_update(almmodel: ALMModel,
-               decoded: DecodedSamples,
-               alm_multipliers: Dict[str, float],
-               alpha: float = 3.0,
-               beta: float = 1.1):
+def alm_update(
+    almmodel: ALMModel,
+    decoded: DecodedSamples,
+    alm_multipliers: Dict[str, float],
+    alpha: float = 3.0,
+    beta: float = 1.1,
+):
     """Update almmodel's multipliers
     Args:
         almmodel (ALMModel): alm model
@@ -54,17 +56,27 @@ def alm_update(almmodel: ALMModel,
         for const_label, const in constraints.items():
             for indices, value in const.items():
                 if not indices:
-                    indices = ("0")
-                linear_name = const_label + "_linear_" + ",".join([str(i) for i in indices])
+                    indices = "0"
+                linear_name = (
+                    const_label + "_linear_" + ",".join([str(i) for i in indices])
+                )
                 quad_name = const_label + "_quad_" + ",".join([str(i) for i in indices])
-                if isinstance(almmodel.problem.constraints[const_label].condition, Equal):
+                if isinstance(
+                    almmodel.problem.constraints[const_label].condition, Equal
+                ):
                     # lambdaの更新
                     alm_multipliers[linear_name] += alm_multipliers[quad_name] * value
                     # muの更新: alphaは3が良いらしい
                     alm_multipliers[quad_name] *= alpha
-                elif isinstance(almmodel.problem.constraints[const_label].condition, (LessThan, LessThanEqual)):
-                    alm_multipliers[linear_name] \
-                            = max(0, alm_multipliers[linear_name] + alm_multipliers[quad_name] * value)
+                elif isinstance(
+                    almmodel.problem.constraints[const_label].condition,
+                    (LessThan, LessThanEqual),
+                ):
+                    alm_multipliers[linear_name] = max(
+                        0,
+                        alm_multipliers[linear_name]
+                        + alm_multipliers[quad_name] * value,
+                    )
                     alm_multipliers[quad_name] *= beta
     print(alm_multipliers)
     return alm_multipliers
@@ -77,9 +89,9 @@ def make_initial_multipliers(problem: Problem):
     return multipliers
 
 
-def parameter_update(problem: Problem,
-                     decoded: DecodedSamples,
-                     multipliers: Dict[str, float]):
+def parameter_update(
+    problem: Problem, decoded: DecodedSamples, multipliers: Dict[str, float]
+):
     next_multipliers = {}
     for key, value in decoded.constraint_violations[0].items():
         if value > 0:

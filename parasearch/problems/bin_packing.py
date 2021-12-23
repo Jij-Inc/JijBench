@@ -1,7 +1,7 @@
 import jijmodeling as jm
 
 
-def make_problem():
+def bin_packing():
     w = jm.Placeholder("w", dim=1)
     num_items = w.shape[0]
     c = jm.Placeholder("c")
