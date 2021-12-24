@@ -90,7 +90,7 @@ def make_initial_multipliers(problem: Problem):
 
 
 def parameter_update(
-    problem: Problem, decoded: DecodedSamples, multipliers: Dict[str, float]
+    problem: Problem, decoded: DecodedSamples, multipliers: Dict
 ):
     next_multipliers = {}
     for key, value in decoded.constraint_violations[0].items():

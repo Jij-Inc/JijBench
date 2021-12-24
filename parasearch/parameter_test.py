@@ -1,15 +1,10 @@
-from collections import UserDict
 import glob
 import pickle
-from sys import settrace
 import problems
 from visualize import make_step_per_violation
-from alm import alm_transpile, alm_pyqubo_compile
 from update import parameter_update
 import jijzept as jz
 import jijmodeling as jm
-from jijmodeling.expression.serializable import to_serializable
-import openjij as oj
 import datetime
 import json
 from typing import List, Dict, Callable, Any
@@ -19,12 +14,12 @@ class BaseBenchDict(dict):
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
 
-        for k in self.default_keys():
-            self[k] = None
-            setattr(self, k, None)
+        for k, v in self.default_dict().items():
+            self[k] = v
+            setattr(self, k, v)
 
-    def default_keys(self):
-        return []
+    def default_dict(self):
+        return {}
 
     def keys(self):
         return tuple(super().keys())
@@ -40,16 +35,22 @@ class BenchSetting(BaseBenchDict):
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
 
-    def default_keys(self):
-        return ("problem_name", "mathmatical_model", "ph_value", "multipliers")
+    def default_dict(self):
+        return {
+            "updater": "",
+            "problem_name": "",
+            "mathmatical_model": {},
+            "ph_value": {},
+            "multipliers": {},
+        }
 
 
 class BenchResult(BaseBenchDict):
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
 
-    def default_keys(self):
-        return ("penalties", "raw_response")
+    def default_dict(self):
+        return {"penalties": {}, "raw_response": {}}
 
 
 class Experiment:
@@ -70,13 +71,13 @@ class Experiment:
 
 
 class PSBench:
-    instance_dir = "./Instance"
+    instance_dir = "./Instances"
 
     def __init__(
         self,
         updaters: List[
             Callable[
-                [jm.Problem, jm.DecodedSamples, Dict[str, float]], Dict[str, float]
+                [jm.Problem, jm.DecodedSamples, Dict], Dict
             ]
         ],
         sampler: Any,
@@ -126,10 +127,7 @@ class PSBench:
                 ] = jm.expression.serializable.to_serializable(problem)
                 with open(instance_file, "rb") as f:
                     experiment.setting["ph_value"] = pickle.load(f)
-                experiment.setting["multipliers"] = {}
-
-                experiment.results["penalties"] = {}
-                experiment.results["raw_response"] = {}
+                    
                 self._experiments.append(experiment)
 
     def initialize_multipliers(self, problem: jm.Problem):
@@ -144,7 +142,7 @@ class PSBench:
     def run_for_onecase(
         self,
         updater,
-        experiment: DataSaver,
+        experiment: Experiment,
         sampling_params={},
         max_iters=10,
     ):
