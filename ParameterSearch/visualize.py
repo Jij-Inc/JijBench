@@ -1,4 +1,6 @@
 import matplotlib.pyplot as plt
+from dimod.SampleSet import from_serializable
+
 # from jijmodeling.expression.serializable import from_serializable
 import json
 
@@ -7,6 +9,9 @@ def make_step_per_violation(data_time):
     path = "Results/log_" + data_time + ".json"
     with open(path, "r") as f:
         experiments = json.load(f)
+
+    # response = experiments["response"]
+    # response = from_serializable(response)
 
     steps = range(experiments["setting"]["num_iterations"])
     penalties = experiments["results"]["penalties"]
