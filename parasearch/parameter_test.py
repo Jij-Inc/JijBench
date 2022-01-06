@@ -3,6 +3,7 @@ import pickle
 import problems
 from visualize import make_step_per_violation
 from update import parameter_update
+import openjij as oj
 import jijzept as jz
 import jijmodeling as jm
 import datetime
@@ -41,6 +42,7 @@ class BenchSetting(BaseBenchDict):
             "problem_name": "",
             "mathmatical_model": {},
             "ph_value": {},
+            "optimal_solution": [],
             "multipliers": {},
         }
 
@@ -54,7 +56,8 @@ class BenchResult(BaseBenchDict):
 
 
 class Experiment:
-    def __init__(self) -> None:
+    def __init__(self, updater) -> None:
+        self.updater = updater
         self.setting = BenchSetting()
         self.results = BenchResult()
         self.datetime = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -69,17 +72,19 @@ class Experiment:
         with open(filename, "w") as f:
             json.dump(save_obj, f)
 
+    def plot_penalty_by_step(self):
+        pass
+
+    def tts(self, num_sweeps_list=[30, 50, 80, 100, 150, 200], pr=0.99):
+        pass
+
 
 class PSBench:
     instance_dir = "./Instances"
 
     def __init__(
         self,
-        updaters: List[
-            Callable[
-                [jm.Problem, jm.DecodedSamples, Dict], Dict
-            ]
-        ],
+        updaters: List[Callable[[jm.Problem, jm.DecodedSamples, Dict], Dict]],
         sampler: Any,
         target_instances="all",
     ) -> None:
@@ -117,18 +122,23 @@ class PSBench:
             for name in self.target_instances:
                 self.problems[name] = getattr(problems, name)()
 
-        for name, problem in self.problems.items():
-            instance_files = glob.glob(f"{self.instance_dir}/{name}/*.pickle")
-            for instance_file in instance_files:
-                experiment = Experiment()
-                experiment.setting["problem_name"] = name
-                experiment.setting[
-                    "mathmatical_model"
-                ] = jm.expression.serializable.to_serializable(problem)
-                with open(instance_file, "rb") as f:
-                    experiment.setting["ph_value"] = pickle.load(f)
-                    
-                self._experiments.append(experiment)
+        for updater in self.updaters:
+            for name, problem in self.problems.items():
+                instance_files = glob.glob(f"{self.instance_dir}/{name}/*.pickle")
+                for instance_file in instance_files:
+                    experiment = Experiment(updater)
+                    experiment.setting["updater"] = updater.__name__
+                    experiment.setting["problem_name"] = name
+                    experiment.setting[
+                        "mathmatical_model"
+                    ] = jm.expression.serializable.to_serializable(problem)
+                    with open(instance_file, "rb") as f:
+                        experiment.setting["ph_value"] = pickle.load(f)
+
+                    # 最適解を設定（とりあえずdummy）
+                    experiment.setting["optimal_solution"] = [0 for _ in range(2700)]
+
+                    self._experiments.append(experiment)
 
     def initialize_multipliers(self, problem: jm.Problem):
         multipliers = {}
@@ -141,7 +151,6 @@ class PSBench:
 
     def run_for_onecase(
         self,
-        updater,
         experiment: Experiment,
         sampling_params={},
         max_iters=10,
@@ -149,6 +158,13 @@ class PSBench:
         problem = self.problems[experiment.setting["problem_name"]]
         ph_value = experiment.setting["ph_value"]
         multipliers = self.initialize_multipliers(problem=problem)
+        
+        import numpy as np
+        x1 = jm.BinaryArray("x", shape=(5, 3, 5, 18, 2))
+        solution = np.zeros((5, 3, 5, 18, 2), dtype=int)
+        energy = jm.evaluate_solutions(problem, [{x1: solution}], ph_value)
+        print(energy)
+        fafafa
 
         for step in range(max_iters):
             experiment.setting["multipliers"][step] = multipliers
@@ -163,26 +179,34 @@ class PSBench:
             experiment.results["penalties"][step] = penalties
             experiment.results["raw_response"][step] = response.to_serializable()
 
-            multipliers = updater(problem, decoded, multipliers)
+            multipliers = experiment.updater(problem, decoded, multipliers)
 
         experiment.save(path="Results/")
+        """ oj.solver_benchmark(
+            solver=lambda time, **args: self.sampler.sample_model(
+                problem, ph_value, multipliers, num_sweeps=time
+            ),
+            time_list=[30, 50, 80, 100, 150, 200],
+            solutions=experiment.setting["optimal_solution"],
+            p_r=0.99,
+        ) """
         make_step_per_violation(experiment.datetime)
 
     def run(self, sampling_params={}, max_iters=10) -> None:
         self.setup()
-        for updater in self.updaters:
-            for experiment in self.experiments[0:1]:
-                experiment.setting["num_iterations"] = max_iters
-                self.run_for_onecase(
-                    updater=updater,
-                    experiment=experiment,
-                    sampling_params=sampling_params,
-                    max_iters=max_iters,
-                )
+
+        for experiment in self.experiments[0:1]:
+            experiment.setting["num_iterations"] = max_iters
+            self.run_for_onecase(
+                experiment=experiment,
+                sampling_params=sampling_params,
+                max_iters=max_iters,
+            )
 
 
 def main():
-    target_instances = "all"
+    # target_instances = "all"
+    target_instances = ["strip_packing"]
     sampler = jz.JijSASampler(config="../../../config/config.toml")
 
     bench = PSBench([parameter_update], sampler, target_instances=target_instances)
