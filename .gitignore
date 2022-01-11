@@ -130,3 +130,6 @@ dmypy.json
 
 ParameterSearch/config.toml
 ParameterSearch/Results
+
+# Mac
+.DS_Store
