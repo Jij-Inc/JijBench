@@ -16,13 +16,9 @@ class DataSaver:
 
     def save(self, path: str = ""):
         now = datetime.datetime.now()
-        self.data_time = now.strftime('%Y%m%d_%H%M%S')
-        filename = path + 'log_' + now.strftime('%Y%m%d_%H%M%S') + '.json'
-        save_obj = {
-            'date': str(now),
-            'setting': self.setting,
-            'results': self.results
-          }
+        self.data_time = now.strftime("%Y%m%d_%H%M%S")
+        filename = path + "log_" + now.strftime("%Y%m%d_%H%M%S") + ".json"
+        save_obj = {"date": str(now), "setting": self.setting, "results": self.results}
         with open(filename, "w") as f:
             json.dump(save_obj, f)
 
@@ -59,7 +55,13 @@ def parameter_test():
     experiment.setting["multipliers"] = {}
     for step in range(num_iterations):
         # 問題を解く
-        response = sampler.sample_model(transpiled_problem, ph_value, multipliers, num_sweeps=num_sweeps, num_reads=num_reads)
+        response = sampler.sample_model(
+            transpiled_problem,
+            ph_value,
+            multipliers,
+            num_sweeps=num_sweeps,
+            num_reads=num_reads,
+        )
 
         # 解のデコード
         decoded = transpiled_problem.decode(response, ph_value, {})
