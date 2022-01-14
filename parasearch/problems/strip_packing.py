@@ -1,13 +1,6 @@
 import jijmodeling as jm
 
 
-I_n = 5
-J_n = 3
-K_n = 5
-L_n = 18
-W = 2540
-
-
 def strip_packing():
     """
     :param I_n: 行数
@@ -24,11 +17,11 @@ def strip_packing():
     problem = jm.Problem("strip packing")
 
     # 定数
-    # I_n = jm.Placeholder("I_n")  # 行数
-    # J_n = jm.Placeholder("J_n")  # 列数
-    # K_n = jm.Placeholder("K_n")  # 行内の行数
-    # L_n = jm.Placeholder("L_n")  # アイテム数
-    # W = jm.Placeholder("W")  # 素板幅寸法
+    I_n = jm.Placeholder("I_n")  # 行数
+    J_n = jm.Placeholder("J_n")  # 列数
+    K_n = jm.Placeholder("K_n")  # 行内の行数
+    L_n = jm.Placeholder("L_n")  # アイテム数
+    W = jm.Placeholder("W")  # 素板幅寸法
 
     h = jm.Placeholder("h", shape=(L_n,))
     w = jm.Placeholder("w", shape=(L_n,))
