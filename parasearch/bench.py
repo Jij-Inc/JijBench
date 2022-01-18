@@ -3,13 +3,11 @@ import glob
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import problems
-from update import parameter_update
-import openjij as oj
 import jijzept as jz
 import jijmodeling as jm
 import datetime
 import json
+from parasearch import problems
 from typing import List, Dict, Callable, Any
 
 
@@ -45,7 +43,7 @@ class BenchSetting(BaseBenchDict):
             "instance_name": "",
             "mathmatical_model": {},
             "ph_value": {},
-            "opt_value": [],
+            "opt_value": -1,
             "multipliers": {},
         }
 
@@ -59,6 +57,8 @@ class BenchResult(BaseBenchDict):
 
 
 class Experiment:
+    log_filename = "log.json"
+
     def __init__(self, updater, result_dir="./Results") -> None:
         self.updater = updater
         self.setting = BenchSetting()
@@ -66,11 +66,16 @@ class Experiment:
         self.evaluation_metrics = pd.DataFrame()
         self.datetime = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         self.result_dir = result_dir
-        self.log_dir = f"{result_dir}/logs"
-        self.img_dir = f"{result_dir}/imgs"
+        self.log_dir = f"{result_dir}/{self.datetime}/logs"
+        self.img_dir = f"{result_dir}/{self.datetime}/imgs"
+        self.table_dir = f"{result_dir}/{self.datetime}/tables"
 
     def save(self):
-        filename = f"{self.log_dir}/{self.datetime}.json"
+        instance_name = self.setting["instance_name"]
+        save_dir = f"{self.log_dir}/{instance_name}"
+        os.makedirs(save_dir, exist_ok=True)
+
+        filename = f"{save_dir}/{self.log_filename}"
         save_obj = {
             "date": str(self.datetime),
             "setting": self.setting,
@@ -80,7 +85,8 @@ class Experiment:
             json.dump(save_obj, f)
 
     def plot_evaluation_metrics(self):
-        result_file = f"{self.log_dir}/{self.datetime}.json"
+        instance_name = self.setting["instance_name"]
+        result_file = f"{self.log_dir}/{instance_name}/{self.log_filename}"
         with open(result_file, "r") as f:
             experiment = json.load(f)
 
@@ -88,7 +94,6 @@ class Experiment:
         penalties = experiment["results"]["penalties"]
         best_penalties = [min(value) for value in penalties.values()]
 
-        instance_name = experiment["setting"]["instance_name"]
         save_dir = f"{self.img_dir}/{instance_name}"
         os.makedirs(save_dir, exist_ok=True)
 
@@ -98,8 +103,8 @@ class Experiment:
         plt.ylabel("sum of penalties")
         plt.savefig(f"{save_dir}/sum_of_penalties.jpg")
 
-        self.evaluation_metrics.plot(x="annealing_time", y="tts")
-        plt.savefig(f"{save_dir}/tts.jpg")
+        self.evaluation_metrics.plot(x="annealing_time", y="time_to_solution")
+        plt.savefig(f"{save_dir}/time_to_solution.jpg")
         self.evaluation_metrics.plot(x="annealing_time", y="success_probability")
         plt.savefig(f"{save_dir}/success_probability.jpg")
         self.evaluation_metrics.plot(x="annealing_time", y="residual_energy")
@@ -111,10 +116,11 @@ class Experiment:
         problem,
         ph_value,
         num_reads=1,
-        num_sweeps_list=[30, 50, 80, 100, 150, 200],
+        num_sweeps_list=[25, 50, 100, 150, 200, 300],
         pr=0.99,
     ):
-        result_file = f"{self.log_dir}/{self.datetime}.json"
+        instance_name = self.setting["instance_name"]
+        result_file = f"{self.log_dir}/{instance_name}/{self.log_filename}"
         with open(result_file, "r") as f:
             experiment = json.load(f)
 
@@ -122,11 +128,16 @@ class Experiment:
         init_multipliers = experiment["setting"]["multipliers"]["0"]
         updated_multipliers = experiment["setting"]["multipliers"][str(steps - 1)]
 
-        tts_list = []
-        ps_list = []
-        tau_list = []
-        min_energy_list = []
-        mean_eneagy_list = []
+        evaluation_metrics = {
+            "annealing_time": [],
+            "feasible_rate_of_baseline": [],
+            "feasible_rate_of_new_updater": [],
+            "time_to_solution": [],
+            "success_probability": [],
+            "min_energy": [],
+            "mean_eneagy": [],
+            "residual_energy": [],
+        }
         for num_sweeps in num_sweeps_list[:2]:
             baseline = sampler.sample_model(
                 problem,
@@ -153,18 +164,27 @@ class Experiment:
             energies = decoded.feasibles().energy
             ps = (energies <= min_energy).sum() / len(decoded.solutions) + 1e-16
 
-            tts_list.append(np.log(1 - pr) / np.log(1 - ps) * tau if ps < pr else tau)
-            ps_list.append(ps)
-            tau_list.append(tau)
-            min_energy_list.append(min_energy)
-            mean_eneagy_list.append(energies.mean())
+            evaluation_metrics["annealing_time"].append(tau)
+            evaluation_metrics["feasible_rate_of_baseline"].append(
+                len(baseline_decoded.feasibles()) / len(baseline_decoded)
+            )
+            evaluation_metrics["feasible_rate_of_new_updater"].append(
+                len(decoded.feasibles()) / len(decoded)
+            )
+            evaluation_metrics["time_to_solution"].append(
+                np.log(1 - pr) / np.log(1 - ps) * tau if ps < pr else tau
+            )
+            evaluation_metrics["success_probability"].append(ps)
+            evaluation_metrics["min_energy"].append(min_energy)
+            evaluation_metrics["mean_eneagy"].append(energies.mean())
+            evaluation_metrics["residual_energy"].append(energies.mean() - min_energy)
 
-        self.evaluation_metrics["annealing_time"] = tau_list
-        self.evaluation_metrics["tts"] = tts_list
-        self.evaluation_metrics["success_probability"] = ps_list
-        self.evaluation_metrics["residual_energy"] = np.array(
-            mean_eneagy_list
-        ) - np.array(min_energy)
+        self.evaluation_metrics = pd.DataFrame(evaluation_metrics)
+
+        save_dir = f"{self.table_dir}/{instance_name}"
+        os.makedirs(save_dir, exist_ok=True)
+
+        self.evaluation_metrics.to_csv(f"{save_dir}/metrics.csv")
 
 
 class PSBench:
@@ -175,12 +195,14 @@ class PSBench:
         target_instances="all",
         n_instances_per_problem="all",
         instance_dir="./Instances",
+        result_dir="./Results"
     ) -> None:
         self.updaters = updaters
         self.sampler = sampler
         self.target_instances = target_instances
         self.n_instances_per_problem = n_instances_per_problem
         self.instance_dir = instance_dir
+        self.result_dir = result_dir
 
         self._problems = {}
         self._experiments = []
@@ -219,13 +241,16 @@ class PSBench:
                 )
                 if isinstance(self.n_instances_per_problem, int):
                     instance_files = instance_files[: self.n_instances_per_problem]
+                print(self.instance_dir)
                 print(instance_files)
 
                 for instance_file in instance_files:
-                    experiment = Experiment(updater)
+                    experiment = Experiment(updater, result_dir=self.result_dir)
                     experiment.setting["updater"] = updater.__name__
                     experiment.setting["problem_name"] = name
-                    instance_name = instance_file.lstrip(self.instance_dir).rstrip(".json")
+                    instance_name = instance_file.lstrip(self.instance_dir).rstrip(
+                        ".json"
+                    )
                     experiment.setting["instance_name"] = instance_name
                     experiment.setting[
                         "mathmatical_model"
@@ -291,12 +316,14 @@ class PSBench:
 
 
 def main():
+    from users.makino import update_simple
+
     # target_instances = "all"
     target_instances = ["knapsack"]
-    sampler = jz.JijSASampler(config="../../../config/config.toml")
+    sampler = jz.JijSASampler(config="../../.config/jijzept/config.toml")
 
     bench = PSBench(
-        [parameter_update],
+        [update_simple],
         sampler,
         target_instances=target_instances,
         n_instances_per_problem=1,

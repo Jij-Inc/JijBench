@@ -128,7 +128,11 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-*.json
-*.vrp
-*.tsp
-*.tour
+#*.json
+#*.vrp
+#*.tsp
+#*.tour
+
+Results/
+
+backup/
