@@ -138,7 +138,7 @@ class Experiment:
             "mean_eneagy": [],
             "residual_energy": [],
         }
-        for num_sweeps in num_sweeps_list[:2]:
+        for num_sweeps in num_sweeps_list:
             baseline = sampler.sample_model(
                 problem,
                 ph_value,
@@ -195,7 +195,7 @@ class PSBench:
         target_instances="all",
         n_instances_per_problem="all",
         instance_dir="./Instances",
-        result_dir="./Results"
+        result_dir="./Results",
     ) -> None:
         self.updaters = updaters
         self.sampler = sampler
@@ -241,8 +241,6 @@ class PSBench:
                 )
                 if isinstance(self.n_instances_per_problem, int):
                     instance_files = instance_files[: self.n_instances_per_problem]
-                print(self.instance_dir)
-                print(instance_files)
 
                 for instance_file in instance_files:
                     experiment = Experiment(updater, result_dir=self.result_dir)
@@ -276,18 +274,16 @@ class PSBench:
     def run_for_one_experiment(
         self,
         experiment: Experiment,
-        sampling_params={},
         max_iters=10,
     ):
         problem = self.problems[experiment.setting["problem_name"]]
         ph_value = experiment.setting["ph_value"]
         multipliers = self.initialize_multipliers(problem=problem)
 
+        # 一旦デフォルトのnum_reads, num_sweepsでupdaterを動かす
         for step in range(max_iters):
             experiment.setting["multipliers"][step] = multipliers
-            response = self.sampler.sample_model(
-                problem, ph_value, multipliers, **sampling_params
-            )
+            response = self.sampler.sample_model(problem, ph_value, multipliers)
             decoded = problem.decode(response, ph_value, {})
 
             penalties = []
@@ -307,10 +303,11 @@ class PSBench:
         self.setup()
 
         for experiment in self.experiments:
+            instance_name = experiment.setting["instance_name"]
+            print(f">> instance_name = {instance_name}")
             experiment.setting["num_iterations"] = max_iters
             self.run_for_one_experiment(
                 experiment=experiment,
-                sampling_params=sampling_params,
                 max_iters=max_iters,
             )
 
