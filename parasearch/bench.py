@@ -57,13 +57,15 @@ class BenchResult(BaseBenchDict):
 
 
 class Experiment:
+    jijzept_config_file = "/home/azureuser/.config/jijzept/config.toml"
+    baseline_sampler = jz.JijSASampler(config=jijzept_config_file)
     log_filename = "log.json"
 
     def __init__(self, updater, result_dir="./Results") -> None:
         self.updater = updater
         self.setting = BenchSetting()
         self.results = BenchResult()
-        self.evaluation_metrics = pd.DataFrame()
+        self.evaluation_metrics = None
         self.datetime = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         self.result_dir = result_dir
         self.log_dir = f"{result_dir}/{self.datetime}/logs"
@@ -96,12 +98,12 @@ class Experiment:
 
         save_dir = f"{self.img_dir}/{instance_name}"
         os.makedirs(save_dir, exist_ok=True)
-
-        plt.plot(steps, best_penalties, marker="o")
-        plt.title("step - sum of penalties")
-        plt.xlabel("step")
-        plt.ylabel("sum of penalties")
-        plt.savefig(f"{save_dir}/sum_of_penalties.jpg")
+        if best_penalties:
+            plt.plot(steps, best_penalties, marker="o")
+            plt.title("step - sum of penalties")
+            plt.xlabel("step")
+            plt.ylabel("sum of penalties")
+            plt.savefig(f"{save_dir}/sum_of_penalties.jpg")
 
         self.evaluation_metrics.plot(x="annealing_time", y="time_to_solution")
         plt.savefig(f"{save_dir}/time_to_solution.jpg")
@@ -115,31 +117,34 @@ class Experiment:
         sampler,
         problem,
         ph_value,
+        multipliers,
+        optional_args,
         num_reads=1,
         num_sweeps_list=[25, 50, 100, 150, 200, 300],
         pr=0.99,
     ):
         instance_name = self.setting["instance_name"]
-        result_file = f"{self.log_dir}/{instance_name}/{self.log_filename}"
+
+        """ result_file = f"{self.log_dir}/{instance_name}/{self.log_filename}"
         with open(result_file, "r") as f:
             experiment = json.load(f)
 
         steps = experiment["setting"]["num_iterations"]
-        init_multipliers = experiment["setting"]["multipliers"]["0"]
-        updated_multipliers = experiment["setting"]["multipliers"][str(steps - 1)]
+        updated_multipliers = experiment["setting"]["multipliers"][str(steps - 1)] """
 
         evaluation_metrics = {
             "annealing_time": [],
-            "feasible_rate_of_baseline": [],
-            "feasible_rate_of_new_updater": [],
+            "feasible_rate_for_baseline": [],
+            "feasible_rate_for_new_updater": [],
             "time_to_solution": [],
             "success_probability": [],
             "min_energy": [],
             "mean_eneagy": [],
             "residual_energy": [],
         }
+        init_multipliers = initialize_multipliers(problem)
         for num_sweeps in num_sweeps_list:
-            baseline = sampler.sample_model(
+            baseline = self.baseline_sampler.sample_model(
                 problem,
                 ph_value,
                 init_multipliers,
@@ -147,16 +152,17 @@ class Experiment:
                 num_sweeps=num_sweeps,
                 search=True,
             )
+
             baseline_decoded = problem.decode(baseline, ph_value, {})
             min_energy = baseline_decoded.feasibles().energy.min()
 
-            response = sampler.sample_model(
+            response = sampler(
                 problem,
                 ph_value,
-                updated_multipliers,
+                multipliers,
                 num_reads=num_reads,
                 num_sweeps=num_sweeps,
-                search=True,
+                **optional_args,
             )
             tau = response.info["sampling_time"]
 
@@ -165,10 +171,10 @@ class Experiment:
             ps = (energies <= min_energy).sum() / len(decoded.solutions) + 1e-16
 
             evaluation_metrics["annealing_time"].append(tau)
-            evaluation_metrics["feasible_rate_of_baseline"].append(
+            evaluation_metrics["feasible_rate_for_baseline"].append(
                 len(baseline_decoded.feasibles()) / len(baseline_decoded)
             )
-            evaluation_metrics["feasible_rate_of_new_updater"].append(
+            evaluation_metrics["feasible_rate_for_new_updater"].append(
                 len(decoded.feasibles()) / len(decoded)
             )
             evaluation_metrics["time_to_solution"].append(
@@ -190,19 +196,21 @@ class Experiment:
 class PSBench:
     def __init__(
         self,
-        updaters: List[Callable[[jm.Problem, jm.DecodedSamples, Dict], Dict]],
+        updater: Callable[[jm.Problem, jm.DecodedSamples, Dict], Dict],
         sampler: Any,
         target_instances="all",
         n_instances_per_problem="all",
+        optional_args={},
         instance_dir="./Instances",
         result_dir="./Results",
     ) -> None:
-        self.updaters = updaters
+        self.updater = updater
         self.sampler = sampler
         self.target_instances = target_instances
         self.n_instances_per_problem = n_instances_per_problem
         self.instance_dir = instance_dir
         self.result_dir = result_dir
+        self.optional_args = optional_args
 
         self._problems = {}
         self._experiments = []
@@ -234,42 +242,27 @@ class PSBench:
             for name in self.target_instances:
                 self.problems[name] = getattr(problems, name)()
 
-        for updater in self.updaters:
-            for name, problem in self.problems.items():
-                instance_files = glob.glob(
-                    f"{self.instance_dir}/{name}/**/*.json", recursive=True
+        for name, problem in self.problems.items():
+            instance_files = glob.glob(
+                f"{self.instance_dir}/{name}/**/*.json", recursive=True
+            )
+            if isinstance(self.n_instances_per_problem, int):
+                instance_files = instance_files[: self.n_instances_per_problem]
+            for instance_file in instance_files:
+                experiment = Experiment(self.updater, result_dir=self.result_dir)
+                experiment.setting["updater"] = self.updater.__name__
+                experiment.setting["problem_name"] = name
+                instance_name = instance_file.lstrip(self.instance_dir).rstrip(".json")
+                experiment.setting["instance_name"] = instance_name
+                experiment.setting[
+                    "mathmatical_model"
+                ] = jm.expression.serializable.to_serializable(problem)
+                with open(instance_file, "rb") as f:
+                    experiment.setting["ph_value"] = json.load(f)
+                experiment.setting["opt_value"] = experiment.setting["ph_value"].pop(
+                    "opt_value", None
                 )
-                if isinstance(self.n_instances_per_problem, int):
-                    instance_files = instance_files[: self.n_instances_per_problem]
-
-                for instance_file in instance_files:
-                    experiment = Experiment(updater, result_dir=self.result_dir)
-                    experiment.setting["updater"] = updater.__name__
-                    experiment.setting["problem_name"] = name
-                    instance_name = instance_file.lstrip(self.instance_dir).rstrip(
-                        ".json"
-                    )
-                    experiment.setting["instance_name"] = instance_name
-                    experiment.setting[
-                        "mathmatical_model"
-                    ] = jm.expression.serializable.to_serializable(problem)
-                    with open(instance_file, "rb") as f:
-                        experiment.setting["ph_value"] = json.load(f)
-
-                    experiment.setting["opt_value"] = experiment.setting[
-                        "ph_value"
-                    ].pop("opt_value", None)
-
-                    self._experiments.append(experiment)
-
-    def initialize_multipliers(self, problem: jm.Problem):
-        multipliers = {}
-        for key in problem.constraints.keys():
-            multipliers[key] = 1
-        return multipliers
-
-    def update_multipliers(self):
-        pass
+                self._experiments.append(experiment)
 
     def run_for_one_experiment(
         self,
@@ -278,28 +271,36 @@ class PSBench:
     ):
         problem = self.problems[experiment.setting["problem_name"]]
         ph_value = experiment.setting["ph_value"]
-        multipliers = self.initialize_multipliers(problem=problem)
+        multipliers = initialize_multipliers(problem=problem)
 
         # 一旦デフォルトのnum_reads, num_sweepsでupdaterを動かす
         for step in range(max_iters):
             experiment.setting["multipliers"][step] = multipliers
-            response = self.sampler.sample_model(problem, ph_value, multipliers)
-            decoded = problem.decode(response, ph_value, {})
+            multipliers, self.optional_args, response = experiment.updater(
+                self.sampler,
+                problem,
+                ph_value,
+                multipliers,
+                self.optional_args,
+                step=step,
+                experiment=experiment,
+            )
 
+            decoded = problem.decode(response, ph_value, {})
             penalties = []
             for violations in decoded.constraint_violations:
                 penalties.append(sum(value for value in violations.values()))
             experiment.results["penalties"][step] = penalties
             experiment.results["raw_response"][step] = response.to_serializable()
 
-            multipliers = experiment.updater(problem, decoded, multipliers)
+            if step == max_iters - 1:
+                experiment.save()
+                experiment.evaluate(
+                    self.sampler, problem, ph_value, multipliers, self.optional_args
+                )
+                experiment.plot_evaluation_metrics()
 
-        experiment.save()
-
-        experiment.evaluate(self.sampler, problem, ph_value)
-        experiment.plot_evaluation_metrics()
-
-    def run(self, sampling_params={}, max_iters=10) -> None:
+    def run(self, sampling_params={}, max_iters=10):
         self.setup()
 
         for experiment in self.experiments:
@@ -310,23 +311,36 @@ class PSBench:
                 experiment=experiment,
                 max_iters=max_iters,
             )
+            print()
+
+
+def initialize_multipliers(problem: jm.Problem):
+    multipliers = {}
+    for key in problem.constraints.keys():
+        multipliers[key] = 1
+    return multipliers
 
 
 def main():
-    from users.makino import update_simple
+    from users.makino.updater import update_simple
+    from users.makino.solver import sample_model
 
     # target_instances = "all"
     target_instances = ["knapsack"]
-    sampler = jz.JijSASampler(config="../../.config/jijzept/config.toml")
+
+    instance_size = "small"
+    instance_dir = f"./Instances/{instance_size}"
+    result_dir = f"./Results/makino/{instance_size}"
 
     bench = PSBench(
-        [update_simple],
-        sampler,
+        update_simple,
+        sample_model,
         target_instances=target_instances,
         n_instances_per_problem=1,
+        instance_dir=instance_dir,
+        result_dir=result_dir,
     )
-    sampling_params = {"num_sweeps": 5, "num_reads": 5}
-    bench.run(sampling_params=sampling_params, max_iters=2)
+    bench.run(max_iters=2)
 
 
 if __name__ == "__main__":
