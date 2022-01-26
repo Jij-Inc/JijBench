@@ -130,4 +130,9 @@ dmypy.json
 
 .config.toml
 
-**.json
+Results/
+
+backup/
+
+.devcontainer/
+.vscode/
