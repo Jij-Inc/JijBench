@@ -3,7 +3,7 @@ import jijmodeling as jm
 
 def travelling_salesman():
     # 問題
-    problem = jm.Problem('tsp')
+    problem = jm.Problem('travelling_salesman')
     dist = jm.Placeholder("dist", dim=2)
     N = jm.Placeholder("N")
     

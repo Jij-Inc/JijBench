@@ -16,7 +16,7 @@ def bin_packing():
     # j: binの添字
     j = jm.Element("j", num_items)
 
-    problem = jm.Problem("bin packing")
+    problem = jm.Problem("bin_packing")
 
     # objective function
     obj = y[:]

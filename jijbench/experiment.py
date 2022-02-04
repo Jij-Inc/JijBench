@@ -25,10 +25,14 @@ class ExperimentSetting:
 class ExperimentResult:
     penalties: dict = None
     raw_response: dict = None
+    result_file: str = ""
+    log_dir: str = ""
+    img_dir: str = ""
+    table_dir: str = ""
 
 
 class Experiment:
-    log_filename = "log.json"
+    log_filename = "experiment.json"
 
     def __init__(
         self,
@@ -39,7 +43,6 @@ class Experiment:
     ) -> None:
         self.updater = updater
         self.sampler = sampler
-        self.result_dir = result_dir
         if optional_args:
             self.optional_args = optional_args
         else:
@@ -51,10 +54,12 @@ class Experiment:
         self.results = ExperimentResult()
 
         self.datetime = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+
         self.result_dir = result_dir
-        self.log_dir = f"{result_dir}/{self.datetime}/logs"
-        self.img_dir = f"{result_dir}/{self.datetime}/imgs"
-        self.table_dir = f"{result_dir}/{self.datetime}/tables"
+        result_number = len([d for d in os.listdir(result_dir) if "results" in d])
+        self.log_dir = f"{result_dir}/results_{result_number}/logs"
+        self.img_dir = f"{result_dir}/results_{result_number}/imgs"
+        self.table_dir = f"{result_dir}/results_{result_number}/tables"
 
     def run(self, problem: jm.Problem, ph_value: Dict, max_iters=10):
         def _initialize_multipliers():
@@ -108,23 +113,24 @@ class Experiment:
         setting = data["setting"]
         results = data["results"]
 
-        updater = self.updater
-        sampler = self.sampler
-        optional_args = self.optional_args
-        result_dir = self.result_dir
+        self.datetime = date
+        self.setting = ExperimentSetting(**setting)
+        self.results = ExperimentResult(**results)
 
-        obj = Experiment(updater, sampler, result_dir, optional_args)
-        obj.datetime = date
-        obj.setting = ExperimentSetting(**setting)
-        obj.results = ExperimentResult(**results)
-        return obj
+    def save(self, savename: str = None):
+        os.makedirs(self.log_dir, exist_ok=True)
+        os.makedirs(self.img_dir, exist_ok=True)
+        os.makedirs(self.table_dir, exist_ok=True)
+        self.results.log_dir = self.log_dir
+        self.results.img_dir = self.img_dir
+        self.results.table_dir = self.table_dir
 
-    def save(self):
-        instance_name = self.setting.instance_name
-        save_dir = f"{self.log_dir}/{instance_name}"
-        os.makedirs(save_dir, exist_ok=True)
+        if savename is None:
+            savename = self.log_filename
 
-        filename = f"{save_dir}/{self.log_filename}"
+        filename = f"{self.log_dir}/{savename}"
+        self.results.result_file = filename
+
         save_obj = {
             "date": str(self.datetime),
             "setting": asdict(self.setting),
@@ -146,10 +152,9 @@ if __name__ == "__main__":
     experiment = Experiment(
         updater=update_simple, sampler=sample_model, result_dir="./"
     )
-    experiment.run(problem, ph_value, max_iters=1)
+    experiment.run(problem, ph_value, max_iters=0)
     experiment.save()
 
     experiment = experiment.load(
-        "/home/azureuser/JijBenchmark/jijbench/20220203_213241/logs/log.json"
+        "/home/azureuser/JijBenchmark/jijbench/results_3/logs/experiment.json"
     )
-    print(experiment.setting)

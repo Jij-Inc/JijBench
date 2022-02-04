@@ -1,5 +1,7 @@
 from abc import ABCMeta
+from inspect import getargvalues
 from typing import Callable, List, Dict, Any
+import os
 import glob
 import jijmodeling as jm
 from jijmodeling.transpilers.type_annotations import PH_VALUES_INTERFACE
@@ -39,6 +41,8 @@ class Benchmark:
         self.instance_context = _InstanceContext(
             target_problems, n_instances_per_problem, instance_files, instance_dir
         )
+
+        os.makedirs(result_dir, exist_ok=True)
         self.result_dir = result_dir
         self.optional_args = optional_args
 
@@ -54,32 +58,18 @@ class Benchmark:
         self._experiments = experiments
 
     def setup(self):
-        """if self.target_instances == "all":
-            for name in problems.__all__:
-                self.problems[name] = getattr(problems, name)()
-        else:
-            for name in self.target_instances:
-                self.problems[name] = getattr(problems, name)()"""
-
-        for instance_file in self.instance_context.files():
-            experiment = Experiment(
-                self.updater,
-                self.sampler,
-                result_dir=self.result_dir,
-                optional_args=self.optional_args,
-            )
-            # experiment.setting.problem_name = name
-            # instance_name = instance_file.lstrip(self.instance_dir).rstrip(".json")
-            experiment.setting.instance_file = instance_file
-            # experiment.setting.mathmatical_model = (
-            #    jm.expression.serializable.to_serializable(problem)
-            # )
-            # with open(instance_file, "rb") as f:
-            #    experiment.setting.ph_value = json.load(f)
-            #experiment.setting.opt_value = experiment.setting.ph_value.pop(
-            #    "opt_value", None
-            #)
-            self._experiments.append(experiment)
+        files_by_problem = self.instance_context.files_by_problem()
+        for problem_name, instance_files in files_by_problem.items():
+            for instance_file in instance_files:
+                experiment = Experiment(
+                    self.updater,
+                    self.sampler,
+                    result_dir=self.result_dir,
+                    optional_args=self.optional_args,
+                )
+                experiment.setting.problem_name = problem_name
+                experiment.setting.instance_file = instance_file
+                self._experiments.append(experiment)
 
     def run(self, sampling_params={}, max_iters=10):
         """run experiment
@@ -89,15 +79,16 @@ class Benchmark:
             max_iters (int, optional): max iteration. Defaults to 10.
         """
         self.setup()
-        # for experiment in self.experiments:
-        #     instance_name = experiment.setting["instance_name"]
-        #     print(f">> instance_name = {instance_name}")
-        #     experiment.setting["num_iterations"] = max_iters
-        #     self.run_for_one_experiment(
-        #         experiment=experiment,
-        #         max_iters=max_iters,
-        #     )
-        #     print()
+        for experiment in self.experiments:
+            instance_file = experiment.setting.instance_file
+            print(f">> instance_file = {instance_file}")
+            problem = getattr(problems, experiment.setting.problem_name)()
+            with open(instance_file, "r") as f:
+                ph_value = json.load(f)
+
+            experiment.run(problem, ph_value, max_iters)
+            savename = instance_file.split("/")[-1].split(".")[0] + ".json"
+            experiment.save(savename)
 
 
 class _InstanceState(metaclass=ABCMeta):
@@ -106,11 +97,12 @@ class _InstanceState(metaclass=ABCMeta):
 
 
 class _SpecificInstance(_InstanceState):
-    def __init__(self, instance_files):
+    def __init__(self, problem, instance_files):
+        self.problem = problem
         self.instance_files = instance_files
 
-    def files(self):
-        return self.instance_files
+    def files_by_problem(self):
+        return {self.problem: self.instance_files}
 
 
 class _AnyInstance(_InstanceState):
@@ -122,7 +114,8 @@ class _AnyInstance(_InstanceState):
         self.n_instances = n_instances
         self.instance_dir = instance_dir
 
-    def files(self):
+    def files_by_problem(self):
+        files = {}
         for name in self.target_problems:
             instance_files = glob.glob(
                 f"{self.instance_dir}/{name}/**/*.json", recursive=True
@@ -130,25 +123,29 @@ class _AnyInstance(_InstanceState):
             if isinstance(self.n_instances, int):
                 instance_files.sort()
                 instance_files = instance_files[: self.n_instances]
-        return instance_files
+            files[name] = instance_files
+        return files
 
 
 class _InstanceContext(_InstanceState):
     def __init__(self, target_problems, n_instances, instance_files, instance_dir):
-        if instance_files:
-            self.state = _SpecificInstance(instance_files)
+        if target_problems != "all":
+            if instance_files:
+                self.state = _SpecificInstance(target_problems[0], instance_files)
+            else:
+                self.state = _AnyInstance(target_problems, n_instances, instance_dir)
         else:
             self.state = _AnyInstance(target_problems, n_instances, instance_dir)
 
-    def files(self):
-        return self.state.files()
+    def files_by_problem(self):
+        return self.state.files_by_problem()
 
 
 if __name__ == "__main__":
     from users.makino.updater import update_simple
     from users.makino.solver import sample_model
 
-    target_problems = "all"
+    target_problems = ["knapsack"]
 
     instance_size = "small"
     instance_files = [
@@ -157,12 +154,10 @@ if __name__ == "__main__":
     # instance_files = None
     instance_dir = f"./Instances/{instance_size}"
     result_dir = f"./Results/makino/{instance_size}"
-    result_dir = "./"
 
-    context = _InstanceContext(target_problems, 5, instance_files, instance_dir)
-    files = context.files()
+    context = _InstanceContext(target_problems, 2, instance_files, instance_dir)
+    files = context.files_by_problem()
     print(files)
-
     bench = Benchmark(
         update_simple,
         sample_model,
@@ -172,7 +167,6 @@ if __name__ == "__main__":
         instance_dir=instance_dir,
         result_dir=result_dir,
     )
-    bench.run(max_iters=1)
-    fafafaf
-
-    print(bench.experiments)
+    # bench.setup()
+    # print(bench.experiments)
+    bench.run(max_iters=3)

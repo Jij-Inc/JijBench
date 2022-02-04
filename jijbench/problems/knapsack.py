@@ -11,7 +11,7 @@ def knapsack():
     # i: itemの添字
     i = jm.Element("i", n)
 
-    problem = jm.Problem("knapsack packing")
+    problem = jm.Problem("knapsack")
 
     # objective function
     obj = jm.Sum(i, v[i] * x[i])

@@ -3,7 +3,7 @@ import jijmodeling as jm
 
 def travelling_salesman_with_time_windows():
     # 問題
-    problem = jm.Problem('tsptw')
+    problem = jm.Problem('travelling_salesman_with_time_windows')
 
     # 距離行列
     dist = jm.Placeholder("dist", dim=2)  # 距離行列

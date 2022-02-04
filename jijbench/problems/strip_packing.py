@@ -14,7 +14,7 @@ def strip_packing():
     """
 
     # 問題
-    problem = jm.Problem("strip packing")
+    problem = jm.Problem("strip_packing")
 
     # 定数
     I_n = jm.Placeholder("I_n")  # 行数
