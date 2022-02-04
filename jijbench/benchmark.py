@@ -1,13 +1,13 @@
-from abc import ABCMeta, abstractmethod
-from typing import Callable, List, Dict, Any
 import os
 import glob
 import jijmodeling as jm
-from jijmodeling.transpilers.type_annotations import PH_VALUES_INTERFACE
 import dimod
 import json
-from experiment import Experiment
+from abc import ABCMeta, abstractmethod
+from typing import Callable, List, Dict, Any
+from jijmodeling.transpilers.type_annotations import PH_VALUES_INTERFACE
 from jijbench import problems
+from .experiment import Experiment
 
 
 class Benchmark:
@@ -40,11 +40,9 @@ class Benchmark:
         self.instance_context = _InstanceContext(
             target_problems, n_instances_per_problem, instance_files, instance_dir
         )
-
         self.result_dir = result_dir
         self.optional_args = optional_args
 
-        self._problems = {}
         self._experiments = []
 
     @property
@@ -68,7 +66,7 @@ class Benchmark:
                 experiment.setting.problem_name = problem_name
                 experiment.setting.instance_file = instance_file
                 self._experiments.append(experiment)
-        os.makedirs(result_dir, exist_ok=True)
+        os.makedirs(self.result_dir, exist_ok=True)
 
     def run(self, sampling_params={}, max_iters=10):
         """run experiment
@@ -169,4 +167,4 @@ if __name__ == "__main__":
     )
     # bench.setup()
     # print(bench.experiments)
-    bench.run(max_iters=3)
+    bench.run(max_iters=0)

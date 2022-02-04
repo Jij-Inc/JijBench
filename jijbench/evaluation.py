@@ -1,4 +1,3 @@
-import os
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -50,36 +49,37 @@ class Evaluator:
             )
 
             baseline_decoded = problem.decode(baseline, ph_value, {})
-            min_energy = baseline_decoded.feasibles().energy.min()
+            if baseline_decoded.feasibles():
+                min_energy = baseline_decoded.feasibles().energy.min()
 
-            response = experiment.sampler(
-                problem,
-                ph_value,
-                updated_multipliers,
-                num_reads=num_reads,
-                num_sweeps=num_sweeps,
-                **optional_args,
-            )
-            tau = response.info["sampling_time"]
+                response = experiment.sampler(
+                    problem,
+                    ph_value,
+                    updated_multipliers,
+                    num_reads=num_reads,
+                    num_sweeps=num_sweeps,
+                    **optional_args,
+                )
+                tau = response.info["sampling_time"]
 
-            decoded = problem.decode(response, ph_value, {})
-            energies = decoded.feasibles().energy
-            ps = (energies <= min_energy).sum() / len(decoded.solutions) + 1e-16
+                decoded = problem.decode(response, ph_value, {})
+                energies = decoded.feasibles().energy
+                ps = (energies <= min_energy).sum() / len(decoded.solutions) + 1e-16
 
-            evaluation_metrics["annealing_time"].append(tau)
-            evaluation_metrics["feasible_rate_for_baseline"].append(
-                len(baseline_decoded.feasibles()) / len(baseline_decoded)
-            )
-            evaluation_metrics["feasible_rate_for_new_updater"].append(
-                len(decoded.feasibles()) / len(decoded)
-            )
-            evaluation_metrics["time_to_solution"].append(
-                np.log(1 - pr) / np.log(1 - ps) * tau if ps < pr else tau
-            )
-            evaluation_metrics["success_probability"].append(ps)
-            evaluation_metrics["min_energy"].append(min_energy)
-            evaluation_metrics["mean_eneagy"].append(energies.mean())
-            evaluation_metrics["residual_energy"].append(energies.mean() - min_energy)
+                evaluation_metrics["annealing_time"].append(tau)
+                evaluation_metrics["feasible_rate_for_baseline"].append(
+                    len(baseline_decoded.feasibles()) / len(baseline_decoded)
+                )
+                evaluation_metrics["feasible_rate_for_new_updater"].append(
+                    len(decoded.feasibles()) / len(decoded)
+                )
+                evaluation_metrics["time_to_solution"].append(
+                    np.log(1 - pr) / np.log(1 - ps) * tau if ps < pr else tau
+                )
+                evaluation_metrics["success_probability"].append(ps)
+                evaluation_metrics["min_energy"].append(min_energy)
+                evaluation_metrics["mean_eneagy"].append(energies.mean())
+                evaluation_metrics["residual_energy"].append(energies.mean() - min_energy)
 
         self.evaluation_metrics = pd.DataFrame(evaluation_metrics)
 
