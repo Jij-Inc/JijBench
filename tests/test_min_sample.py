@@ -4,22 +4,18 @@ import openjij as oj
 
 def test_min_sample():
     target_instances = ["knapsack"]
-    instance_size = 'small'
+    instance_size = "small"
     instance_dir = f"parasearch/Instances/{instance_size}"
     result_dir = f"parasaerch/Results/makino/{instance_size}"
 
-
     def updater(problem, decoded, params) -> dict:
         return params
-    
+
     def sampler(problem, ph_value, multipliers, num_reads, num_sweeps):
-        
+
         sampler = oj.SASampler()
 
-    bench = Benchmark(
-        updater=updater,
-        sampler = sampler
-    )
+    bench = Benchmark(updater=updater, sampler=sampler)
     results = bench.run()
     # resultsを保存 (ここは明示的に保存させずにrunの内部で自動保存でも良いかもしれない)
     results.save("directory path")
@@ -33,9 +29,7 @@ def test_min_sample():
     # ロードしたデータを使ってrunとは独立に評価を行えるようにする.
     evaluator = Evaluator(results)
     # こんな感じでCallableなオブジェクトを受け取って全結果に対しての評価を行なえるようにしておいてもいいかもしれない。
-    evaluator.evaluate(name = "new metric", func = lambda x: ...)
+    evaluator.evaluate(name="new metric", func=lambda x: ...)
 
     # 保存
     evaluator.save("directory path")
-
-
