@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -49,37 +50,51 @@ class Evaluator:
             )
 
             baseline_decoded = problem.decode(baseline, ph_value, {})
+
+            response = self.experiment.sampler(
+                problem,
+                ph_value,
+                updated_multipliers,
+                num_reads=num_reads,
+                num_sweeps=num_sweeps,
+                **optional_args,
+            )
+            decoded = problem.decode(response, ph_value, {})
+            tau = response.info["sampling_time"]
+
+            evaluation_metrics["annealing_time"].append(tau)
+            evaluation_metrics["feasible_rate_for_baseline"].append(
+                len(baseline_decoded.feasibles()) / len(baseline_decoded)
+            )
+            evaluation_metrics["feasible_rate_for_new_updater"].append(
+                len(decoded.feasibles()) / len(decoded)
+            )
             if baseline_decoded.feasibles():
                 min_energy = baseline_decoded.feasibles().energy.min()
-
-                response = experiment.sampler(
-                    problem,
-                    ph_value,
-                    updated_multipliers,
-                    num_reads=num_reads,
-                    num_sweeps=num_sweeps,
-                    **optional_args,
-                )
-                tau = response.info["sampling_time"]
-
-                decoded = problem.decode(response, ph_value, {})
+                evaluation_metrics["min_energy"].append(min_energy)
+            else:
+                evaluation_metrics["min_energy"].append(np.nan)
+            
+            print(decoded.feasibles())
+            if decoded.feasibles():
                 energies = decoded.feasibles().energy
+                evaluation_metrics["mean_eneagy"].append(energies.mean())
+            else:
+                evaluation_metrics["mean_eneagy"].append(np.nan)
+            
+            if baseline_decoded.feasibles() and decoded.feasibles():
                 ps = (energies <= min_energy).sum() / len(decoded.solutions) + 1e-16
-
-                evaluation_metrics["annealing_time"].append(tau)
-                evaluation_metrics["feasible_rate_for_baseline"].append(
-                    len(baseline_decoded.feasibles()) / len(baseline_decoded)
-                )
-                evaluation_metrics["feasible_rate_for_new_updater"].append(
-                    len(decoded.feasibles()) / len(decoded)
-                )
                 evaluation_metrics["time_to_solution"].append(
                     np.log(1 - pr) / np.log(1 - ps) * tau if ps < pr else tau
                 )
                 evaluation_metrics["success_probability"].append(ps)
-                evaluation_metrics["min_energy"].append(min_energy)
-                evaluation_metrics["mean_eneagy"].append(energies.mean())
-                evaluation_metrics["residual_energy"].append(energies.mean() - min_energy)
+                evaluation_metrics["residual_energy"].append(
+                    energies.mean() - min_energy
+                )
+            else:
+                evaluation_metrics["time_to_solution"].append(np.nan)
+                evaluation_metrics["success_probability"].append(np.nan)
+                evaluation_metrics["residual_energy"].append(np.nan)
 
         self.evaluation_metrics = pd.DataFrame(evaluation_metrics)
 
@@ -98,19 +113,20 @@ class Evaluator:
 
         instance_file = self.experiment.setting.instance_file
         instance_name = instance_file.split("/")[-1].split(".")[0]
+        os.makedirs(f"{results.img_dir}/{instance_name}", exist_ok=True)
         if best_penalties:
             plt.plot(steps, best_penalties, marker="o")
             plt.title("step - sum of penalties")
             plt.xlabel("step")
             plt.ylabel("sum of penalties")
-            plt.savefig(f"{results.img_dir}/{instance_name}_sum_of_penalties.jpg")
+            plt.savefig(f"{results.img_dir}/{instance_name}/sum_of_penalties.jpg")
 
         self.evaluation_metrics.plot(x="annealing_time", y="time_to_solution")
-        plt.savefig(f"{results.img_dir}/{instance_name}_time_to_solution.jpg")
+        plt.savefig(f"{results.img_dir}/{instance_name}/time_to_solution.jpg")
         self.evaluation_metrics.plot(x="annealing_time", y="success_probability")
-        plt.savefig(f"{results.img_dir}/{instance_name}_success_probability.jpg")
+        plt.savefig(f"{results.img_dir}/{instance_name}/success_probability.jpg")
         self.evaluation_metrics.plot(x="annealing_time", y="residual_energy")
-        plt.savefig(f"{results.img_dir}/{instance_name}_residual_energy.jpg")
+        plt.savefig(f"{results.img_dir}/{instance_name}/residual_energy.jpg")
 
 
 if __name__ == "__main__":

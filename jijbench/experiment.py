@@ -54,10 +54,10 @@ class Experiment:
         self.datetime = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
         self.result_dir = result_dir
-        result_number = len([d for d in os.listdir(result_dir) if "results" in d])
-        self.log_dir = f"{result_dir}/results_{result_number}/logs"
-        self.img_dir = f"{result_dir}/results_{result_number}/imgs"
-        self.table_dir = f"{result_dir}/results_{result_number}/tables"
+        benchmark_number = len([d for d in os.listdir(result_dir) if "benchmark" in d])
+        self.log_dir = f"{result_dir}/benchmark_{benchmark_number}/logs"
+        self.img_dir = f"{result_dir}/benchmark_{benchmark_number}/imgs"
+        self.table_dir = f"{result_dir}/benchmark_{benchmark_number}/tables"
 
     def run(self, problem: jm.Problem, ph_value: Dict, max_iters=10):
         def _initialize_multipliers():
@@ -127,6 +127,7 @@ class Experiment:
             savename = self.log_filename
 
         filename = f"{self.log_dir}/{savename}"
+        print(self.log_dir)
         self.results.result_file = filename
 
         save_obj = {

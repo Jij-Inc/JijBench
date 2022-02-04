@@ -136,3 +136,8 @@ backup/
 
 .devcontainer/
 .vscode/
+
+# Mac
+.DS_Store
+
+notebook/.results/

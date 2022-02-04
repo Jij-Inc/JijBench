@@ -68,7 +68,7 @@ class Benchmark:
                 self._experiments.append(experiment)
         os.makedirs(self.result_dir, exist_ok=True)
 
-    def run(self, sampling_params={}, max_iters=10):
+    def run(self, sampling_params={}, max_iters=10, save=True):
         """run experiment
 
         Args:
@@ -84,8 +84,9 @@ class Benchmark:
                 ph_value = json.load(f)
 
             experiment.run(problem, ph_value, max_iters)
-            savename = instance_file.split("/")[-1].split(".")[0] + ".json"
-            experiment.save(savename)
+            if save:
+                savename = instance_file.split("/")[-1].split(".")[0] + ".json"
+                experiment.save(savename)
 
 
 class _InstanceState(metaclass=ABCMeta):
