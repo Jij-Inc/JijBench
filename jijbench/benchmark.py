@@ -1,5 +1,4 @@
-from abc import ABCMeta
-from inspect import getargvalues
+from abc import ABCMeta, abstractmethod
 from typing import Callable, List, Dict, Any
 import os
 import glob
@@ -42,7 +41,6 @@ class Benchmark:
             target_problems, n_instances_per_problem, instance_files, instance_dir
         )
 
-        os.makedirs(result_dir, exist_ok=True)
         self.result_dir = result_dir
         self.optional_args = optional_args
 
@@ -70,6 +68,7 @@ class Benchmark:
                 experiment.setting.problem_name = problem_name
                 experiment.setting.instance_file = instance_file
                 self._experiments.append(experiment)
+        os.makedirs(result_dir, exist_ok=True)
 
     def run(self, sampling_params={}, max_iters=10):
         """run experiment
@@ -92,17 +91,17 @@ class Benchmark:
 
 
 class _InstanceState(metaclass=ABCMeta):
-    def files():
+    @abstractmethod
+    def files_by_problem(self):
         pass
 
 
 class _SpecificInstance(_InstanceState):
-    def __init__(self, problem, instance_files):
-        self.problem = problem
+    def __init__(self, instance_files):
         self.instance_files = instance_files
 
     def files_by_problem(self):
-        return {self.problem: self.instance_files}
+        return self.instance_files
 
 
 class _AnyInstance(_InstanceState):
@@ -129,11 +128,8 @@ class _AnyInstance(_InstanceState):
 
 class _InstanceContext(_InstanceState):
     def __init__(self, target_problems, n_instances, instance_files, instance_dir):
-        if target_problems != "all":
-            if instance_files:
-                self.state = _SpecificInstance(target_problems[0], instance_files)
-            else:
-                self.state = _AnyInstance(target_problems, n_instances, instance_dir)
+        if instance_files:
+            self.state = _SpecificInstance(instance_files)
         else:
             self.state = _AnyInstance(target_problems, n_instances, instance_dir)
 
@@ -148,9 +144,12 @@ if __name__ == "__main__":
     target_problems = ["knapsack"]
 
     instance_size = "small"
-    instance_files = [
-        "/home/azureuser/JijBenchmark/jijbench/Instances/small/knapsack/f1_l-d_kp_10_269.json"
-    ]
+
+    instance_files = {
+        "knapsack": [
+            "/home/azureuser/JijBenchmark/jijbench/Instances/small/knapsack/f1_l-d_kp_10_269.json"
+        ]
+    }
     # instance_files = None
     instance_dir = f"./Instances/{instance_size}"
     result_dir = f"./Results/makino/{instance_size}"
@@ -158,6 +157,7 @@ if __name__ == "__main__":
     context = _InstanceContext(target_problems, 2, instance_files, instance_dir)
     files = context.files_by_problem()
     print(files)
+
     bench = Benchmark(
         update_simple,
         sample_model,
