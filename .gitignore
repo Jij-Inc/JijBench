@@ -135,3 +135,5 @@ Results/
 
 # Mac
 .DS_Store
+
+notebook/.results/
