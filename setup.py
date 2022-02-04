@@ -9,7 +9,8 @@ setup(
     install_requires=[
         "jijzept",
         "jijmodeling",
-        "openjij," "numpy",
+        "openjij", 
+        "numpy",
         "pandas",
         "matplotlib",
     ],
