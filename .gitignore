@@ -128,8 +128,22 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
+<<<<<<< HEAD
 ParameterSearch/config.toml
 ParameterSearch/Results
 
 # Mac
 .DS_Store
+=======
+#*.json
+#*.vrp
+#*.tsp
+#*.tour
+
+Results/
+
+backup/
+
+.devcontainer/
+.vscode/
+>>>>>>> feature/new_components
