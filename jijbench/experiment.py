@@ -1,12 +1,10 @@
-from abc import ABCMeta, abstractmethod
-from dataclasses import dataclass, asdict
-from typing import Dict, Callable, Any
-
-from jijbench import problems
 import datetime
 import os
 import json
 import jijmodeling as jm
+from dataclasses import dataclass, asdict
+from typing import Dict, Callable, Any
+from jijbench import problems
 
 
 @dataclass
