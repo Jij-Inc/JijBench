@@ -136,3 +136,6 @@ dmypy.json
 Results/
 
 backup/
+
+.devcontainer/
+.vscode/
