@@ -40,7 +40,7 @@ def test_min_sample():
         n_instances_per_problem=1,
         result_dir=result_dir,
     )
-    bench.run(max_iters=1)
+    bench.run(max_iters=5)
     # resultsを保存 (ここは明示的に保存させずにrunの内部で自動保存でも良いかもしれない)
     # results.save("directory path")
 

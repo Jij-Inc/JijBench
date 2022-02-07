@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -112,19 +113,20 @@ class Evaluator:
 
         instance_file = self.experiment.setting.instance_file
         instance_name = instance_file.split("/")[-1].split(".")[0]
+        os.makedirs(f"{results.img_dir}/{instance_name}", exist_ok=True)
         if best_penalties:
             plt.plot(steps, best_penalties, marker="o")
             plt.title("step - sum of penalties")
             plt.xlabel("step")
             plt.ylabel("sum of penalties")
-            plt.savefig(f"{results.img_dir}/{instance_name}_sum_of_penalties.jpg")
+            plt.savefig(f"{results.img_dir}/{instance_name}/sum_of_penalties.jpg")
 
         self.evaluation_metrics.plot(x="annealing_time", y="time_to_solution")
-        plt.savefig(f"{results.img_dir}/{instance_name}_time_to_solution.jpg")
+        plt.savefig(f"{results.img_dir}/{instance_name}/time_to_solution.jpg")
         self.evaluation_metrics.plot(x="annealing_time", y="success_probability")
-        plt.savefig(f"{results.img_dir}/{instance_name}_success_probability.jpg")
+        plt.savefig(f"{results.img_dir}/{instance_name}/success_probability.jpg")
         self.evaluation_metrics.plot(x="annealing_time", y="residual_energy")
-        plt.savefig(f"{results.img_dir}/{instance_name}_residual_energy.jpg")
+        plt.savefig(f"{results.img_dir}/{instance_name}/residual_energy.jpg")
 
 
 if __name__ == "__main__":
