@@ -68,25 +68,30 @@ class Evaluator:
             evaluation_metrics["feasible_rate_for_new_updater"].append(
                 len(decoded.feasibles()) / len(decoded)
             )
-            if baseline_decoded.feasibles() and decoded.feasibles():
+            if baseline_decoded.feasibles():
                 min_energy = baseline_decoded.feasibles().energy.min()
+                evaluation_metrics["min_energy"].append(min_energy)
+            else:
+                evaluation_metrics["min_energy"].append(np.nan)
+            
+            if decoded.feasibles():
                 energies = decoded.feasibles().energy
+                evaluation_metrics["mean_eneagy"].append(energies.mean())
+            else:
+                evaluation_metrics["mean_eneagy"].append(np.nan)
+            
+            if baseline_decoded.feasibles() and decoded.feasibles():
                 ps = (energies <= min_energy).sum() / len(decoded.solutions) + 1e-16
-
                 evaluation_metrics["time_to_solution"].append(
                     np.log(1 - pr) / np.log(1 - ps) * tau if ps < pr else tau
                 )
                 evaluation_metrics["success_probability"].append(ps)
-                evaluation_metrics["min_energy"].append(min_energy)
-                evaluation_metrics["mean_eneagy"].append(energies.mean())
                 evaluation_metrics["residual_energy"].append(
                     energies.mean() - min_energy
                 )
             else:
                 evaluation_metrics["time_to_solution"].append(np.nan)
                 evaluation_metrics["success_probability"].append(np.nan)
-                evaluation_metrics["min_energy"].append(np.nan)
-                evaluation_metrics["mean_eneagy"].append(np.nan)
                 evaluation_metrics["residual_energy"].append(np.nan)
 
         self.evaluation_metrics = pd.DataFrame(evaluation_metrics)
