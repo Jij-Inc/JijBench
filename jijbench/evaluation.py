@@ -5,7 +5,11 @@ import matplotlib.pyplot as plt
 from jijbench import problems
 from jijbench.experiment import Experiment
 
+df = pd.DataFrame(np.zeros((5, 10)))
+df.groupby(0).aggregate([max, "var"])
 
+
+fafafaf
 class Evaluator:
     def __init__(self, experiment: Experiment):
         self.experiment = experiment
