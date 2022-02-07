@@ -74,6 +74,7 @@ class Evaluator:
             else:
                 evaluation_metrics["min_energy"].append(np.nan)
             
+            print(decoded.feasibles())
             if decoded.feasibles():
                 energies = decoded.feasibles().energy
                 evaluation_metrics["mean_eneagy"].append(energies.mean())
