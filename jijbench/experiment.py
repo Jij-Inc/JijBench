@@ -54,6 +54,7 @@ class Experiment:
         self.datetime = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
         self.result_dir = result_dir
+        os.makedirs(result_dir, exist_ok=True)
         benchmark_number = len([d for d in os.listdir(result_dir) if "benchmark" in d])
         self.log_dir = f"{result_dir}/benchmark_{benchmark_number}/logs"
         self.img_dir = f"{result_dir}/benchmark_{benchmark_number}/imgs"

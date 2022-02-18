@@ -1,4 +1,3 @@
-from gettext import install
 from setuptools import setup
 
 setup(
@@ -6,11 +5,11 @@ setup(
     python_requires=">=3.9, <3.11",
     packages=["jijbench", "jijbench.problems"],
     version_config={
-         "template": "{tag}",
-         "dirty_template": "{tag}",
+        "template": "{tag}",
+        "dirty_template": "{tag}",
     },
     setup_requires=[
-        'setuptools-git-versioning',
+        "setuptools-git-versioning",
     ],
     install_requires=[
         "jijzept",
