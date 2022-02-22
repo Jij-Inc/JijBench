@@ -5,11 +5,7 @@ import matplotlib.pyplot as plt
 from jijbench import problems
 from jijbench.experiment import Experiment
 
-df = pd.DataFrame(np.zeros((5, 10)))
-df.groupby(0).aggregate([max, "var"])
 
-
-fafafaf
 class Evaluator:
     def __init__(self, experiment: Experiment):
         self.experiment = experiment
@@ -78,14 +74,14 @@ class Evaluator:
                 evaluation_metrics["min_energy"].append(min_energy)
             else:
                 evaluation_metrics["min_energy"].append(np.nan)
-            
+
             print(decoded.feasibles())
             if decoded.feasibles():
                 energies = decoded.feasibles().energy
                 evaluation_metrics["mean_eneagy"].append(energies.mean())
             else:
                 evaluation_metrics["mean_eneagy"].append(np.nan)
-            
+
             if baseline_decoded.feasibles() and decoded.feasibles():
                 ps = (energies <= min_energy).sum() / len(decoded.solutions) + 1e-16
                 evaluation_metrics["time_to_solution"].append(
