@@ -6,7 +6,7 @@ import openjij as oj
 
 
 def test_min_sample():
-    target_problems = ["bin_packing"]
+    target_problems = ["knapsack"]
     instance_size = "medium"
     instance_dir = f"jijbench/Instances/{instance_size}"
     result_dir = f"jijbench/Results/makino/{instance_size}"
@@ -28,9 +28,15 @@ def test_min_sample():
             num_sweeps=num_sweeps,
         )
         response = sampler.sample(bqm)
+        df = response.to_pandas_dataframe()
+        print(df)
+        print(df.columns[:100])
+        print()
+        print(response.to_serializable().keys())
+        fafaf
         return response
 
-    optional_args = {"num_reads": 1, "num_sweeps": 100}
+    optional_args = {"num_reads": 5, "num_sweeps": 100}
     bench = Benchmark(
         updater=updater,
         sampler=sampler,

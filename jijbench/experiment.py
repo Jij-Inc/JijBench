@@ -1,3 +1,4 @@
+from base64 import decode
 import datetime
 import os
 import json
@@ -94,6 +95,7 @@ class Experiment:
 
             decoded = problem.decode(response, ph_value, {})
             penalties = []
+            # バグ
             for violations in decoded.constraint_violations:
                 penalties.append(sum(value for value in violations.values()))
             self.results.penalties[step] = penalties
@@ -152,7 +154,7 @@ if __name__ == "__main__":
     experiment = Experiment(
         updater=update_simple, sampler=sample_model, result_dir="./"
     )
-    experiment.run(problem, ph_value, max_iters=0)
+    experiment.run(problem, ph_value, max_iters=2)
     experiment.save()
 
     experiment = experiment.load(
