@@ -1,5 +1,8 @@
 # ParameterSearch
-
+# インストール方法
+```shell
+pip install jijbench --extra-index-url https://jij.jfrog.io/artifactory/api/pypi/Jij-Private/simple
+```
 # 仕様
 ## **class Experiment**
 ### **Parameters**
@@ -27,7 +30,7 @@
 最も単純な使い方
 ```python
 # Example 1
-# ユーザ定義のsolverの帰り値（何でも良い）
+# ユーザ定義のsolverの返り値（何でも良い）
 sample_response = {"hoge": {"fuga": 1}}
 
 with Experiment() as experiment:
