@@ -20,7 +20,7 @@ class Experiment:
 
         self._id_names = ["run_id", "experiment_id"]
         self._table = None
-        self._table_dtypes = {"run_id": int, "experiment_id": type(self.experiment_id)}
+        self._table_dtypes = None
 
         if autosave:
             os.makedirs(autosave_dir, exist_ok=True)
@@ -44,6 +44,7 @@ class Experiment:
 
     def __enter__(self, *args, **kwargs):
         self._table = pd.DataFrame(columns=self._id_names)
+        self._table_dtypes = {"run_id": int, "experiment_id": type(self.experiment_id)}
         return self
 
     def __exit__(self, exception_type, exception_value, traceback):
