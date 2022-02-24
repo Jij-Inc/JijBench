@@ -20,7 +20,7 @@
 |名前|説明||
 |:---|:---|:---|
 |**insert_into_table(record: dict)**|**record**に記述されたデータを**table**に挿入する。**record**はdict型で書かなければならず、キーはtableの列名に使われ、値は対応するセルに代入される。この時、行方向の指定には**run_id**が使われる。このメソッドを呼ぶと最後に__next__が呼ばれ**run_id**を一つ進める。||
-|**save(save_file: str)**|**table**をcsvで実験結果を保存する。`autosave=True`の時は**autosave_dir**で指定されたディレクトリ以下に**benchmark_{bechmark_id}/tables**というディレクトリが自動作成され、そのディレクトリ以下に**experiment_id_{experiment_id}.csv**というファイル名で**table**を保存する。`autosave=False`の場合、**save_file**で指定されるファイル名で**table**を保存する。
+|**save(save_file: str)**|**table**をcsvを保存する。`autosave=True`の時は**autosave_dir**で指定されたディレクトリ以下に**benchmark_{bechmark_id}/tables**というディレクトリが自動作成され、そのディレクトリ以下に**experiment_id_{experiment_id}.csv**というファイル名で**table**を保存する。`autosave=False`の場合、**save_file**で指定されるファイル名で**table**を保存する。
 |**load(load_file: str)**|saveメソッドで保存した結果を読み込み、**table**に代入する。`autosave=True`場合、 **autosave_dir**以下の**experiment_id**、**benchmark_id**で指定される結果を自動で読み込み、`autosave=False`の場合、**load_file**で指定されるファイルを読み込む。||
 
 ### **Examples**
