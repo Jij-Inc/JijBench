@@ -1,162 +1,116 @@
-from base64 import decode
-import datetime
+from ast import Expression
 import os
 import json
-import jijmodeling as jm
-from dataclasses import dataclass, asdict
-from typing import Dict, Callable, Any
-from jijbench import problems
-
-
-@dataclass
-class ExperimentSetting:
-    updater: str = ""
-    sampler: str = ""
-    problem_name: str = ""
-    mathmatical_model: dict = None
-    instance_file: str = ""
-    ph_value: dict = None
-    opt_value: float = -1.0
-    multipliers: dict = None
-
-
-@dataclass
-class ExperimentResult:
-    penalties: dict = None
-    raw_response: dict = None
-    result_file: str = ""
-    log_dir: str = ""
-    img_dir: str = ""
-    table_dir: str = ""
+from typing import Union
+import pandas as pd
 
 
 class Experiment:
-    log_filename = "experiment.json"
-
     def __init__(
         self,
-        updater: Callable[[jm.Problem, jm.DecodedSamples, Dict], Dict],
-        sampler: Any,
-        result_dir="./Results",
-        optional_args=None,
-    ) -> None:
-        self.updater = updater
-        self.sampler = sampler
-        if optional_args:
-            self.optional_args = optional_args
+        run_id: int = 0,
+        experiment_id: Union[int, str] = 0,
+        benchmark_id: Union[int, str] = None,
+        autosave: bool = True,
+        autosave_dir: str = ".",
+    ):
+        self.run_id = run_id
+        self.experiment_id = experiment_id
+        self.autosave = autosave
+        self.autosave_dir = autosave_dir
+
+        self._id_names = ["run_id", "experiment_id"]
+        self._table = None
+        self._table_dtypes = {"run_id": int, "experiment_id": type(self.experiment_id)}
+
+        if autosave:
+            os.makedirs(autosave_dir, exist_ok=True)
+            if benchmark_id is None:
+                benchmark_id = len(os.listdir(self.autosave_dir))
+            self.benchmark_id = benchmark_id
+            self.table_dir = f"{self.autosave_dir}/benchmark_{self.benchmark_id}/tables"
         else:
-            self.optional_args = {}
+            self.benchmark_id = None
+            self.table_dir = None
 
-        self.setting = ExperimentSetting(
-            updater=self.updater.__name__, sampler=self.sampler.__name__
-        )
-        self.results = ExperimentResult()
+    @property
+    def table(self):
+        return self._table
 
-        self.datetime = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    def __enter__(self, *args, **kwargs):
+        self._table = pd.DataFrame(columns=self._id_names)
+        return self
 
-        self.result_dir = result_dir
-        os.makedirs(result_dir, exist_ok=True)
-        benchmark_number = len([d for d in os.listdir(result_dir) if "benchmark" in d])
-        self.log_dir = f"{result_dir}/benchmark_{benchmark_number}/logs"
-        self.img_dir = f"{result_dir}/benchmark_{benchmark_number}/imgs"
-        self.table_dir = f"{result_dir}/benchmark_{benchmark_number}/tables"
+    def __exit__(self, exception_type, exception_value, traceback):
+        pass
 
-    def run(self, problem: jm.Problem, ph_value: Dict, max_iters=10):
-        def _initialize_multipliers():
-            _multipliers = {}
-            for _key in problem.constraints.keys():
-                _multipliers[_key] = 1
-            return _multipliers
+    def __next__(self):
+        self.run_id += 1
+        return self.run_id
 
-        self.setting.problem_name = problem.name
-        self.setting.mathmatical_model = jm.expression.serializable.to_serializable(
-            problem
-        )
-        self.setting.ph_value = ph_value
-        self.setting.opt_value = ph_value.pop("opt_value", None)
-        self.setting.multipliers = {}
+    def insert_into_table(self, record):
+        self._table.loc[self.run_id, self._id_names] = [self.run_id, self.experiment_id]
+        for k, v in record.items():
+            if isinstance(v, dict):
+                v = json.dumps(v)
 
-        self.results.penalties = {}
-        self.results.raw_response = {}
+            self._table.loc[self.run_id, k] = v
+            self._table[k] = self._table[k].astype(type(v))
+            self._table_dtypes[k] = type(v)
+        next(self)
 
-        multipliers = _initialize_multipliers()
-        # 一旦デフォルトのnum_reads, num_sweepsでupdaterを動かす
-        for step in range(max_iters):
-            self.setting.multipliers[step] = multipliers
-            multipliers, self.optional_args, response = self.updater(
-                self.sampler,
-                problem,
-                ph_value,
-                multipliers,
-                self.optional_args,
-                step=step,
-                experiment=self,
+    def load(self, load_file=None):
+        if self.autosave:
+            self._table = pd.read_csv(
+                f"{self.table_dir}/experiment_id_{self.experiment_id}.csv", index_col=0
             )
+        else:
+            self._table = pd.read_csv(load_file, index_col=0)
 
-            decoded = problem.decode(response, ph_value, {})
-            penalties = []
-            # バグ
-            for violations in decoded.constraint_violations:
-                penalties.append(sum(value for value in violations.values()))
-            self.results.penalties[step] = penalties
-            self.results.raw_response[step] = response.to_serializable()
-
-    def load(self, filename: str) -> "Experiment":
-        """load date
-        saveで保存した結果をそのままloadする.
-        Returns:
-            Experiment: loaded Experiment object.
-        """
-        with open(filename, "r") as f:
-            data = json.load(f)
-
-        date = data["date"]
-        setting = data["setting"]
-        results = data["results"]
-
-        self.datetime = date
-        self.setting = ExperimentSetting(**setting)
-        self.results = ExperimentResult(**results)
-
-    def save(self, savename: str = None):
-        os.makedirs(self.log_dir, exist_ok=True)
-        os.makedirs(self.img_dir, exist_ok=True)
-        os.makedirs(self.table_dir, exist_ok=True)
-        self.results.log_dir = self.log_dir
-        self.results.img_dir = self.img_dir
-        self.results.table_dir = self.table_dir
-
-        if savename is None:
-            savename = self.log_filename
-
-        filename = f"{self.log_dir}/{savename}"
-        print(self.log_dir)
-        self.results.result_file = filename
-
-        save_obj = {
-            "date": str(self.datetime),
-            "setting": asdict(self.setting),
-            "results": asdict(self.results),
-        }
-        with open(filename, "w") as f:
-            json.dump(save_obj, f)
+    def save(self, save_file=None):
+        if self.autosave:
+            os.makedirs(self.table_dir, exist_ok=True)
+            self._table.to_csv(
+                f"{self.table_dir}/experiment_id_{self.experiment_id}.csv"
+            )
+        else:
+            self._table.to_csv(save_file)
 
 
 if __name__ == "__main__":
-    from users.makino.updater import update_simple
-    from users.makino.solver import sample_model
+    # ユーザ定義のsolverの帰り値（何でも良い）
+    sample_response = {"hoge": {"fuga": 1}}
 
-    problem = problems.knapsack()
-    instance_file = "/home/azureuser/JijBenchmark/jijbench/Instances/small/knapsack/f1_l-d_kp_10_269.json"
-    with open(instance_file, "r") as f:
-        ph_value = json.load(f)
+    # 実験したいパラメータ（solverに渡すパラメータ）
+    params_1 = [10, 100, 1000]
+    params_2 = [5, 10, 15]
+    steps = range(3)
 
-    experiment = Experiment(
-        updater=update_simple, sampler=sample_model, result_dir="./"
-    )
-    experiment.run(problem, ph_value, max_iters=2)
-    experiment.save()
+    # 実験結果を保存したい場所
+    save_dir = "/home/azureuser/data/jijbench"
+    experiment_id = "test"
+    benchmark_id = 0
+    with Experiment(
+        experiment_id=experiment_id, benchmark_id=benchmark_id, autosave_dir=save_dir
+    ) as experiment:
+        for p1 in params_1:
+            for p2 in params_2:
+                for step in steps:
+                    # solverは上のsample_responseを返す想定
+                    # sample_response = solver()
 
-    experiment = experiment.load(
-        "/home/azureuser/JijBenchmark/jijbench/results_3/logs/experiment.json"
-    )
+                    # experiment.tableに登録するrecordを辞書型で作成
+                    record = {
+                        "step": step,
+                        "param_1": p1,
+                        "param_2": p2,
+                        "results": sample_response,
+                    }
+                    experiment.insert_into_table(record)
+        experiment.save()
+
+    # 以前実験した結果をloadしたい場合
+    with Experiment(
+        experiment_id=experiment_id, benchmark_id=benchmark_id, autosave_dir=save_dir
+    ) as experiment:
+        experiment.load()
