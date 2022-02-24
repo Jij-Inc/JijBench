@@ -12,12 +12,12 @@
 |**autosave_dir**: str|`autosave=True`の時の実験結果の保存先|
 
 ### **Attributes**
-||||
+|名前|説明||
 |:---|:---|:---|
 |**table**: pandas.DataFrame|実験設定や実験結果を格納する。ユーザは好きな情報を格納できる。||
 
 ### **Methods**
-||||
+|名前|説明||
 |:---|:---|:---|
 |**insert_into_table(record: dict)**|**record**に記述されたデータを**table**に挿入する。**record**はdict型で書かなければならず、キーはtableの列名に使われ、値は対応するセルに代入される。この時、行方向の指定には**run_id**が使われる。このメソッドを呼ぶと最後に__next__が呼ばれ**run_id**を一つ進める。||
 |**save(save_file: str)**|**table**をcsvで実験結果を保存する。`autosave=True`の時は**autosave_dir**で指定されたディレクトリ以下に**benchmark_{bechmark_id}/tables**というディレクトリが自動作成され、そのディレクトリ以下に**experiment_id_{experiment_id}.csv**というファイル名で**table**を保存する。`autosave=False`の場合、**save_file**で指定されるファイル名で**table**を保存する。
