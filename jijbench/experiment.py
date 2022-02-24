@@ -20,12 +20,18 @@ class Experiment:
 
         self._id_names = ["run_id", "experiment_id"]
         self._table = None
-        self._table_dtypes = {"run_id": int, "experiment_id": type(self.experiment_id)}
+        self._table_dtypes = None
 
         if autosave:
             os.makedirs(autosave_dir, exist_ok=True)
             if benchmark_id is None:
-                benchmark_id = len(os.listdir(self.autosave_dir))
+                benchmark_id = sum(
+                    [
+                        os.path.isdir(f"{self.autosave_dir}/{d}")
+                        for d in os.listdir(self.autosave_dir)
+                        if "benchmark" in d
+                    ]
+                )
             self.benchmark_id = benchmark_id
             self.table_dir = f"{self.autosave_dir}/benchmark_{self.benchmark_id}/tables"
         else:
@@ -38,6 +44,7 @@ class Experiment:
 
     def __enter__(self, *args, **kwargs):
         self._table = pd.DataFrame(columns=self._id_names)
+        self._table_dtypes = {"run_id": int, "experiment_id": type(self.experiment_id)}
         return self
 
     def __exit__(self, exception_type, exception_value, traceback):
@@ -52,6 +59,8 @@ class Experiment:
         for k, v in record.items():
             if isinstance(v, dict):
                 v = json.dumps(v)
+            if isinstance(v, list):
+                v = str(v)
 
             self._table.loc[self.run_id, k] = v
             self._table[k] = self._table[k].astype(type(v))
@@ -77,39 +86,56 @@ class Experiment:
 
 
 if __name__ == "__main__":
+    # Example 1
+    # 最も単純な使い方
     # ユーザ定義のsolverの帰り値（何でも良い）
     sample_response = {"hoge": {"fuga": 1}}
 
-    # 実験したいパラメータ（solverに渡すパラメータ）
-    params_1 = [10, 100, 1000]
-    params_2 = [5, 10, 15]
-    steps = range(3)
+    with Experiment() as experiment:
+        for param in [10, 100, 1000]:
+            for step in range(3):
+                # solverは上のsample_responseを返す想定
+                # sample_response = solver()
+                # experiment.tableに登録するrecordを辞書型で作成
+                record = {
+                    "step": step,
+                    "param": param,
+                    "results": sample_response,
+                }
+                experiment.insert_into_table(record)
+        experiment.save()
+        print(experiment.table)
+    print()
 
-    # 実験結果を保存したい場所
+    # Example 2
+    # 実験結果を保存したい場所を指定する。
+    # experiment_idとbenchmark_idを明示的に指定し保存した結果の読み込みを分かりやすくする。
     save_dir = "/home/azureuser/data/jijbench"
     experiment_id = "test"
     benchmark_id = 0
+    
+    # 実験したいパラメータ（solverに渡すパラメータ）
+    params = [10, 100, 1000]
+    steps = range(3)
+
     with Experiment(
         experiment_id=experiment_id, benchmark_id=benchmark_id, autosave_dir=save_dir
     ) as experiment:
-        for p1 in params_1:
-            for p2 in params_2:
-                for step in steps:
-                    # solverは上のsample_responseを返す想定
-                    # sample_response = solver()
-
-                    # experiment.tableに登録するrecordを辞書型で作成
-                    record = {
-                        "step": step,
-                        "param_1": p1,
-                        "param_2": p2,
-                        "results": sample_response,
-                    }
-                    experiment.insert_into_table(record)
+        for param in params:
+            for step in steps:
+                # sample_response = solver()
+                record = {
+                    "step": step,
+                    "param": param,
+                    "results": sample_response,
+                }
+                experiment.insert_into_table(record)
         experiment.save()
 
-    # 以前実験した結果をloadしたい場合
+    # 以前実験した結果をloadする。experiment_idとbenchmark_idを覚えていればいつでも読み込みできる。
+    # もちろんファイル名を直接指定しても良い。その場合はautosave=Falseにしてloadでファイル名を指定する。
     with Experiment(
         experiment_id=experiment_id, benchmark_id=benchmark_id, autosave_dir=save_dir
     ) as experiment:
         experiment.load()
+        print(experiment.table)
