@@ -3,7 +3,7 @@
 # 仕様
 ## **class Experiment**
 ### **Parameters**
-|名前|説明|
+|名前|説明||
 |:---|:---|:---|
 |**run_id**: int|solverの実行を区別するID|
 |**experiment_id**: int or str |Experimentインスタンスを区別するID|
@@ -14,7 +14,7 @@
 ### **Attributes**
 ||||
 |:---|:---|:---|
-|**table**: pandas.DataFrame||実験設定や実験結果を格納する。ユーザは好きな情報を格納できる。||
+|**table**: pandas.DataFrame|実験設定や実験結果を格納する。ユーザは好きな情報を格納できる。||
 
 ### **Methods**
 ||||
