@@ -35,7 +35,7 @@ jobs:
          
       - name: Build Wheel
         run: |
-          python ./setup_dev.py bdist_wheel
+          python ./setup.py bdist_wheel
     
       - name: Transfer Package  
         uses: actions/upload-artifact@v2
