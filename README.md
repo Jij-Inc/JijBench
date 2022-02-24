@@ -3,13 +3,13 @@
 # 仕様
 ## **class Experiment**
 ### **Parameters**
-||||
+|名前|説明|
 |:---|:---|:---|
-|**run_id**: int|solverの実行を区別するID||
-|**experiment_id**: int or str |Experimentインスタンスを区別するID||
-|**benchmark_id**: int or str|Benchmarkインスタンスを区別するID||
-|**autosave**: bool|実験結果を自動で保存したい場合はTrue,そうでない場合はFalse||
-|**autosave_dir**: str|`autosave=True`の時の実験結果の保存先||
+|**run_id**: int|solverの実行を区別するID|
+|**experiment_id**: int or str |Experimentインスタンスを区別するID|
+|**benchmark_id**: int or str|Benchmarkインスタンスを区別するID|
+|**autosave**: bool|実験結果を自動で保存したい場合はTrue,そうでない場合はFalse|
+|**autosave_dir**: str|`autosave=True`の時の実験結果の保存先|
 
 ### **Attributes**
 ||||
