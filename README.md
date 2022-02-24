@@ -1,8 +1,8 @@
 # ParameterSearch
 
 # 仕様
-### class `Experiment`
-|**Parameters**|説明||
+## **class Experiment**
+### **Parameters**
 |:---|:---|:---|
 |**run_id**: int|solverの実行を区別するID||
 |**experiment_id**: int or str |Experimentインスタンスを区別するID||
@@ -10,15 +10,69 @@
 |**autosave**: bool|実験結果を自動で保存したい場合はTrue,そうでない場合はFalse||
 |**autosave_dir**: str|`autosave=True`の時の実験結果の保存先||
 
-|**Attribute**|説明||
+### **Attributes**
+||||
 |:---|:---|:---|
 |**table**: pandas.DataFrame||実験設定や実験結果を格納する。ユーザは好きな情報を格納できる。||
 
-|**Method**|説明||
+### **Methods**
+||||
 |:---|:---|:---|
-|**insert_into_table(record: dict)**|`table`に`record`に記述されたデータを挿入する。`record`はdict型で書かなければならず、キーはtableの列名に使われ、値は対応するセルに代入される。この時、行方向の指定には`run_id`が使われる。このメソッドを呼ぶと最後に__next__メソッドが呼ばれ`run_id`を一つ進める。||
-|**save(save_file: str)**|`table`をcsvで実験結果を保存する。`autosave=True`の時は`autosave_dir`で指定されたディレクトリ以下に`benchmark_{bechmark_id}/tables`というディレクトリが自動で作成され、そのディレクトリ以下に`experiment_id_{experiment_id}.csv`というファイル名で`table`が保存される。`autosave=False`の場合、`save_file`で指定されるファイル名で`table`が保存される。
-|**load(load_file: str)**|saveメソッドで保存した結果を読み込み、`table`に代入する。`autosave=True`場合、 `autosave_dir`以下の`experiment_id`、`benchmark_id`で指定される結果を自動で読み込み、`autosave=False`の場合、`load_file`で指定されるファイルを読み込む。||
+|**insert_into_table(record: dict)**|**record**に記述されたデータを**table**に挿入する。**record**はdict型で書かなければならず、キーはtableの列名に使われ、値は対応するセルに代入される。この時、行方向の指定には**run_id**が使われる。このメソッドを呼ぶと最後に__next__が呼ばれ**run_id**を一つ進める。||
+|**save(save_file: str)**|**table**をcsvで実験結果を保存する。`autosave=True`の時は**autosave_dir**で指定されたディレクトリ以下に**benchmark_{bechmark_id}/tables**というディレクトリが自動作成され、そのディレクトリ以下に**experiment_id_{experiment_id}.csv**というファイル名で**table**を保存する。`autosave=False`の場合、**save_file**で指定されるファイル名で**table**を保存する。
+|**load(load_file: str)**|saveメソッドで保存した結果を読み込み、**table**に代入する。`autosave=True`場合、 **autosave_dir**以下の**experiment_id**、**benchmark_id**で指定される結果を自動で読み込み、`autosave=False`の場合、**load_file**で指定されるファイルを読み込む。||
+
+### **Examples**
+最も単純な使い方
+```python
+# Example 1
+# ユーザ定義のsolverの帰り値（何でも良い）
+sample_response = {"hoge": {"fuga": 1}}
+
+with Experiment() as experiment:
+    for param in [10, 100, 1000]:
+        for step in range(3):
+            # solverは上のsample_responseを返す想定
+            # sample_response = solver()
+            # experiment.tableに登録するrecordを辞書型で作成
+            record = {
+                "step": step,
+                "param": param,
+                "results": sample_response,
+            }
+            experiment.insert_into_table(record)
+    experiment.save()
+
+```
+実験結果を保存したい場所を指定する。experiment_idとbenchmark_idを明示的に指定すると結果の保存と読み込みの対応関係がつけやすくなる。
+```python
+# Example 2
+save_dir = "/home/azureuser/data/jijbench"
+experiment_id = "test"
+benchmark_id = 0
+
+with Experiment(
+    experiment_id=experiment_id, benchmark_id=benchmark_id, autosave_dir=save_dir
+) as experiment:
+    for param in [10, 100, 1000]:
+        for step in range(3):
+            # sample_response = solver()
+            record = {
+                "step": step,
+                "param": param,
+                "results": sample_response,
+            }
+            experiment.insert_into_table(record)
+    experiment.save()
+
+# 以前実験した結果を読み込む。experiment_idとbenchmark_idを覚えていれば対応する実験を読み込める。
+# もちろんファイル名を直接指定しても良い。その場合はautosave=Falseにしてloadの引数でファイル名を指定する。
+with Experiment(
+    experiment_id=experiment_id, benchmark_id=benchmark_id, autosave_dir=save_dir
+) as experiment:
+    experiment.load()
+```
+
 # 実行方法
 # パラメータのアップデート
 
