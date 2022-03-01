@@ -13,7 +13,6 @@ setup(
     ],
     install_requires=[
         "jijzept",
-        "jijmodeling",
         "openjij",
         "numpy",
         "pandas",
