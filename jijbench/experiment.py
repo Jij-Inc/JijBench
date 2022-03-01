@@ -19,8 +19,8 @@ class Experiment:
         self.autosave_dir = autosave_dir
 
         self._id_names = ["run_id", "experiment_id"]
-        self._table = None
-        self._table_dtypes = None
+        self._table = pd.DataFrame(columns=self._id_names)
+        self._table_dtypes = {"run_id": int, "experiment_id": type(self.experiment_id)}
 
         if autosave:
             os.makedirs(autosave_dir, exist_ok=True)
@@ -43,8 +43,6 @@ class Experiment:
         return self._table
 
     def __enter__(self, *args, **kwargs):
-        self._table = pd.DataFrame(columns=self._id_names)
-        self._table_dtypes = {"run_id": int, "experiment_id": type(self.experiment_id)}
         return self
 
     def __exit__(self, exception_type, exception_value, traceback):
@@ -54,7 +52,7 @@ class Experiment:
         self.run_id += 1
         return self.run_id
 
-    def insert_into_table(self, record):
+    def insert_into_table(self, record, replace=True):
         self._table.loc[self.run_id, self._id_names] = [self.run_id, self.experiment_id]
         for k, v in record.items():
             if isinstance(v, dict):
@@ -65,7 +63,8 @@ class Experiment:
             self._table.loc[self.run_id, k] = v
             self._table[k] = self._table[k].astype(type(v))
             self._table_dtypes[k] = type(v)
-        next(self)
+        if replace:
+            next(self)
 
     def load(self, load_file=None):
         if self.autosave:
