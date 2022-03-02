@@ -1,4 +1,5 @@
 from base64 import decode
+from cmath import exp
 import os
 import json
 import uuid
@@ -23,6 +24,7 @@ class Experiment:
         self._table = _Table(experiment_id=experiment_id, benchmark_id=benchmark_id)
         self._artifact = {}
         self._dirs = _Dir(
+            experiment_id=experiment_id,
             benchmark_id=benchmark_id,
             autosave=autosave,
             autosave_dir=autosave_dir,
@@ -68,13 +70,31 @@ class Experiment:
         self._table.benchmark_id = (
             uuid.uuid4() if self.benchmark_id is None else self.benchmark_id
         )
-        self._dirs.make_dirs()
+        self._dirs.make_dirs(
+            experiment_id=self.experiment_id, benchmark_id=self.benchmark_id
+        )
         return self
 
-    def end(self):
+    def stop(self):
         pass
 
-    def insert_into_table(self, record, next_run=False):
+    def store(self, results, table_keys=None, artifact_keys=None, next_run=True):
+        if table_keys is None:
+            self.store_as_table(results)
+        else:
+            record = {k: results[k] for k in artifact_keys if k in results.keys()}
+            self.store_as_table(record)
+
+        if artifact_keys is None:
+            self.store_as_artifact(results)
+        else:
+            artifact = {k: results[k] for k in artifact_keys if k in results.keys()}
+            self.store_as_artifact(artifact)
+
+        if next_run:
+            next(self)
+
+    def store_as_table(self, record):
         index = self._table.current_index
         ids = self._table.get_id_columns()
         self._table.data.loc[index, ids] = [
@@ -92,9 +112,6 @@ class Experiment:
             self._table.data.loc[index, k] = v
             self._table.data[k] = self._table.data[k].astype(type(v))
 
-        if next_run:
-            next(self)
-
     def _reconstruct_record(self, record):
         new_record = {}
         for k, v in record.items():
@@ -109,7 +126,7 @@ class Experiment:
             else:
                 new_record[k] = v
         return new_record
-    
+
     def _get_dimod_sampleset_items(self, response):
         energies = response.record.energy
         num_occurrences = response.record.num_occurrences
@@ -162,15 +179,12 @@ class Experiment:
             ]
         return columns, values
 
-    def update_artifact(self, results, next_run=False):
-        self._artifact.update({self.run_id: results})
-        
-        if next_run:
-            next(self)
-        
+    def store_as_artifact(self, artifact):
+        self._artifact.update({self.run_id: artifact})
+
     def load(self, load_file=None):
         self._table.data = pd.read_csv(
-            f"{self._dirs.table_dir}/experiment_id_{self.experiment_id}.csv",
+            f"{self._dirs.table_dir}/table.csv",
             index_col=0,
         )
         artifact = {}
@@ -178,7 +192,7 @@ class Experiment:
         for d in dir_names:
             load_dir = f"{self._dirs.artifact_dir}/{d}"
             if os.path.isdir(load_dir):
-                with open(f"{load_dir}/results.pkl", "rb") as f:
+                with open(f"{load_dir}/artifact.pkl", "rb") as f:
                     artifact[d] = pickle.load(f)
         self._artifact = artifact
 
@@ -190,13 +204,11 @@ class Experiment:
             self._artifact = pickle.load(f)
 
     def save(self, save_file=None):
-        self._table.data.to_csv(
-            f"{self._dirs.table_dir}/experiment_id_{self.experiment_id}.csv"
-        )
+        self._table.data.to_csv(f"{self._dirs.table_dir}/table.csv")
         for run_id, v in self._artifact.items():
             save_dir = f"{self._dirs.artifact_dir}/{run_id}"
             os.makedirs(save_dir, exist_ok=True)
-            with open(f"{save_dir}/results.pkl", "wb") as f:
+            with open(f"{save_dir}/artifact.pkl", "wb") as f:
                 pickle.dump(v, f)
 
     def save_table(self, save_file):
@@ -308,12 +320,26 @@ class _Table:
 
 
 class _Dir:
-    def __init__(self, benchmark_id, autosave, autosave_dir):
+    _dir_template = "{autosave_dir}/benchmark_{benchmark_id}/{kind}/{experiment_id}"
+
+    def __init__(self, experiment_id, benchmark_id, autosave, autosave_dir):
+        self.experiment_id = experiment_id
+        self.benchmark_id = benchmark_id
         self.autosave = autosave
         self.autosave_dir = autosave_dir
 
-        self._table_dir = f"{self.autosave_dir}/benchmark_{benchmark_id}/tables"
-        self._artifact_dir = f"{self.autosave_dir}/benchmark_{benchmark_id}/artifacts"
+        self._table_dir = self._dir_template.format(
+            autosave_dir=self.autosave_dir,
+            benchmark_id=self.benchmark_id,
+            kind="tables",
+            experiment_id=self.experiment_id,
+        )
+        self._artifact_dir = self._dir_template.format(
+            autosave_dir=self.autosave_dir,
+            benchmark_id=self.benchmark_id,
+            kind="artifact",
+            experiment_id=self.experiment_id,
+        )
 
     @property
     def table_dir(self):
@@ -323,10 +349,35 @@ class _Dir:
     def artifact_dir(self):
         return self._artifact_dir
 
-    def make_dirs(self):
+    def make_dirs(self, experiment_id=None, benchmark_id=None):
         if self.autosave:
+            self._table_dir = self._rename_dir(
+                kind="tables", experiment_id=experiment_id, benchmark_id=benchmark_id
+            )
+            self._artifact_dir = self._rename_dir(
+                kind="artifact", experiment_id=experiment_id, benchmark_id=benchmark_id
+            )
             os.makedirs(self._table_dir, exist_ok=True)
             os.makedirs(self._artifact_dir, exist_ok=True)
+
+    def _rename_dir(
+        self,
+        kind,
+        experiment_id=None,
+        benchmark_id=None,
+    ):
+        if experiment_id is None:
+            experiment_id = self.experiment_id
+        if benchmark_id is None:
+            benchmark_id = self.benchmark_id
+
+        d = self._dir_template.format(
+            autosave_dir=self.autosave_dir,
+            benchmark_id=benchmark_id,
+            kind=kind,
+            experiment_id=experiment_id,
+        )
+        return d
 
 
 if __name__ == "__main__":
@@ -421,8 +472,11 @@ if __name__ == "__main__":
                     # "results": response,
                     "results": decoded,
                 }
-                experiment.insert_into_table(record)
-                experiment.update_artifact(sample_artifacts, next_run=True)
+                experiment.store(
+                    record,
+                    table_keys=["param", "reuslts"],
+                    artifact_keys=["step", "results"],
+                )
     experiment.save()
 
     experiment_id = experiment.experiment_id
