@@ -1,3 +1,4 @@
+from base64 import decode
 import os
 import json
 import uuid
@@ -73,76 +74,7 @@ class Experiment:
     def end(self):
         pass
 
-    def insert_into_table(self, record, replace=True):
-        def _reconstruct_record():
-            _new_record = {}
-            for _k, _v in record.items():
-                if isinstance(_v, dimod.SampleSet):
-                    _energies = _v.record.energy
-                    _num_occurrences = _v.record.num_occurrences
-
-                    _columns = (
-                        self._table.get_energy_columns() + self._table.get_num_columns()
-                    )
-                    _values = [
-                        list(_energies),
-                        _energies.min(),
-                        _energies.mean(),
-                        _energies.std(),
-                        list(_num_occurrences),
-                        np.nan,
-                        np.nan,
-                    ]
-                    for _new_k, _new_v in zip(_columns, _values):
-                        _new_record[_new_k] = _new_v
-                elif _v.__class__.__name__ == "DecodedSamples":
-                    _energies = _v.energies
-                    _objectives = _v.objectives
-
-                    _constraint_violations = {}
-                    for _violation in _v.constraint_violations:
-                        for _const_name, _value in _violation.items():
-                            if _const_name in _constraint_violations.keys():
-                                _constraint_violations[_const_name].append(_value)
-                            else:
-                                _constraint_violations[_const_name] = [_value]
-
-                    _columns = self._table.get_energy_columns()
-                    _columns += self._table.get_objective_columns()
-                    _columns += self._table.get_num_columns()
-
-                    _values = [
-                        list(_energies),
-                        _energies.min(),
-                        _energies.mean(),
-                        _energies.std(),
-                        list(_objectives),
-                        _objectives.min(),
-                        _objectives.mean(),
-                        _objectives.std(),
-                        np.nan,
-                        len(_v.feasibles()),
-                        len(_v.data),
-                    ]
-                    for (
-                        _const_name,
-                        _violation_values,
-                    ) in _constraint_violations.items():
-                        _violation_values = np.array(_violation_values)
-                        _columns += self._table.rename_violation_columns(_const_name)
-                        _values += [
-                            list(_violation_values),
-                            _violation_values.min(),
-                            _violation_values.mean(),
-                            _violation_values.std(),
-                        ]
-
-                    for _new_k, _new_v in zip(_columns, _values):
-                        _new_record[_new_k] = _new_v
-                else:
-                    _new_record[_k] = _v
-            return _new_record
-
+    def insert_into_table(self, record, next_run=False):
         index = self._table.current_index
         ids = self._table.get_id_columns()
         self._table.data.loc[index, ids] = [
@@ -150,8 +82,7 @@ class Experiment:
             self.experiment_id,
             self.benchmark_id,
         ]
-
-        record = _reconstruct_record()
+        record = self._reconstruct_record(record)
         for k, v in record.items():
             if isinstance(v, dict):
                 v = json.dumps(v)
@@ -161,19 +92,95 @@ class Experiment:
             self._table.data.loc[index, k] = v
             self._table.data[k] = self._table.data[k].astype(type(v))
 
-        if replace:
+        if next_run:
             next(self)
 
-    def update_artifact(self, results):
-        self._artifact.update(results)
+    def _reconstruct_record(self, record):
+        new_record = {}
+        for k, v in record.items():
+            if isinstance(v, dimod.SampleSet):
+                columns, values = self._get_dimod_sampleset_items(v)
+                for new_k, new_v in zip(columns, values):
+                    new_record[new_k] = new_v
+            elif v.__class__.__name__ == "DecodedSamples":
+                columns, values = self._get_jm_problem_decodedsamples_items(v)
+                for new_k, new_v in zip(columns, values):
+                    new_record[new_k] = new_v
+            else:
+                new_record[k] = v
+        return new_record
+    
+    def _get_dimod_sampleset_items(self, response):
+        energies = response.record.energy
+        num_occurrences = response.record.num_occurrences
+        columns = self._table.get_energy_columns() + self._table.get_num_columns()
+        values = [
+            list(energies),
+            energies.min(),
+            energies.mean(),
+            energies.std(),
+            list(num_occurrences),
+            np.nan,
+            np.nan,
+        ]
+        return columns, values
 
+    def _get_jm_problem_decodedsamples_items(self, decoded):
+        energies = decoded.energies
+        objectives = decoded.objectives
+        constraint_violations = {}
+        for violation in decoded.constraint_violations:
+            for const_name, v in violation.items():
+                if const_name in constraint_violations.keys():
+                    constraint_violations[const_name].append(v)
+                else:
+                    constraint_violations[const_name] = [v]
+        columns = self._table.get_energy_columns()
+        columns += self._table.get_objective_columns()
+        columns += self._table.get_num_columns()
+        values = [
+            list(energies),
+            energies.min(),
+            energies.mean(),
+            energies.std(),
+            list(objectives),
+            objectives.min(),
+            objectives.mean(),
+            objectives.std(),
+            np.nan,
+            len(decoded.feasibles()),
+            len(decoded.data),
+        ]
+        for const_name, v in constraint_violations.items():
+            v = np.array(v)
+            columns += self._table.rename_violation_columns(const_name)
+            values += [
+                list(v),
+                v.min(),
+                v.mean(),
+                v.std(),
+            ]
+        return columns, values
+
+    def update_artifact(self, results, next_run=False):
+        self._artifact.update({self.run_id: results})
+        
+        if next_run:
+            next(self)
+        
     def load(self, load_file=None):
         self._table.data = pd.read_csv(
             f"{self._dirs.table_dir}/experiment_id_{self.experiment_id}.csv",
             index_col=0,
         )
-        with open(f"{self._dirs.artifact_dir}/results.pkl", "rb") as f:
-            self._artifact = pickle.load(f)
+        artifact = {}
+        dir_names = os.listdir(self._dirs.artifact_dir)
+        for d in dir_names:
+            load_dir = f"{self._dirs.artifact_dir}/{d}"
+            if os.path.isdir(load_dir):
+                with open(f"{load_dir}/results.pkl", "rb") as f:
+                    artifact[d] = pickle.load(f)
+        self._artifact = artifact
 
     def load_table(self, load_file):
         self._table.data = pd.read_csv(load_file, index_col=0)
@@ -186,8 +193,11 @@ class Experiment:
         self._table.data.to_csv(
             f"{self._dirs.table_dir}/experiment_id_{self.experiment_id}.csv"
         )
-        with open(f"{self._dirs.artifact_dir}/results.pkl", "wb") as f:
-            pickle.dump(self._artifact, f)
+        for run_id, v in self._artifact.items():
+            save_dir = f"{self._dirs.artifact_dir}/{run_id}"
+            os.makedirs(save_dir, exist_ok=True)
+            with open(f"{save_dir}/results.pkl", "wb") as f:
+                pickle.dump(v, f)
 
     def save_table(self, save_file):
         self._table.data.to_csv(save_file)
@@ -412,10 +422,10 @@ if __name__ == "__main__":
                     "results": decoded,
                 }
                 experiment.insert_into_table(record)
-                experiment.update_artifact(sample_artifacts)
+                experiment.update_artifact(sample_artifacts, next_run=True)
     experiment.save()
 
-    experiment_id = "e9501440-44db-48b5-beac-a34a97cafe6b"
+    experiment_id = experiment.experiment_id
     experiment = Experiment(experiment_id=experiment_id, benchmark_id="test")
     experiment.load()
 
