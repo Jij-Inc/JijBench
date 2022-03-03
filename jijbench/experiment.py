@@ -80,7 +80,7 @@ class Experiment:
         if table_keys is None:
             self.store_as_table(results)
         else:
-            record = {k: results[k] for k in artifact_keys if k in results.keys()}
+            record = {k: results[k] for k in table_keys if k in results.keys()}
             self.store_as_table(record)
 
         if artifact_keys is None:
