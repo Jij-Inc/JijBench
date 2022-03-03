@@ -1,5 +1,8 @@
 import jijmodeling as jm
+from jijbench.problems.instance_loader import JijBenchInstance
 
+def tsp_instance() -> JijBenchInstance:
+    return JijBenchInstance(problem_name="travelling_salesman")
 
 def travelling_salesman_problem():
     # 問題

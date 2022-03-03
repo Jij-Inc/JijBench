@@ -7,7 +7,7 @@ from abc import ABCMeta, abstractmethod
 from typing import Callable, List, Dict, Any
 from jijmodeling.transpilers.type_annotations import PH_VALUES_INTERFACE
 from jijbench import problems
-from .experiment import Experiment
+from jijbench.experiment.experiment import Experiment
 
 
 class Benchmark:

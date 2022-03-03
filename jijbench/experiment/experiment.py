@@ -1,3 +1,5 @@
+import datetime
+from fileinput import filename
 import os
 import json
 import uuid
@@ -6,27 +8,41 @@ import pickle
 import numpy as np
 import pandas as pd
 from typing import Any, Dict, List, Optional, Union
+from jijbench.experiment.artifact_parser import get_dimod_sampleset_items, get_jm_problem_decodedsamples_items
 
+ExperimentResultDefaultDir = "./.jb_results"
 
 class Experiment:
+    """Experiment class
+    Manage experimental results as Dataframe and artifact (python objects).
+    """
     def __init__(
         self,
         experiment_id: Union[int, str] = None,
         benchmark_id: Union[int, str] = None,
         autosave: bool = True,
-        autosave_dir: str = ".",
+        save_dir: str = ExperimentResultDefaultDir,
     ):
         self.autosave = autosave
-        self.autosave_dir = autosave_dir
+        self.save_dir = save_dir
 
-        self._table = _Table(experiment_id=experiment_id, benchmark_id=benchmark_id)
+        if benchmark_id is None:
+            benchmark_id = uuid.uuid4()
+        if experiment_id is None:
+            experiment_id = uuid.uuid4()
+
+        self._table = _Table(experiment_id=str(experiment_id), benchmark_id=str(benchmark_id))
         self._artifact = {}
+        self._artifact_time_stamp = {}
         self._dirs = _Dir(
-            experiment_id=experiment_id,
-            benchmark_id=benchmark_id,
+            experiment_id=str(experiment_id),
+            benchmark_id=str(benchmark_id),
             autosave=autosave,
-            autosave_dir=autosave_dir,
+            save_dir=save_dir,
         )
+
+        # initialize table index
+        self._table.current_index = 0
 
     @property
     def run_id(self):
@@ -49,29 +65,26 @@ class Experiment:
         return self._artifact
 
     def __enter__(self):
+        self.start()
         return self
 
     def __exit__(self, exception_type, exception_value, traceback):
+        self.close()
         pass
 
     def __next__(self):
-        self._table.current_index += 1
-        self._table.run_id = uuid.uuid4()
+        self.close()
         return self.run_id
 
     def start(self):
-        self._table.current_index = 0
-        self._table.run_id = uuid.uuid4()
-        self._table.experiment_id = (
-            uuid.uuid4() if self.experiment_id is None else self.experiment_id
-        )
-        self._table.benchmark_id = (
-            uuid.uuid4() if self.benchmark_id is None else self.benchmark_id
-        )
+        self._table.run_id = str(uuid.uuid4())
         self._dirs.make_dirs(
             experiment_id=self.experiment_id, benchmark_id=self.benchmark_id
         )
         return self
+    
+    def close(self):
+        self._table.current_index += 1
 
     def stop(self):
         pass
@@ -81,7 +94,7 @@ class Experiment:
             results: Dict[str, Any],
             table_keys: Optional[List[str]]=None,
             artifact_keys: Optional[List[str]]=None,
-            next_run: bool=True):
+            time_stamp: Optional[Union[pd.Timestamp, datetime.datetime]] = None):
         """store results
 
         Args:
@@ -90,123 +103,138 @@ class Experiment:
             artifact_keys (list[str], optional): _description_. Defaults to None.
             next_run (bool, optional): _description_. Defaults to True.
         """
-        
-        if table_keys is None:
-            self.store_as_table(results)
+
+        if time_stamp is None:
+            _time_stamp = pd.Timestamp.now()
         else:
-            record = {k: results[k] for k in artifact_keys if k in results.keys()}
-            self.store_as_table(record)
+            _time_stamp = pd.Timestamp(time_stamp)
+
+
+        if table_keys is None:
+            self.store_as_table(results, time_stamp=_time_stamp)
+        else:
+            record = {k: results[k] for k in table_keys if k in results.keys()}
+            self.store_as_table(record, time_stamp=_time_stamp)
 
         if artifact_keys is None:
-            self.store_as_artifact(results)
+            self.store_as_artifact(results, time_stamp=_time_stamp)
         else:
             artifact = {k: results[k] for k in artifact_keys if k in results.keys()}
-            self.store_as_artifact(artifact)
+            self.store_as_artifact(artifact, time_stamp=_time_stamp)
 
-        if next_run:
-            next(self)
 
-    def store_as_table(self, record):
+    def store_as_table(
+            self,
+            record: dict,
+            time_stamp: Optional[Union[pd.Timestamp, datetime.datetime]] = None):
+        """store as table
+
+        Args:
+            record (dict): record
+            time_stamp (pd.Timestamp | datetime.datetime, optional): time stamp. Defaults to None.
+        """
         index = self._table.current_index
         ids = self._table.get_id_columns()
-        self._table.data.loc[index, ids] = [
+        if time_stamp is None:
+            _time_stamp = pd.Timestamp.now()
+        else:
+            _time_stamp = pd.Timestamp(time_stamp)
+
+
+        ids_data = [
             self.run_id,
             self.experiment_id,
             self.benchmark_id,
+            _time_stamp
         ]
+        self._table.data.loc[index, ids] = ids_data
         record = self._reconstruct_record(record)
-        for k, v in record.items():
-            if isinstance(v, dict):
-                v = json.dumps(v)
-            elif isinstance(v, list):
-                v = str(v)
+        for key, value in record.items():
+            if isinstance(value, dict):
+                value = json.dumps(value)
+            elif isinstance(value, list):
+                value = str(value)
+            record[key] = value
+            self._table.data.loc[index, key] = value
+            self._table.data[key] = self._table.data[key].astype(type(value))
+    
+        record.update(dict(zip(ids, ids_data)))
+        if self.autosave:
+            self.add_record_to_csv(record)
 
-            self._table.data.loc[index, k] = v
-            self._table.data[k] = self._table.data[k].astype(type(v))
 
     def _reconstruct_record(self, record):
         new_record = {}
         for k, v in record.items():
             if isinstance(v, dimod.SampleSet):
-                columns, values = self._get_dimod_sampleset_items(v)
+                columns, values = get_dimod_sampleset_items(self, v)
                 for new_k, new_v in zip(columns, values):
                     new_record[new_k] = new_v
             elif v.__class__.__name__ == "DecodedSamples":
-                columns, values = self._get_jm_problem_decodedsamples_items(v)
+                columns, values = get_jm_problem_decodedsamples_items(self, v)
                 for new_k, new_v in zip(columns, values):
                     new_record[new_k] = new_v
             else:
                 new_record[k] = v
         return new_record
 
-    def _get_dimod_sampleset_items(self, response):
-        energies = response.record.energy
-        num_occurrences = response.record.num_occurrences
-        columns = self._table.get_energy_columns() + self._table.get_num_columns()
-        values = [
-            list(energies),
-            energies.min(),
-            energies.mean(),
-            energies.std(),
-            list(num_occurrences),
-            np.nan,
-            np.nan,
-        ]
-        return columns, values
 
-    def _get_jm_problem_decodedsamples_items(self, decoded):
-        energies = decoded.energies
-        objectives = decoded.objectives
-        constraint_violations = {}
-        for violation in decoded.constraint_violations:
-            for const_name, v in violation.items():
-                if const_name in constraint_violations.keys():
-                    constraint_violations[const_name].append(v)
-                else:
-                    constraint_violations[const_name] = [v]
-        columns = self._table.get_energy_columns()
-        columns += self._table.get_objective_columns()
-        columns += self._table.get_num_columns()
-        values = [
-            list(energies),
-            energies.min(),
-            energies.mean(),
-            energies.std(),
-            list(objectives),
-            objectives.min(),
-            objectives.mean(),
-            objectives.std(),
-            np.nan,
-            len(decoded.feasibles()),
-            len(decoded.data),
-        ]
-        for const_name, v in constraint_violations.items():
-            v = np.array(v)
-            columns += self._table.rename_violation_columns(const_name)
-            values += [
-                list(v),
-                v.min(),
-                v.mean(),
-                v.std(),
-            ]
-        return columns, values
+    def store_as_artifact(
+            self, artifact,
+            time_stamp: Optional[Union[pd.Timestamp, datetime.datetime]] = None):
 
-    def store_as_artifact(self, artifact):
+        if time_stamp is None:
+            time_stamp = pd.Timestamp.now()
+        else:
+            time_stamp = pd.Timestamp(time_stamp)
+
+        self._artifact_time_stamp.update({self.run_id: time_stamp}) 
         self._artifact.update({self.run_id: artifact})
 
-    def load(self, load_file=None):
-        self._table.data = pd.read_csv(
-            f"{self._dirs.table_dir}/table.csv",
+        if self.autosave:
+            run_id = self.run_id
+            save_dir = f"{self._dirs.artifact_dir}/{run_id}"
+            os.makedirs(save_dir, exist_ok=True)
+            with open(f"{save_dir}/artifact.pkl", "wb") as f:
+                pickle.dump(self.artifact[run_id], f)
+
+            time_stamp = self._artifact_time_stamp[run_id]
+            with open(f"{save_dir}/time_stamp.txt", "w") as f:
+                f.write(str(time_stamp))
+
+
+    @classmethod
+    def load(
+            cls,
+            experiment_id: Union[int, str],
+            benchmark_id: Union[int, str],
+            autosave: bool = True,
+            save_dir: str = ExperimentResultDefaultDir) -> 'Experiment':
+
+        experiment = Experiment(
+            experiment_id=experiment_id,
+            benchmark_id=benchmark_id,
+            autosave=autosave,
+            save_dir=save_dir
+        )
+        experiment._table.data = pd.read_csv(
+            f"{experiment._dirs.table_dir}/table.csv",
             index_col=0,
         )
         artifact = {}
-        dir_names = os.listdir(self._dirs.artifact_dir)
+        artifact_timestamp = {}
+        dir_names = os.listdir(experiment._dirs.artifact_dir)
         for d in dir_names:
-            load_dir = f"{self._dirs.artifact_dir}/{d}"
+            load_dir = f"{experiment._dirs.artifact_dir}/{d}"
             if os.path.isdir(load_dir):
                 with open(f"{load_dir}/artifact.pkl", "rb") as f:
                     artifact[d] = pickle.load(f)
-        self._artifact = artifact
+                with open(f"{load_dir}/time_stamp.txt", "r") as f:
+                    artifact_timestamp[d] = pd.Timestamp(f.read())
+
+        experiment._artifact = artifact
+        experiment._artifact_time_stamp = artifact_timestamp
+        return experiment
 
     def load_table(self, load_file):
         self._table.data = pd.read_csv(load_file, index_col=0)
@@ -216,12 +244,24 @@ class Experiment:
             self._artifact = pickle.load(f)
 
     def save(self, save_file=None):
+        os.makedirs(self._dirs.table_dir, exist_ok=True)
         self._table.data.to_csv(f"{self._dirs.table_dir}/table.csv")
         for run_id, v in self._artifact.items():
             save_dir = f"{self._dirs.artifact_dir}/{run_id}"
             os.makedirs(save_dir, exist_ok=True)
             with open(f"{save_dir}/artifact.pkl", "wb") as f:
                 pickle.dump(v, f)
+            
+            time_stamp = self._artifact_time_stamp[run_id]
+            with open(f"{save_dir}/time_stamp.txt", "w") as f:
+                f.write(str(time_stamp))
+
+    def add_record_to_csv(self, record: dict):
+        df = pd.DataFrame({key: [value] for key, value in record.items()})
+        os.makedirs(self._dirs.table_dir, exist_ok=True)
+        file_name = f"{self._dirs.table_dir}/table.csv"
+        df.to_csv(file_name, mode="a", header=not os.path.exists(file_name))
+ 
 
     def save_table(self, save_file):
         self._table.data.to_csv(save_file)
@@ -232,10 +272,13 @@ class Experiment:
 
 
 class _Table:
+    """Table template
+    """
     id_dtypes = {
         "run_id": object,
         "experiment_id": object,
         "benchmark_id": object,
+        "time_stamp": pd.Timestamp,
     }
     energy_dtypes = {
         "energy": object,
@@ -272,14 +315,14 @@ class _Table:
         "violation_dtypes",
     ]
 
-    def __init__(self, run_id=None, experiment_id=None, benchmark_id=None):
+    def __init__(self, experiment_id, benchmark_id):
         columns = self.get_columns()
         self._data = pd.DataFrame(columns=columns)
         self._current_index = 0
 
-        self.run_id = run_id
         self.experiment_id = experiment_id
         self.benchmark_id = benchmark_id
+
 
     @property
     def data(self):
@@ -332,33 +375,36 @@ class _Table:
 
 
 class _Dir:
-    _dir_template = "{autosave_dir}/benchmark_{benchmark_id}/{kind}/{experiment_id}"
+    """Directory template
+    """
 
-    def __init__(self, experiment_id, benchmark_id, autosave, autosave_dir):
+    _dir_template = "{save_dir}/benchmark_{benchmark_id}/{experiment_id}/{kind}"
+
+    def __init__(self, experiment_id, benchmark_id, autosave, save_dir):
         self.experiment_id = experiment_id
         self.benchmark_id = benchmark_id
         self.autosave = autosave
-        self.autosave_dir = autosave_dir
+        self.save_dir = save_dir
 
-        self._table_dir = self._dir_template.format(
-            autosave_dir=self.autosave_dir,
+        self._table_dir: str = self._dir_template.format(
+            save_dir=self.save_dir,
             benchmark_id=self.benchmark_id,
             kind="tables",
             experiment_id=self.experiment_id,
         )
-        self._artifact_dir = self._dir_template.format(
-            autosave_dir=self.autosave_dir,
+        self._artifact_dir: str = self._dir_template.format(
+            save_dir=self.save_dir,
             benchmark_id=self.benchmark_id,
             kind="artifact",
             experiment_id=self.experiment_id,
         )
 
     @property
-    def table_dir(self):
+    def table_dir(self) -> str:
         return self._table_dir
 
     @property
-    def artifact_dir(self):
+    def artifact_dir(self) -> str:
         return self._artifact_dir
 
     def make_dirs(self, experiment_id=None, benchmark_id=None):
@@ -384,7 +430,7 @@ class _Dir:
             benchmark_id = self.benchmark_id
 
         d = self._dir_template.format(
-            autosave_dir=self.autosave_dir,
+            save_dir=self.save_dir,
             benchmark_id=benchmark_id,
             kind=kind,
             experiment_id=experiment_id,
@@ -426,7 +472,7 @@ if __name__ == "__main__":
     steps = range(3)
 
     with Experiment(
-        experiment_id=experiment_id, benchmark_id=benchmark_id, autosave_dir=save_dir
+        experiment_id=experiment_id, benchmark_id=benchmark_id, save_dir=save_dir
     ) as experiment:
         for param in params:
             for step in steps:
@@ -442,7 +488,7 @@ if __name__ == "__main__":
     # 以前実験した結果をloadする。experiment_idとbenchmark_idを覚えていればいつでも読み込みできる。
     # もちろんファイル名を直接指定しても良い。その場合はautosave=Falseにしてloadでファイル名を指定する。
     with Experiment(
-        experiment_id=experiment_id, benchmark_id=benchmark_id, autosave_dir=save_dir
+        experiment_id=experiment_id, benchmark_id=benchmark_id, save_dir=save_dir
     ) as experiment:
         experiment.load()
         print(experiment.table)"""

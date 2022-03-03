@@ -1,4 +1,9 @@
 import jijmodeling as jm
+from jijbench.problems.instance_loader import JijBenchInstance
+
+
+def tsptw_instance() -> JijBenchInstance:
+    return JijBenchInstance(problem_name="travelling_salesman_with_time_windows")
 
 
 def travelling_salesman_with_time_windwos_problem():
