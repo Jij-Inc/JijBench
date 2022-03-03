@@ -5,7 +5,7 @@ import dimod
 import pickle
 import numpy as np
 import pandas as pd
-from typing import Union
+from typing import Any, Dict, List, Optional, Union
 
 
 class Experiment:
@@ -76,7 +76,21 @@ class Experiment:
     def stop(self):
         pass
 
-    def store(self, results, table_keys=None, artifact_keys=None, next_run=True):
+    def store(
+            self,
+            results: Dict[str, Any],
+            table_keys: Optional[List[str]]=None,
+            artifact_keys: Optional[List[str]]=None,
+            next_run: bool=True):
+        """store results
+
+        Args:
+            results (Dict[str, Any]): ex. {"num_reads": 10, "results": sampleset}
+            table_keys (list[str], optional): _description_. Defaults to None.
+            artifact_keys (list[str], optional): _description_. Defaults to None.
+            next_run (bool, optional): _description_. Defaults to True.
+        """
+        
         if table_keys is None:
             self.store_as_table(results)
         else:
