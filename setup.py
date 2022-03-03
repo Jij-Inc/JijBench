@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name="jijbench",
-    python_requires=">=3.9, <3.11",
+    python_requires=">=3.8, <3.11",
     packages=["jijbench", "jijbench.problems"],
     version_config={
         "template": "{tag}",
@@ -12,7 +12,6 @@ setup(
         "setuptools-git-versioning",
     ],
     install_requires=[
-        "jijzept",
         "openjij",
         "numpy",
         "pandas",
