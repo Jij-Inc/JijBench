@@ -128,11 +128,11 @@ class Experiment:
         new_record = {}
         for k, v in record.items():
             if isinstance(v, dimod.SampleSet):
-                columns, values = get_dimod_sampleset_items(v)
+                columns, values = get_dimod_sampleset_items(self, v)
                 for new_k, new_v in zip(columns, values):
                     new_record[new_k] = new_v
             elif v.__class__.__name__ == "DecodedSamples":
-                columns, values = get_jm_problem_decodedsamples_items(v)
+                columns, values = get_jm_problem_decodedsamples_items(self, v)
                 for new_k, new_v in zip(columns, values):
                     new_record[new_k] = new_v
             else:
