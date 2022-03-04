@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from jijbench import problems
-from jijbench.experiment import Experiment
+from jijbench.experiment.experiment import Experiment
 
 class Evaluator:
     def __init__(self, experiment: Experiment):
