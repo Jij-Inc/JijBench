@@ -5,7 +5,8 @@ import dimod
 import pickle
 import numpy as np
 import pandas as pd
-from typing import Union
+from typing import Any, Dict, List, Optional, Union
+from jijbench.experiment.artifact_parser import get_dimod_sampleset_items, get_jm_problem_decodedsamples_items
 
 
 class Experiment:
@@ -28,6 +29,9 @@ class Experiment:
             autosave_dir=autosave_dir,
         )
 
+        # initialize table index
+        self._table.current_index = 0
+
     @property
     def run_id(self):
         return self._table.run_id
@@ -49,34 +53,46 @@ class Experiment:
         return self._artifact
 
     def __enter__(self):
+        self.start()
         return self
 
     def __exit__(self, exception_type, exception_value, traceback):
+        self.close()
         pass
 
     def __next__(self):
-        self._table.current_index += 1
-        self._table.run_id = uuid.uuid4()
+        self.close()
         return self.run_id
 
     def start(self):
-        self._table.current_index = 0
         self._table.run_id = uuid.uuid4()
-        self._table.experiment_id = (
-            uuid.uuid4() if self.experiment_id is None else self.experiment_id
-        )
-        self._table.benchmark_id = (
-            uuid.uuid4() if self.benchmark_id is None else self.benchmark_id
-        )
         self._dirs.make_dirs(
             experiment_id=self.experiment_id, benchmark_id=self.benchmark_id
         )
         return self
+    
+    def close(self):
+        self._table.current_index += 1
+        self._table.run_id = uuid.uuid4()
 
     def stop(self):
         pass
 
-    def store(self, results, table_keys=None, artifact_keys=None, next_run=True):
+    def store(
+            self,
+            results: Dict[str, Any],
+            table_keys: Optional[List[str]]=None,
+            artifact_keys: Optional[List[str]]=None,
+            next_run: bool=True):
+        """store results
+
+        Args:
+            results (Dict[str, Any]): ex. {"num_reads": 10, "results": sampleset}
+            table_keys (list[str], optional): _description_. Defaults to None.
+            artifact_keys (list[str], optional): _description_. Defaults to None.
+            next_run (bool, optional): _description_. Defaults to True.
+        """
+        
         if table_keys is None:
             self.store_as_table(results)
         else:
@@ -89,8 +105,6 @@ class Experiment:
             artifact = {k: results[k] for k in artifact_keys if k in results.keys()}
             self.store_as_artifact(artifact)
 
-        if next_run:
-            next(self)
 
     def store_as_table(self, record):
         index = self._table.current_index
@@ -114,68 +128,16 @@ class Experiment:
         new_record = {}
         for k, v in record.items():
             if isinstance(v, dimod.SampleSet):
-                columns, values = self._get_dimod_sampleset_items(v)
+                columns, values = get_dimod_sampleset_items(v)
                 for new_k, new_v in zip(columns, values):
                     new_record[new_k] = new_v
             elif v.__class__.__name__ == "DecodedSamples":
-                columns, values = self._get_jm_problem_decodedsamples_items(v)
+                columns, values = get_jm_problem_decodedsamples_items(v)
                 for new_k, new_v in zip(columns, values):
                     new_record[new_k] = new_v
             else:
                 new_record[k] = v
         return new_record
-
-    def _get_dimod_sampleset_items(self, response):
-        energies = response.record.energy
-        num_occurrences = response.record.num_occurrences
-        columns = self._table.get_energy_columns() + self._table.get_num_columns()
-        values = [
-            list(energies),
-            energies.min(),
-            energies.mean(),
-            energies.std(),
-            list(num_occurrences),
-            np.nan,
-            np.nan,
-        ]
-        return columns, values
-
-    def _get_jm_problem_decodedsamples_items(self, decoded):
-        energies = decoded.energies
-        objectives = decoded.objectives
-        constraint_violations = {}
-        for violation in decoded.constraint_violations:
-            for const_name, v in violation.items():
-                if const_name in constraint_violations.keys():
-                    constraint_violations[const_name].append(v)
-                else:
-                    constraint_violations[const_name] = [v]
-        columns = self._table.get_energy_columns()
-        columns += self._table.get_objective_columns()
-        columns += self._table.get_num_columns()
-        values = [
-            list(energies),
-            energies.min(),
-            energies.mean(),
-            energies.std(),
-            list(objectives),
-            objectives.min(),
-            objectives.mean(),
-            objectives.std(),
-            np.nan,
-            len(decoded.feasibles()),
-            len(decoded.data),
-        ]
-        for const_name, v in constraint_violations.items():
-            v = np.array(v)
-            columns += self._table.rename_violation_columns(const_name)
-            values += [
-                list(v),
-                v.min(),
-                v.mean(),
-                v.std(),
-            ]
-        return columns, values
 
     def store_as_artifact(self, artifact):
         self._artifact.update({self.run_id: artifact})

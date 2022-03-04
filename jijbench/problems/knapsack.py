@@ -1,5 +1,8 @@
 import jijmodeling as jm
+from jijbench.problems.instance_loader import JijBenchInstance
 
+def knapsack_instance() -> JijBenchInstance:
+    return JijBenchInstance(problem_name="knapsack")
 
 def knapsack():
     w = jm.Placeholder("weights", dim=1)

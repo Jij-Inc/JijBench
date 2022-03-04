@@ -1,5 +1,8 @@
 import jijmodeling as jm
+from jijbench.problems.instance_loader import JijBenchInstance
 
+def strip_packing_instance() -> JijBenchInstance:
+    return JijBenchInstance(problem_name="strip_packing")
 
 def strip_packing():
     """
