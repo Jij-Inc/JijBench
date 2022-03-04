@@ -1,0 +1,1 @@
+from jijbench.experiment.experiment import Experiment

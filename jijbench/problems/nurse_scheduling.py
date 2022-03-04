@@ -1,5 +1,8 @@
 import jijmodeling as jm
+from jijbench.problems.instance_loader import JijBenchInstance
 
+def nurse_scheduling_instance() -> JijBenchInstance:
+    return JijBenchInstance(problem_name="nurse_scheduling")
 
 def nurse_scheduling_problem():
     # 問題
