@@ -137,3 +137,5 @@ Results/
 .DS_Store
 
 notebook/.results/
+
+.jb_results/

@@ -1,2 +1,0 @@
-,run_id,experiment_id,benchmark_id,energy,energy_min,energy_mean,energy_std,objective,obj_min,obj_mean,obj_std,num_occurances,num_feasible,num_samples,{const_name}_violations,{const_name}_violation_min,{const_name}_violation_mean,{const_name}_violation_std
-0,6d090e1f-03d7-4696-8865-60f01b8755fb,d8b48ab5-43a6-4429-8da0-fba1f221cdd4,0d44020d-9509-47d7-8118-7456a6eb82b6,[0.0],0.0,0.0,0.0,[0.0],0.0,0.0,0.0,,1,1,,,,
