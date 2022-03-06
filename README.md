@@ -1,14 +1,14 @@
-# ParameterSearch
+# JijBenchmark
 
 [![Test](https://github.com/Jij-Inc/JijBenchmark/actions/workflows/python-test.yml/badge.svg)](https://github.com/Jij-Inc/JijBenchmark/actions/workflows/python-test.yml)
-# インストール方法
+## Install from JFrog
 ```shell
 pip install jijbench --extra-index-url https://jij.jfrog.io/artifactory/api/pypi/Jij-Private/simple
 ```
 
-# For Developers
+## For Developers
 
-## poetryで開発用のパッケージを管理しています。
+### poetryで開発用のパッケージを管理しています
 
 テストコードで必要なライブラリがあれば
 
@@ -18,7 +18,7 @@ poetry add -D "package name"
 
 でパッケージを追加するようにしてください。
 
-## pytest を使ってテストを書いています。
+### pytest を使ってテストを書いています
 
 以下のいずれかでテストを実行することができます。
 

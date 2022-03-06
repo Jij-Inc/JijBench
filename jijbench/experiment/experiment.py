@@ -8,6 +8,7 @@ import pandas as pd
 from typing import Any, Dict, List, Optional, Union
 from jijbench.experiment.artifact_parser import get_dimod_sampleset_items, get_jm_problem_decodedsamples_items
 
+ExperimentResultDefaultDir = "./.jb_results"
 
 class Experiment:
     def __init__(
@@ -15,10 +16,15 @@ class Experiment:
         experiment_id: Union[int, str] = None,
         benchmark_id: Union[int, str] = None,
         autosave: bool = True,
-        autosave_dir: str = ".",
+        save_dir: str = ExperimentResultDefaultDir,
     ):
         self.autosave = autosave
-        self.autosave_dir = autosave_dir
+        self.save_dir = save_dir
+
+        if benchmark_id is None:
+            benchmark_id = uuid.uuid4()
+        if experiment_id is None:
+            experiment_id = uuid.uuid4()
 
         self._table = _Table(experiment_id=experiment_id, benchmark_id=benchmark_id)
         self._artifact = {}
@@ -26,7 +32,7 @@ class Experiment:
             experiment_id=experiment_id,
             benchmark_id=benchmark_id,
             autosave=autosave,
-            autosave_dir=autosave_dir,
+            save_dir=save_dir,
         )
 
         # initialize table index
@@ -142,19 +148,33 @@ class Experiment:
     def store_as_artifact(self, artifact):
         self._artifact.update({self.run_id: artifact})
 
-    def load(self, load_file=None):
-        self._table.data = pd.read_csv(
-            f"{self._dirs.table_dir}/table.csv",
+    @classmethod
+    def load(
+            cls,
+            experiment_id: Union[int, str],
+            benchmark_id: Union[int, str],
+            autosave: bool = True,
+            save_dir: str = ExperimentResultDefaultDir):
+
+        experiment = Experiment(
+            experiment_id=experiment_id,
+            benchmark_id=benchmark_id,
+            autosave=autosave,
+            save_dir=save_dir
+        )
+        experiment._table.data = pd.read_csv(
+            f"{experiment._dirs.table_dir}/table.csv",
             index_col=0,
         )
         artifact = {}
-        dir_names = os.listdir(self._dirs.artifact_dir)
+        dir_names = os.listdir(experiment._dirs.artifact_dir)
         for d in dir_names:
-            load_dir = f"{self._dirs.artifact_dir}/{d}"
+            load_dir = f"{experiment._dirs.artifact_dir}/{d}"
             if os.path.isdir(load_dir):
                 with open(f"{load_dir}/artifact.pkl", "rb") as f:
                     artifact[d] = pickle.load(f)
-        self._artifact = artifact
+        experiment._artifact = artifact
+        return experiment
 
     def load_table(self, load_file):
         self._table.data = pd.read_csv(load_file, index_col=0)
@@ -164,6 +184,7 @@ class Experiment:
             self._artifact = pickle.load(f)
 
     def save(self, save_file=None):
+        os.makedirs(self._dirs.table_dir, exist_ok=True)
         self._table.data.to_csv(f"{self._dirs.table_dir}/table.csv")
         for run_id, v in self._artifact.items():
             save_dir = f"{self._dirs.artifact_dir}/{run_id}"
@@ -280,22 +301,22 @@ class _Table:
 
 
 class _Dir:
-    _dir_template = "{autosave_dir}/benchmark_{benchmark_id}/{kind}/{experiment_id}"
+    _dir_template = "{save_dir}/benchmark_{benchmark_id}/{kind}/{experiment_id}"
 
-    def __init__(self, experiment_id, benchmark_id, autosave, autosave_dir):
+    def __init__(self, experiment_id, benchmark_id, autosave, save_dir):
         self.experiment_id = experiment_id
         self.benchmark_id = benchmark_id
         self.autosave = autosave
-        self.autosave_dir = autosave_dir
+        self.save_dir = save_dir
 
         self._table_dir = self._dir_template.format(
-            autosave_dir=self.autosave_dir,
+            save_dir=self.save_dir,
             benchmark_id=self.benchmark_id,
             kind="tables",
             experiment_id=self.experiment_id,
         )
         self._artifact_dir = self._dir_template.format(
-            autosave_dir=self.autosave_dir,
+            save_dir=self.save_dir,
             benchmark_id=self.benchmark_id,
             kind="artifact",
             experiment_id=self.experiment_id,
@@ -332,7 +353,7 @@ class _Dir:
             benchmark_id = self.benchmark_id
 
         d = self._dir_template.format(
-            autosave_dir=self.autosave_dir,
+            save_dir=self.save_dir,
             benchmark_id=benchmark_id,
             kind=kind,
             experiment_id=experiment_id,
@@ -374,7 +395,7 @@ if __name__ == "__main__":
     steps = range(3)
 
     with Experiment(
-        experiment_id=experiment_id, benchmark_id=benchmark_id, autosave_dir=save_dir
+        experiment_id=experiment_id, benchmark_id=benchmark_id, save_dir=save_dir
     ) as experiment:
         for param in params:
             for step in steps:
@@ -390,7 +411,7 @@ if __name__ == "__main__":
     # 以前実験した結果をloadする。experiment_idとbenchmark_idを覚えていればいつでも読み込みできる。
     # もちろんファイル名を直接指定しても良い。その場合はautosave=Falseにしてloadでファイル名を指定する。
     with Experiment(
-        experiment_id=experiment_id, benchmark_id=benchmark_id, autosave_dir=save_dir
+        experiment_id=experiment_id, benchmark_id=benchmark_id, save_dir=save_dir
     ) as experiment:
         experiment.load()
         print(experiment.table)"""

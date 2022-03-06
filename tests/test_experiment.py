@@ -87,5 +87,38 @@ def test_jijmodeling():
     "num_feasible" in cols
 
 
+def test_file_save_load():
+    d = jm.Placeholder("d")
+    x = jm.Binary("x", shape=(2,))
+    problem = jm.Problem("sample")
+    problem += x[0] + d*x[1]
 
+    ph_value = {"d": 2}
+    pyq_obj = problem.to_pyqubo(ph_value=ph_value)
+    pyq_model = pyq_obj.compile()
 
+    sampler = oj.SASampler()
+    experiment = jb.Experiment(autosave=False)
+
+    for _ in range(3):
+        with experiment.start():
+            bqm = pyq_model.to_bqm()
+            response = sampler.sample(bqm)
+            decoded = problem.decode(response, ph_value=ph_value)
+            experiment.store({"result": decoded})
+    
+    experiment.save()
+
+    load_experiment = jb.Experiment.load(experiment_id=experiment.experiment_id, benchmark_id=experiment.benchmark_id)
+
+    original_cols = experiment.table.columns
+    load_cols = load_experiment.table.columns
+    for c in original_cols:
+        c in load_cols
+    
+    assert len(experiment.table.index) == len(load_experiment.table.index)
+    assert len(experiment.artifact) == len(load_experiment.artifact)
+    for artifact in load_experiment.artifact.values():
+        assert isinstance(artifact["result"], jm.DecodedSamples)
+
+    
