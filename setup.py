@@ -1,9 +1,8 @@
 from setuptools import setup, find_packages
-print(find_packages("jijbench"))
 setup(
     name="jijbench",
     python_requires=">=3.8, <3.11",
-    packages=find_packages("jijbench"),
+    packages=find_packages("jijbench", exclude=["tests", "notebooks"]),
     package_dir={"": "jijbench"},
     version_config={
         "template": "{tag}",

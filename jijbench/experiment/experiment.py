@@ -1,11 +1,9 @@
 import datetime
-from fileinput import filename
 import os
 import json
 import uuid
 import dimod
 import pickle
-import numpy as np
 import pandas as pd
 from typing import Any, Dict, List, Optional, Union
 from jijbench.experiment.artifact_parser import get_dimod_sampleset_items, get_jm_problem_decodedsamples_items
