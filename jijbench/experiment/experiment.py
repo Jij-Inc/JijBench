@@ -31,7 +31,7 @@ class Experiment:
 
         self._table = _Table(experiment_id=str(experiment_id), benchmark_id=str(benchmark_id))
         self._artifact = {}
-        self._artifact_time_stamp = {}
+        self._artifact_timestamp = {}
         self._dirs = _Dir(
             experiment_id=str(experiment_id),
             benchmark_id=str(benchmark_id),
@@ -92,7 +92,7 @@ class Experiment:
             results: Dict[str, Any],
             table_keys: Optional[List[str]]=None,
             artifact_keys: Optional[List[str]]=None,
-            time_stamp: Optional[Union[pd.Timestamp, datetime.datetime]] = None):
+            timestamp: Optional[Union[pd.Timestamp, datetime.datetime]] = None):
         """store results
 
         Args:
@@ -102,48 +102,48 @@ class Experiment:
             next_run (bool, optional): _description_. Defaults to True.
         """
 
-        if time_stamp is None:
-            _time_stamp = pd.Timestamp.now()
+        if timestamp is None:
+            _timestamp = pd.Timestamp.now()
         else:
-            _time_stamp = pd.Timestamp(time_stamp)
+            _timestamp = pd.Timestamp(timestamp)
 
 
         if table_keys is None:
-            self.store_as_table(results, time_stamp=_time_stamp)
+            self.store_as_table(results, timestamp=_timestamp)
         else:
             record = {k: results[k] for k in table_keys if k in results.keys()}
-            self.store_as_table(record, time_stamp=_time_stamp)
+            self.store_as_table(record, timestamp=_timestamp)
 
         if artifact_keys is None:
-            self.store_as_artifact(results, time_stamp=_time_stamp)
+            self.store_as_artifact(results, timestamp=_timestamp)
         else:
             artifact = {k: results[k] for k in artifact_keys if k in results.keys()}
-            self.store_as_artifact(artifact, time_stamp=_time_stamp)
+            self.store_as_artifact(artifact, timestamp=_timestamp)
 
 
     def store_as_table(
             self,
             record: dict,
-            time_stamp: Optional[Union[pd.Timestamp, datetime.datetime]] = None):
+            timestamp: Optional[Union[pd.Timestamp, datetime.datetime]] = None):
         """store as table
 
         Args:
             record (dict): record
-            time_stamp (pd.Timestamp | datetime.datetime, optional): time stamp. Defaults to None.
+            timestamp (pd.Timestamp | datetime.datetime, optional): time stamp. Defaults to None.
         """
         index = self._table.current_index
         ids = self._table.get_id_columns()
-        if time_stamp is None:
-            _time_stamp = pd.Timestamp.now()
+        if timestamp is None:
+            _timestamp = pd.Timestamp.now()
         else:
-            _time_stamp = pd.Timestamp(time_stamp)
+            _timestamp = pd.Timestamp(timestamp)
 
 
         ids_data = [
             self.run_id,
             self.experiment_id,
             self.benchmark_id,
-            _time_stamp
+            _timestamp
         ]
         self._table.data.loc[index, ids] = ids_data
         record = self._reconstruct_record(record)
@@ -179,14 +179,14 @@ class Experiment:
 
     def store_as_artifact(
             self, artifact,
-            time_stamp: Optional[Union[pd.Timestamp, datetime.datetime]] = None):
+            timestamp: Optional[Union[pd.Timestamp, datetime.datetime]] = None):
 
-        if time_stamp is None:
-            time_stamp = pd.Timestamp.now()
+        if timestamp is None:
+            timestamp = pd.Timestamp.now()
         else:
-            time_stamp = pd.Timestamp(time_stamp)
+            timestamp = pd.Timestamp(timestamp)
 
-        self._artifact_time_stamp.update({self.run_id: time_stamp}) 
+        self._artifact_timestamp.update({self.run_id: timestamp}) 
         self._artifact.update({self.run_id: artifact})
 
         if self.autosave:
@@ -196,9 +196,9 @@ class Experiment:
             with open(f"{save_dir}/artifact.pkl", "wb") as f:
                 pickle.dump(self.artifact[run_id], f)
 
-            time_stamp = self._artifact_time_stamp[run_id]
-            with open(f"{save_dir}/time_stamp.txt", "w") as f:
-                f.write(str(time_stamp))
+            timestamp = self._artifact_timestamp[run_id]
+            with open(f"{save_dir}/timestamp.txt", "w") as f:
+                f.write(str(timestamp))
 
 
     @classmethod
@@ -227,11 +227,11 @@ class Experiment:
             if os.path.isdir(load_dir):
                 with open(f"{load_dir}/artifact.pkl", "rb") as f:
                     artifact[d] = pickle.load(f)
-                with open(f"{load_dir}/time_stamp.txt", "r") as f:
+                with open(f"{load_dir}/timestamp.txt", "r") as f:
                     artifact_timestamp[d] = pd.Timestamp(f.read())
 
         experiment._artifact = artifact
-        experiment._artifact_time_stamp = artifact_timestamp
+        experiment._artifact_timestamp = artifact_timestamp
         return experiment
 
     def load_table(self, load_file):
@@ -250,9 +250,9 @@ class Experiment:
             with open(f"{save_dir}/artifact.pkl", "wb") as f:
                 pickle.dump(v, f)
             
-            time_stamp = self._artifact_time_stamp[run_id]
-            with open(f"{save_dir}/time_stamp.txt", "w") as f:
-                f.write(str(time_stamp))
+            timestamp = self._artifact_timestamp[run_id]
+            with open(f"{save_dir}/timestamp.txt", "w") as f:
+                f.write(str(timestamp))
 
     def add_record_to_csv(self, record: dict):
         df = pd.DataFrame({key: [value] for key, value in record.items()})
@@ -276,7 +276,7 @@ class _Table:
         "run_id": object,
         "experiment_id": object,
         "benchmark_id": object,
-        "time_stamp": pd.Timestamp,
+        "timestamp": pd.Timestamp,
     }
     energy_dtypes = {
         "energy": object,
