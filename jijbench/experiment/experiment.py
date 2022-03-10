@@ -7,6 +7,7 @@ import pickle
 import pandas as pd
 from typing import Any, Dict, List, Optional, Union
 from jijbench.experiment.artifact_parser import get_dimod_sampleset_items, get_jm_problem_decodedsamples_items
+import numpy as np
 
 ExperimentResultDefaultDir = "./.jb_results"
 
@@ -99,7 +100,7 @@ class Experiment:
             results (Dict[str, Any]): ex. {"num_reads": 10, "results": sampleset}
             table_keys (list[str], optional): _description_. Defaults to None.
             artifact_keys (list[str], optional): _description_. Defaults to None.
-            next_run (bool, optional): _description_. Defaults to True.
+            timestamp: Optional[Union[pd.Timestamp, datetime.datetime]]: timestamp. Defaults to None (current time is recorded).
         """
 
         if timestamp is None:
@@ -162,6 +163,11 @@ class Experiment:
 
 
     def _reconstruct_record(self, record):
+        """if record includes `dimod.SampleSet` or `DecodedSamples`, reconstruct record to a new one.
+
+        Args:
+            record (dict): record
+        """
         new_record = {}
         for k, v in record.items():
             if isinstance(v, dimod.SampleSet):

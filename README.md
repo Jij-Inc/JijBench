@@ -39,19 +39,22 @@ python -m pytest tests/"file name"::"function name"  # 関数を指定して実�
 |**experiment_id**: int or str |Experimentインスタンスを区別するID|
 |**benchmark_id**: int or str|Benchmarkインスタンスを区別するID|
 |**autosave**: bool|実験結果を自動で保存したい場合はTrue,そうでない場合はFalse|
-|**autosave_dir**: str|`autosave=True`の時の実験結果の保存先|
+|**save_dir**: str|`autosave=True`の時の実験結果の保存先|
 
 ### **Attributes**
 |名前|説明||
 |:---|:---|:---|
-|**table**: pandas.DataFrame|実験設定や実験結果を格納する。ユーザは好きな情報を格納できる。||
+|**table**: pandas.DataFrame|実験設定や実験結果を格納する。ユーザは`pandas.DataFrame`で扱える値であれば好きな情報を格納できる。||
+|**artifact**: dict|実験設定や実験結果を格納する。ユーザは好きな情報を格納できる。||
 
 ### **Methods**
 |名前|説明||
 |:---|:---|:---|
-|**insert_into_table(record: dict)**|**record**に記述されたデータを**table**に挿入する。**record**はdict型で書かなければならず、キーはtableの列名に使われ、値は対応するセルに代入される。この時、行方向の指定には**run_id**が使われる。このメソッドを呼ぶと最後に__next__が呼ばれ**run_id**を一つ進める。||
-|**save(save_file: str)**|**table**をcsvで保存する。`autosave=True`の時は**autosave_dir**で指定されたディレクトリ以下に**benchmark_{bechmark_id}/tables**というディレクトリが自動作成され、そのディレクトリ以下に**experiment_id_{experiment_id}.csv**というファイル名で**table**を保存する。`autosave=False`の場合、**save_file**で指定されるファイル名で**table**を保存する。
-|**load(load_file: str)**|saveメソッドで保存した結果を読み込み、**table**に代入する。`autosave=True`場合、 **autosave_dir**以下の**experiment_id**、**benchmark_id**で指定される結果を自動で読み込み、`autosave=False`の場合、**load_file**で指定されるファイルを読み込む。||
+|**store_as_table(record: dict)**|**record**に記述されたデータを**table**に挿入する。**record**はdict型で書かなければならず、キーはtableの列名に使われ、値は対応するセルに代入される。この時、行方向の指定には**run_id**が使われる。もし**record**のvalueが**dimod.SampleSet**もしくは**DecodedSamples**型の場合、エネルギー値などの取得可能な量を自動で取得し、対応するキーを生成してtableへ格納する。**autosave**がTrueの場合、このメソッドを呼び出すたびに逐次csvファイルへ追記される。||
+|**store_as_artifact(artifact: dict)**|**record**に記述されたデータを**artifact**に挿入する。**artifact**はdict型で書かなければならない。挿入する際には、artfifactの辞書に`{[現在のrun_id]: [artifactデータ]}`のkeyとvalueが追加される。**autosave**がTrueの場合、このメソッドを呼び出すたびに逐次pickleファイルへ追記される。||
+|**store(results: dict, table_keys: List[str], artifact_keys: List[str])**|**store_as_table**と**store_as_artifact**を同時に実行できるメソッドであり、**table_keys**に指定されたキーに対応する量は**store_as_table**で処理され、**artifact_keys**に指定されたキーに対応する量は**store_as_artifact**で処理される。||
+|**save(save_file: str)**|現在の**table**をcsvで保存し、**artifact**をpickleファイルで保存する。`autosave=True`の時はこのメソッドを明示的に呼び出す必要はない。
+|**load(experiment_id: str, benchmark_id: str, autosave: bool)**|指定した**experiment_id**, **benchmark_id**に対応する保存した結果をファイルから読み込み、**table, artifact**に代入する。||
 
 ### **Examples**
 最も単純な使い方
@@ -60,19 +63,27 @@ python -m pytest tests/"file name"::"function name"  # 関数を指定して実�
 # ユーザ定義のsolverの返り値（何でも良い）
 sample_response = {"hoge": {"fuga": 1}}
 
-with Experiment() as experiment:
-    for param in [10, 100, 1000]:
-        for step in range(3):
-            # solverは上のsample_responseを返す想定
-            # sample_response = solver()
-            # experiment.tableに登録するrecordを辞書型で作成
-            record = {
-                "step": step,
-                "param": param,
-                "results": sample_response,
-            }
-            experiment.insert_into_table(record)
-    experiment.save()
+import jijbench as jb
+
+experiment = jb.Experiment()
+
+for param in [10, 100, 1000]:
+    for step in range(3):
+        with Experiment() as experiment:
+        # solverは上のsample_responseを返す想定
+        # sample_response = solver()
+        # experiment.tableに登録するrecordを辞書型で作成
+        record = {
+            "step": step,
+            "param": param,
+            "results": sample_response,
+        }
+        experiment.store(record) # recordがtable, artifactどちらにも保存される
+
+        #experiment.store(record, table_keys=["step", "param"], artifact_keys=["results"]) # step, paramはtableに、resultsはartifactに保存される。
+        # 下のように分割して書いても良い
+        #experiment.store_as_table({"step": step, "param": param}) 
+        #experiment.store_as_artifact({"results": sample_response})  
 
 ```
 実験結果を保存したい場所を指定する。experiment_idとbenchmark_idを明示的に指定すると結果の保存と読み込みの対応関係がつけやすくなる。
@@ -98,10 +109,7 @@ with Experiment(
 
 # 以前実験した結果を読み込む。experiment_idとbenchmark_idを覚えていれば対応する実験を読み込める。
 # もちろんファイル名を直接指定しても良い。その場合はautosave=Falseにしてloadの引数でファイル名を指定する。
-with Experiment(
-    experiment_id=experiment_id, benchmark_id=benchmark_id, autosave_dir=save_dir
-) as experiment:
-    experiment.load()
+experiment = Experiment.load(experiment_id=experiment_id, benchmark_id=benchmark_id, autosave_dir=save_dir)
 ```
 
 # 実行方法
