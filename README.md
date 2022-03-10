@@ -69,21 +69,21 @@ experiment = jb.Experiment()
 
 for param in [10, 100, 1000]:
     for step in range(3):
-        with Experiment() as experiment:
-        # solverは上のsample_responseを返す想定
-        # sample_response = solver()
-        # experiment.tableに登録するrecordを辞書型で作成
-        record = {
-            "step": step,
-            "param": param,
-            "results": sample_response,
-        }
-        experiment.store(record) # recordがtable, artifactどちらにも保存される
+        with experiment.start():
+            # solverは上のsample_responseを返す想定
+            # sample_response = solver()
+            # experiment.tableに登録するrecordを辞書型で作成
+            record = {
+                "step": step,
+                "param": param,
+                "results": sample_response,
+            }
+            experiment.store(record) # recordがtable, artifactどちらにも保存される
 
-        #experiment.store(record, table_keys=["step", "param"], artifact_keys=["results"]) # step, paramはtableに、resultsはartifactに保存される。
-        # 下のように分割して書いても良い
-        #experiment.store_as_table({"step": step, "param": param}) 
-        #experiment.store_as_artifact({"results": sample_response})  
+            #experiment.store(record, table_keys=["step", "param"], artifact_keys=["results"]) # step, paramはtableに、resultsはartifactに保存される。
+            # 下のように分割して書いても良い
+            #experiment.store_as_table({"step": step, "param": param}) 
+            #experiment.store_as_artifact({"results": sample_response})  
 
 ```
 実験結果を保存したい場所を指定する。experiment_idとbenchmark_idを明示的に指定すると結果の保存と読み込みの対応関係がつけやすくなる。
@@ -93,19 +93,18 @@ save_dir = "/home/azureuser/data/jijbench"
 experiment_id = "test"
 benchmark_id = 0
 
-with Experiment(
-    experiment_id=experiment_id, benchmark_id=benchmark_id, autosave_dir=save_dir
-) as experiment:
-    for param in [10, 100, 1000]:
-        for step in range(3):
+experiment = jb.Experiment(experiment_id=experiment_id, benchmark_id=benchmark_id, save_dir=save_dir)
+
+for param in [10, 100, 1000]:
+    for step in range(3):
+        with experiment.start():
             # sample_response = solver()
             record = {
                 "step": step,
                 "param": param,
                 "results": sample_response,
             }
-            experiment.insert_into_table(record)
-    experiment.save()
+            experiment.store(record)
 
 # 以前実験した結果を読み込む。experiment_idとbenchmark_idを覚えていれば対応する実験を読み込める。
 # もちろんファイル名を直接指定しても良い。その場合はautosave=Falseにしてloadの引数でファイル名を指定する。
