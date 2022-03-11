@@ -72,6 +72,7 @@ def get_jm_problem_decodedsamples_items(experiment: 'Experiment', decoded: 'Deco
         len(decoded.feasibles()),
         len(decoded.data),
     ]
+    
     for const_name, v in constraint_violations.items():
         v = np.array(v)
         columns += experiment._table.rename_violation_columns(const_name)
