@@ -180,7 +180,7 @@ def test_file_save_load():
     for artifact in load_experiment.artifact.values():
         assert isinstance(artifact["result"], jm.DecodedSamples)
 
-    assert experiment._artifact_timestamp == load_experiment._artifact_timestamp
+    assert experiment._artifact.timestamp == load_experiment._artifact.timestamp
 
 
 def test_auto_save():
@@ -206,19 +206,20 @@ def test_custome_dir_save():
     sampler = oj.SASampler()
     num_rows = 3
     for row in range(num_rows):
-        with experiment.start():
+        with experiment:
             response = sampler.sample_qubo({(0, 1): 1})
             experiment.store({"result": response})
         assert os.path.exists(
             experiment._dirs.artifact_dir + f"/{experiment.run_id}/timestamp.txt"
         )
+        # print(experiment.run_id)
         load_experiment = jb.Experiment.load(
             experiment_id=experiment.experiment_id,
             benchmark_id=experiment.benchmark_id,
             save_dir=custome_dir,
         )
         assert len(load_experiment.table) == row + 1
-
+    
     assert os.path.exists(custome_dir)
     shutil.rmtree(custome_dir)
 
@@ -245,7 +246,7 @@ def test_store_same_timestamp():
 
     run_id = list(experiment.artifact.keys())[0]
 
-    artifact_timestamp = experiment._artifact_timestamp[run_id]
+    artifact_timestamp = experiment._artifact.timestamp[run_id]
     table_timestamp = experiment.table[experiment.table["run_id"] == run_id][
         "timestamp"
     ][0]
@@ -264,7 +265,7 @@ def test_insert_iterobj_into_table():
             "1d_list": [1],
             "2d_list": [[1, 2], [1, 2]],
             "1d_array": np.zeros(2),
-            "2d_array": np.zeros((2, 2)),
+            "nd_array": np.random.normal(size=(10, 5, 4, 3, 2)),
             "dict": {"a": {"b": 1}},
         }
         experiment.store_as_table(record)
@@ -272,7 +273,7 @@ def test_insert_iterobj_into_table():
     assert type(experiment.table.loc[0, "1d_list"]) == list
     assert type(experiment.table.loc[0, "2d_list"]) == list
     assert type(experiment.table.loc[0, "1d_array"]) == np.ndarray
-    assert type(experiment.table.loc[0, "2d_array"]) == np.ndarray
+    assert type(experiment.table.loc[0, "nd_array"]) == np.ndarray
     assert type(experiment.table.loc[0, "dict"]) == dict
 
 
@@ -291,7 +292,7 @@ def test_load_iterobj():
             "1d_list": [1],
             "2d_list": [[1, 2], [1, 2]],
             "1d_array": np.zeros(2),
-            "2d_array": np.zeros((2, 2)),
+            "nd_array": np.random.normal(size=(10, 5, 4, 3, 2)),
             "dict": {"a": {"b": 1}},
         }
         experiment.store_as_table(record)
@@ -304,5 +305,5 @@ def test_load_iterobj():
     assert type(experiment.table.loc[0, "1d_list"]) == list
     assert type(experiment.table.loc[0, "2d_list"]) == list
     assert type(experiment.table.loc[0, "1d_array"]) == np.ndarray
-    assert type(experiment.table.loc[0, "2d_array"]) == np.ndarray
+    assert type(experiment.table.loc[0, "nd_array"]) == np.ndarray
     assert type(experiment.table.loc[0, "dict"]) == dict

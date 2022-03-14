@@ -40,8 +40,7 @@ class Experiment:
         self._table = _Table(
             experiment_id=str(experiment_id), benchmark_id=str(benchmark_id)
         )
-        self._artifact = {}
-        self._artifact_timestamp = {}
+        self._artifact = _Artifact()
         self._dirs = _Dir(
             experiment_id=str(experiment_id),
             benchmark_id=str(benchmark_id),
@@ -70,7 +69,7 @@ class Experiment:
 
     @property
     def artifact(self):
-        return self._artifact
+        return self._artifact.data
 
     def __enter__(self):
         self.start()
@@ -82,25 +81,16 @@ class Experiment:
 
     def start(self):
         self._table.run_id = str(uuid.uuid4())
-        self._dirs.make_dirs()
+        self._dirs.make_dirs(self.run_id)
         return self
 
     def close(self):
         if self.autosave:
             record = self._table.data.loc[self._table.current_index].dropna().to_dict()
-            self.add_record_to_csv(record)
+            self.log_table(record)
+            self.log_artifact()
 
-            run_id = self.run_id
-            if run_id in self._artifact.keys():
-                save_dir = f"{self._dirs.artifact_dir}/{run_id}"
-                os.makedirs(save_dir, exist_ok=True)
-                with open(f"{save_dir}/artifact.pkl", "wb") as f:
-                    pickle.dump(self._artifact[run_id], f)
-
-                timestamp = self._artifact_timestamp[run_id]
-                with open(f"{save_dir}/timestamp.txt", "w") as f:
-                    f.write(str(timestamp))
-        self.save_dtypes()
+        self._table.save_dtypes(f"{self._dirs.experiment_dir}/dtypes.pkl")
         self._table.current_index += 1
 
     def store(
@@ -198,8 +188,8 @@ class Experiment:
         else:
             timestamp = pd.Timestamp(timestamp)
 
-        self._artifact_timestamp.update({self.run_id: timestamp})
-        self._artifact.update({self.run_id: artifact})
+        self._artifact.timestamp.update({self.run_id: timestamp})
+        self._artifact.data.update({self.run_id: artifact})
 
     @classmethod
     def load(
@@ -216,72 +206,39 @@ class Experiment:
             autosave=autosave,
             save_dir=save_dir,
         )
-        experiment._table.data = pd.read_csv(
-            f"{experiment._dirs.table_dir}/table.csv", index_col=0
+        experiment._table = _Table.load(
+            experiment_id=experiment_id,
+            benchmark_id=benchmark_id,
+            autosave=autosave,
+            save_dir=save_dir,
         )
-        dtypes = experiment.load_dtypes(f"{experiment._dirs.experiment_dir}/dtypes.pkl")
-        experiment._table.as_finetype(dtypes)
-
-        artifact = {}
-        artifact_timestamp = {}
-        dir_names = os.listdir(experiment._dirs.artifact_dir)
-        for d in dir_names:
-            load_dir = f"{experiment._dirs.artifact_dir}/{d}"
-            if os.path.isdir(load_dir):
-                with open(f"{load_dir}/artifact.pkl", "rb") as f:
-                    artifact[d] = pickle.load(f)
-                with open(f"{load_dir}/timestamp.txt", "r") as f:
-                    artifact_timestamp[d] = pd.Timestamp(f.read())
-
-        experiment._artifact = artifact
-        experiment._artifact_timestamp = artifact_timestamp
+        experiment._artifact = _Artifact.load(
+            experiment_id=experiment_id,
+            benchmark_id=benchmark_id,
+            autosave=autosave,
+            save_dir=save_dir,
+        )
         return experiment
 
-    @classmethod
-    def load_table(cls, load_file):
-        NotImplementedError
-
-    @classmethod
-    def load_artifact(cls, load_file):
-        NotImplementedError
-
-    @classmethod
-    def load_dtypes(self, load_file):
-        with open(load_file, "rb") as f:
-            return pickle.load(f)
-
     def save(self):
-        self._table.data.to_csv(f"{self._dirs.table_dir}/table.csv")
-        for run_id, v in self._artifact.items():
-            save_dir = f"{self._dirs.artifact_dir}/{run_id}"
-            os.makedirs(save_dir, exist_ok=True)
-            with open(f"{save_dir}/artifact.pkl", "wb") as f:
-                pickle.dump(v, f)
+        self._table.save(f"{self._dirs.table_dir}/table.csv")
+        self._artifact.save(self._dirs.artifact_dir)
 
-            timestamp = self._artifact_timestamp[run_id]
-            with open(f"{save_dir}/timestamp.txt", "w") as f:
-                f.write(str(timestamp))
-
-    def save_table(self, save_file):
-        self._table.data.to_csv(save_file)
-
-    def save_artifact(self, save_file):
-        with open(save_file, "wb") as f:
-            pickle.dump(self._artifact, f)
-
-    def save_dtypes(self):
-        index = self._table.data.loc[self._table.current_index].index
-        dtypes = {}
-        for i, v in zip(index, self._table.data.loc[self._table.current_index]):
-            dtypes[i] = type(v)
-        with open(f"{self._dirs.experiment_dir}/dtypes.pkl", "wb") as f:
-            pickle.dump(dtypes, f)
-
-    def add_record_to_csv(self, record: dict):
+    def log_table(self, record: dict):
         df = pd.DataFrame({key: [value] for key, value in record.items()})
-        os.makedirs(self._dirs.table_dir, exist_ok=True)
         file_name = f"{self._dirs.table_dir}/table.csv"
         df.to_csv(file_name, mode="a", header=not os.path.exists(file_name))
+
+    def log_artifact(self):
+        run_id = self.run_id
+        if run_id in self._artifact.data.keys():
+            save_dir = f"{self._dirs.artifact_dir}/{run_id}"
+            with open(f"{save_dir}/artifact.pkl", "wb") as f:
+                pickle.dump(self._artifact.data[run_id], f)
+
+            timestamp = self._artifact.timestamp[run_id]
+            with open(f"{save_dir}/timestamp.txt", "w") as f:
+                f.write(str(timestamp))
 
 
 class _Table:
@@ -400,7 +357,7 @@ class _Table:
             for col in self._data:
                 self._data[col] = (
                     self._data[col]
-                    .map(self._replace_numpystr)
+                    .map(self._numpystr_to_liststr)
                     .map(self._to_list)
                     .map(np.array)
                 )
@@ -408,7 +365,7 @@ class _Table:
             for col in labels:
                 self._data[col] = (
                     self._data[col]
-                    .map(self._replace_numpystr)
+                    .map(self._numpystr_to_liststr)
                     .map(self._to_list)
                     .map(np.array)
                 )
@@ -429,6 +386,47 @@ class _Table:
             for col in labels:
                 self._data[col] = self._data[col].map(self._to_dict)
 
+    def save(self, savepath):
+        self._data.to_csv(savepath)
+
+    def save_dtypes(self, savepath):
+        index = self._data.loc[self._current_index].index
+        dtypes = {}
+        for i, v in zip(index, self._data.loc[self._current_index]):
+            dtypes[i] = type(v)
+        with open(savepath, "wb") as f:
+            pickle.dump(dtypes, f)
+
+    @classmethod
+    def load(cls, experiment_id, benchmark_id, autosave, save_dir):
+        dirs = _Dir(
+            experiment_id=experiment_id,
+            benchmark_id=benchmark_id,
+            autosave=autosave,
+            save_dir=save_dir,
+        )
+        table = _Table(experiment_id=experiment_id, benchmark_id=benchmark_id)
+        table.data = pd.read_csv(f"{dirs.table_dir}/table.csv", index_col=0)
+        dtypes = _Table.load_dtypes(
+            experiment_id=experiment_id,
+            benchmark_id=benchmark_id,
+            autosave=autosave,
+            save_dir=save_dir,
+        )
+        table.as_finetype(dtypes=dtypes)
+        return table
+
+    @classmethod
+    def load_dtypes(cls, experiment_id, benchmark_id, autosave, save_dir):
+        dirs = _Dir(
+            experiment_id=experiment_id,
+            benchmark_id=benchmark_id,
+            autosave=autosave,
+            save_dir=save_dir,
+        )
+        with open(f"{dirs.experiment_dir}/dtypes.pkl", "rb") as f:
+            return pickle.load(f)
+
     @staticmethod
     def _to_list(x):
         try:
@@ -445,7 +443,7 @@ class _Table:
             return x
 
     @staticmethod
-    def _replace_numpystr(x):
+    def _numpystr_to_liststr(x):
         try:
             return re.sub(
                 r"\n+",
@@ -466,6 +464,59 @@ class _Table:
             )
         except TypeError:
             return x
+
+
+class _Artifact:
+    def __init__(self):
+        self._data = {}
+        self._timestamp = {}
+
+    @property
+    def data(self):
+        return self._data
+
+    @data.setter
+    def data(self, data):
+        self._data = data
+
+    @property
+    def timestamp(self):
+        return self._timestamp
+
+    @timestamp.setter
+    def timestamp(self, timestamp):
+        self._timestamp = timestamp
+
+    @classmethod
+    def load(cls, experiment_id, benchmark_id, autosave, save_dir):
+        dirs = _Dir(
+            experiment_id=experiment_id,
+            benchmark_id=benchmark_id,
+            autosave=autosave,
+            save_dir=save_dir,
+        )
+        artifact = _Artifact()
+
+        dir_names = os.listdir(dirs.artifact_dir)
+        for d in dir_names:
+            load_dir = f"{dirs.artifact_dir}/{d}"
+            if os.path.exists(f"{load_dir}/artifact.pkl"):
+                with open(f"{load_dir}/artifact.pkl", "rb") as f:
+                    artifact._data[d] = pickle.load(f)
+            if os.path.exists(f"{load_dir}/timestamp.txt"):
+                with open(f"{load_dir}/timestamp.txt", "r") as f:
+                    artifact._timestamp[d] = pd.Timestamp(f.read())
+        return artifact
+
+    def save(self, savepath):
+        for run_id, v in self._data.items():
+            save_dir = f"{savepath}/{run_id}"
+            with open(f"{save_dir}/artifact.pkl", "wb") as f:
+                pickle.dump(v, f)
+
+            timestamp = self._timestamp[run_id]
+            with open(f"{save_dir}/timestamp.txt", "w") as f:
+                f.write(str(timestamp))
 
 
 class _Dir:
@@ -511,7 +562,7 @@ class _Dir:
     def artifact_dir(self) -> str:
         return self._artifact_dir
 
-    def make_dirs(self, experiment_id=None, benchmark_id=None):
+    def make_dirs(self, run_id, experiment_id=None, benchmark_id=None):
         self._table_dir = self._rename_dir(
             kind="tables", experiment_id=experiment_id, benchmark_id=benchmark_id
         )
@@ -519,7 +570,7 @@ class _Dir:
             kind="artifact", experiment_id=experiment_id, benchmark_id=benchmark_id
         )
         os.makedirs(self._table_dir, exist_ok=True)
-        os.makedirs(self._artifact_dir, exist_ok=True)
+        os.makedirs(f"{self._artifact_dir}/{run_id}", exist_ok=True)
 
     def _rename_dir(
         self,
