@@ -31,10 +31,12 @@ def get_dimod_sampleset_items(experiment: 'Experiment', response: 'SampleSet') -
         energies.std(),
         list(num_occurrences),
         np.nan,
-        np.nan,
-        response.info["sampling_time"],
-        response.info["execution_time"]
+        np.nan
     ]
+    if "sampling_time" in response.info.keys():
+        values.append(response.info["sampling_time"])
+    if "execution_time" in response.info.keys():
+        values.append(response.info["execution_time"])
     return columns, values
 
 
