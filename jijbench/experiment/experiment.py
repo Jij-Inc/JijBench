@@ -162,6 +162,20 @@ class Experiment:
             self._table.data.at[index, key] = value
             self._table.data[key] = self._table.data[key].astype(value_type)
 
+    def store_as_artifact(
+        self,
+        artifact,
+        timestamp: Optional[Union[pd.Timestamp, datetime.datetime]] = None,
+    ):
+
+        if timestamp is None:
+            timestamp = pd.Timestamp.now()
+        else:
+            timestamp = pd.Timestamp(timestamp)
+
+        self._artifact.timestamp.update({self.run_id: timestamp})
+        self._artifact.data.update({self.run_id: artifact})
+
     def _reconstruct_record(self, record):
         new_record = {}
         for k, v in record.items():
@@ -176,20 +190,6 @@ class Experiment:
             else:
                 new_record[k] = v
         return new_record
-
-    def store_as_artifact(
-        self,
-        artifact,
-        timestamp: Optional[Union[pd.Timestamp, datetime.datetime]] = None,
-    ):
-
-        if timestamp is None:
-            timestamp = pd.Timestamp.now()
-        else:
-            timestamp = pd.Timestamp(timestamp)
-
-        self._artifact.timestamp.update({self.run_id: timestamp})
-        self._artifact.data.update({self.run_id: artifact})
 
     @classmethod
     def load(
@@ -277,12 +277,15 @@ class _Table:
         "{const_name}_violation_std": float,
     }
 
+    time_dtypes = {"sampling_time": float, "execution_time": float}
+
     _dtypes_names = [
         "id_dtypes",
         "energy_dtypes",
         "objective_dtypes",
         "num_dtypes",
         "violation_dtypes",
+        "time_dtypes"
     ]
 
     def __init__(self, experiment_id, benchmark_id):
@@ -330,6 +333,9 @@ class _Table:
 
     def get_violation_columns(self):
         return list(self.violation_dtypes.keys())
+
+    def get_time_columns(self):
+        return list(self.time_dtypes.keys())
 
     def rename_violation_columns(self, const_name):
         columns = self.get_violation_columns()

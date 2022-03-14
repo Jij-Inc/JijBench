@@ -1,3 +1,4 @@
+from base64 import decode
 import os
 import shutil
 import jijbench as jb
@@ -219,7 +220,7 @@ def test_custome_dir_save():
             save_dir=custome_dir,
         )
         assert len(load_experiment.table) == row + 1
-    
+
     assert os.path.exists(custome_dir)
     shutil.rmtree(custome_dir)
 
@@ -259,7 +260,7 @@ def test_insert_iterobj_into_table():
 
     experiment = jb.Experiment(autosave=False)
 
-    with experiment.start():
+    with experiment:
         experiment.table.dropna(axis=1, inplace=True)
         record = {
             "1d_list": [1],
@@ -286,7 +287,7 @@ def test_load_iterobj():
         experiment_id=experiment_id, benchmark_id=benchmark_id, autosave=True
     )
 
-    with experiment.start():
+    with experiment:
         experiment.table.dropna(axis=1, inplace=True)
         record = {
             "1d_list": [1],
@@ -307,3 +308,42 @@ def test_load_iterobj():
     assert type(experiment.table.loc[0, "1d_array"]) == np.ndarray
     assert type(experiment.table.loc[0, "nd_array"]) == np.ndarray
     assert type(experiment.table.loc[0, "dict"]) == dict
+
+
+def test_sampling_and_execution_time():
+    import numpy as np
+    
+    sampler = oj.SASampler()
+    experiment = jb.Experiment(autosave=False)
+
+    with experiment.start():
+        response = sampler.sample_qubo({(0, 1): 1})
+        experiment.store({"result": response})
+
+    experiment.table.dropna(axis="columns", inplace=True)
+
+    assert type(experiment.table.sampling_time[0]) == np.float64
+    assert type(experiment.table.execution_time[0]) == np.float64
+    
+    d = jm.Placeholder("d")
+    x = jm.Binary("x", shape=(2,))
+    problem = jm.Problem("sample")
+    problem += x[0] + d * x[1]
+    problem += jm.Constraint("onehot", x[:] == 1)
+
+    ph_value = {"d": 2}
+    pyq_obj = problem.to_pyqubo(ph_value=ph_value)
+    pyq_model = pyq_obj.compile()
+
+    sampler = oj.SASampler()
+    experiment = jb.Experiment(autosave=False)
+
+    with experiment.start():
+        bqm = pyq_model.to_bqm(feed_dict={"onehot": 1})
+        response = sampler.sample(bqm)
+        decoded = problem.decode(response, ph_value=ph_value)
+        experiment.store({"result": decoded})
+
+    assert np.isnan(experiment.table.sampling_time[0])
+    assert np.isnan(experiment.table.execution_time[0])
+    
