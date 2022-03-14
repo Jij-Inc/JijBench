@@ -21,7 +21,9 @@ def get_dimod_sampleset_items(experiment: 'Experiment', response: 'SampleSet') -
     """
     energies: np.ndarray = response.record.energy
     num_occurrences = response.record.num_occurrences
-    columns = experiment._table.get_energy_columns() + experiment._table.get_num_columns()
+    columns = experiment._table.get_energy_columns()
+    columns += experiment._table.get_num_columns()
+    columns += experiment._table.get_time_columns()
     values = [
         list(energies),
         energies.min(),
@@ -30,6 +32,8 @@ def get_dimod_sampleset_items(experiment: 'Experiment', response: 'SampleSet') -
         list(num_occurrences),
         np.nan,
         np.nan,
+        response.info["sampling_time"],
+        response.info["execution_time"]
     ]
     return columns, values
 
