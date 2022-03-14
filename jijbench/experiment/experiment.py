@@ -106,7 +106,7 @@ class Experiment:
             results (Dict[str, Any]): ex. {"num_reads": 10, "results": sampleset}
             table_keys (list[str], optional): _description_. Defaults to None.
             artifact_keys (list[str], optional): _description_. Defaults to None.
-            next_run (bool, optional): _description_. Defaults to True.
+            timestamp: Optional[Union[pd.Timestamp, datetime.datetime]]: timestamp. Defaults to None (current time is recorded).
         """
 
         if timestamp is None:
@@ -177,6 +177,11 @@ class Experiment:
         self._artifact.data.update({self.run_id: artifact})
 
     def _reconstruct_record(self, record):
+        """if record includes `dimod.SampleSet` or `DecodedSamples`, reconstruct record to a new one.
+
+        Args:
+            record (dict): record
+        """
         new_record = {}
         for k, v in record.items():
             if isinstance(v, dimod.SampleSet):
