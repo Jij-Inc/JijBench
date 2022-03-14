@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from jijbench import problems
 from jijbench.experiment.experiment import Experiment
 
+
 class Evaluator:
     def __init__(self, experiment: Experiment):
         self.experiment = experiment

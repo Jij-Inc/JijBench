@@ -25,11 +25,11 @@ def get_dimod_sampleset_items(experiment: 'Experiment', response: 'SampleSet') -
     columns += experiment._table.get_num_columns()
     columns += experiment._table.get_time_columns()
     values = [
-        list(energies),
+        energies,
         energies.min(),
         energies.mean(),
         energies.std(),
-        list(num_occurrences),
+        num_occurrences,
         np.nan,
         np.nan
     ]
@@ -66,11 +66,11 @@ def get_jm_problem_decodedsamples_items(experiment: 'Experiment', decoded: 'Deco
     columns += experiment._table.get_objective_columns()
     columns += experiment._table.get_num_columns()
     values = [
-        list(energies),
+        energies,
         energies.min(),
         energies.mean(),
         energies.std(),
-        list(objectives),
+        objectives,
         objectives.min(),
         objectives.mean(),
         objectives.std(),

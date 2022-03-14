@@ -322,7 +322,6 @@ def test_sampling_and_execution_time():
         experiment.store({"result": response})
 
     experiment.table.dropna(axis="columns", inplace=True)
-    print(experiment.table.iloc[:, -5:])
     
     assert type(experiment.table.sampling_time[0]) == np.float64
     assert type(experiment.table.execution_time[0]) == np.float64

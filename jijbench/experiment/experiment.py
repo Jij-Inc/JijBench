@@ -32,18 +32,12 @@ class Experiment:
         self.autosave = autosave
         self.save_dir = save_dir
 
-        if benchmark_id is None:
-            benchmark_id = uuid.uuid4()
-        if experiment_id is None:
-            experiment_id = uuid.uuid4()
-
-        self._table = _Table(
-            experiment_id=str(experiment_id), benchmark_id=str(benchmark_id)
-        )
+        self._id = _ID(experiment_id=experiment_id, benchmark_id=benchmark_id)
+        self._table = _Table()
         self._artifact = _Artifact()
         self._dirs = _Dir(
-            experiment_id=str(experiment_id),
-            benchmark_id=str(benchmark_id),
+            experiment_id=self._id.experiment_id,
+            benchmark_id=self._id.benchmark_id,
             autosave=autosave,
             save_dir=save_dir,
         )
@@ -53,15 +47,15 @@ class Experiment:
 
     @property
     def run_id(self):
-        return self._table.run_id
+        return self._id.run_id
 
     @property
     def experiment_id(self):
-        return self._table.experiment_id
+        return self._id.experiment_id
 
     @property
     def benchmark_id(self):
-        return self._table.benchmark_id
+        return self._id.benchmark_id
 
     @property
     def table(self):
@@ -80,7 +74,7 @@ class Experiment:
         pass
 
     def start(self):
-        self._table.run_id = str(uuid.uuid4())
+        self._id.run_id = str(uuid.uuid4())
         self._dirs.make_dirs(self.run_id)
         return self
 
@@ -246,6 +240,43 @@ class Experiment:
                 f.write(str(timestamp))
 
 
+class _ID:
+    """ID template"""
+
+    def __init__(self, experiment_id=None, benchmark_id=None):
+        if experiment_id is None:
+            experiment_id = str(uuid.uuid4())
+        if benchmark_id is None:
+            benchmark_id = str(uuid.uuid4())
+        self._run_id = None
+        self._experiment_id = experiment_id
+        self._benchmark_id = benchmark_id
+
+    @property
+    def run_id(self):
+        return self._run_id
+
+    @run_id.setter
+    def run_id(self, run_id):
+        self._run_id = run_id
+
+    @property
+    def experiment_id(self):
+        return self._experiment_id
+
+    @experiment_id.setter
+    def experiment_id(self, experiment_id):
+        self._experiment_id = experiment_id
+
+    @property
+    def benchmark_id(self):
+        return self._benchmark_id
+
+    @benchmark_id.setter
+    def benchmark_id(self, benchmark_id):
+        self._benchmark_id = benchmark_id
+
+
 class _Table:
     """Table template"""
 
@@ -290,16 +321,13 @@ class _Table:
         "objective_dtypes",
         "num_dtypes",
         "violation_dtypes",
-        "time_dtypes"
+        "time_dtypes",
     ]
 
-    def __init__(self, experiment_id, benchmark_id):
+    def __init__(self):
         columns = self.get_default_columns()
         self._data = pd.DataFrame(columns=columns)
         self._current_index = 0
-
-        self.experiment_id = experiment_id
-        self.benchmark_id = benchmark_id
 
     @property
     def data(self):
@@ -416,7 +444,7 @@ class _Table:
             autosave=autosave,
             save_dir=save_dir,
         )
-        table = _Table(experiment_id=experiment_id, benchmark_id=benchmark_id)
+        table = _Table()
         table.data = pd.read_csv(f"{dirs.table_dir}/table.csv", index_col=0)
         dtypes = _Table.load_dtypes(
             experiment_id=experiment_id,

@@ -16,6 +16,10 @@ class Evaluator:
     def aggregate(self):
         pass
     
+    def tts(self, criteria):
+        pass
     
-
+    def success_probability(self, criteria):
+        pass
+    
     
