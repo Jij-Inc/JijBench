@@ -1,4 +1,3 @@
-from base64 import decode
 import os
 import shutil
 import jijbench as jb
@@ -14,6 +13,7 @@ def pre_post_process():
     # postprocess
     if os.path.exists("./.jb_results"):
         shutil.rmtree("./.jb_results")
+        pass
 
 
 def test_run_id():
@@ -159,7 +159,7 @@ def test_file_save_load():
     experiment = jb.Experiment(autosave=False)
 
     for _ in range(3):
-        with experiment.start():
+        with experiment:
             bqm = pyq_model.to_bqm()
             response = sampler.sample(bqm)
             decoded = problem.decode(response, ph_value=ph_value)
@@ -193,7 +193,7 @@ def test_auto_save():
             response = sampler.sample_qubo({(0, 1): 1})
             experiment.store({"result": response})
         assert os.path.exists(
-            experiment._dirs.artifact_dir + f"/{experiment.run_id}/timestamp.txt"
+            experiment._dir.artifact_dir + f"/{experiment.run_id}/timestamp.txt"
         )
         load_experiment = jb.Experiment.load(
             experiment_id=experiment.experiment_id, benchmark_id=experiment.benchmark_id
@@ -211,7 +211,7 @@ def test_custome_dir_save():
             response = sampler.sample_qubo({(0, 1): 1})
             experiment.store({"result": response})
         assert os.path.exists(
-            experiment._dirs.artifact_dir + f"/{experiment.run_id}/timestamp.txt"
+            experiment._dir.artifact_dir + f"/{experiment.run_id}/timestamp.txt"
         )
         # print(experiment.run_id)
         load_experiment = jb.Experiment.load(
@@ -321,7 +321,7 @@ def test_sampling_and_execution_time():
         experiment.store({"result": response})
 
     experiment.table.dropna(axis="columns", inplace=True)
-
+    
     assert type(experiment.table.sampling_time[0]) == np.float64
     assert type(experiment.table.execution_time[0]) == np.float64
     
