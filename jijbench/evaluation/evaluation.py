@@ -1,10 +1,10 @@
 import numpy as np
 import pandas as pd
-from jijbench.evaluation import Evaluator
+from jijbench.experiment import Experiment
 
 
 class Evaluator:
-    def __init__(self, experiment: jb.Experiment):
+    def __init__(self, experiment: Experiment):
         self.experiment = experiment
 
     @property
