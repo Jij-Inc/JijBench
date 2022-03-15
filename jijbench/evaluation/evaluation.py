@@ -1,6 +1,6 @@
-import jijbench as jb
 import numpy as np
 import pandas as pd
+from jijbench.evaluation import Evaluator
 
 
 class Evaluator:
@@ -33,20 +33,14 @@ class Evaluator:
 
     def calc_typical_metircs(self, opt_value=None, pr=0.99, expand=True):
         metrics = pd.DataFrame()
-        metrics["success_probability"] = self.ps(
-            opt_value=opt_value, expand=expand
-        )
+        metrics["success_probability"] = self.ps(opt_value=opt_value, expand=expand)
         metrics["feasible_rate"] = self.fr(expand=expand)
         metrics["residual_energy"] = self.re(opt_value=opt_value, expand=expand)
         metrics["TTS(optimal)"] = self.tts(
             opt_value=opt_value, pr=pr, solution="optimal", expand=expand
         )
-        metrics["TTS(feasible)"] = self.tts(
-            pr=pr, solution="feasible", expand=expand
-        )
-        metrics["TTS(derived)"] = self.tts(
-            pr=pr, solution="derived", expand=expand
-        )
+        metrics["TTS(feasible)"] = self.tts(pr=pr, solution="feasible", expand=expand)
+        metrics["TTS(derived)"] = self.tts(pr=pr, solution="derived", expand=expand)
         return metrics
 
     def apply(self, func, column, expand=True, axis=0):
