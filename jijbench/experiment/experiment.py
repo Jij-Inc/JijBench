@@ -35,7 +35,7 @@ class Experiment:
         self._id = _ID(experiment_id=experiment_id, benchmark_id=benchmark_id)
         self._table = _Table()
         self._artifact = _Artifact()
-        self._dirs = _Dir(
+        self._dir = _Dir(
             experiment_id=self._id.experiment_id,
             benchmark_id=self._id.benchmark_id,
             autosave=autosave,
@@ -75,16 +75,16 @@ class Experiment:
 
     def start(self):
         self._id.run_id = str(uuid.uuid4())
-        self._dirs.make_dirs(self.run_id)
+        self._dir.make_dirs(self.run_id)
         return self
 
     def close(self):
         if self.autosave:
-            record = self._table.data.loc[self._table.current_index].dropna().to_dict()
+            record = self._table.data.loc[self._table.current_index].to_dict()
             self.log_table(record)
             self.log_artifact()
 
-        self._table.save_dtypes(f"{self._dirs.experiment_dir}/dtypes.pkl")
+        self._table.save_dtypes(f"{self._dir.experiment_dir}/dtypes.pkl")
         self._table.current_index += 1
 
     def store(
@@ -176,16 +176,27 @@ class Experiment:
         Args:
             record (dict): record
         """
+        def _update_record():
+            if isinstance(new_v, list):
+                new_record[new_k] = new_v
+            elif isinstance(new_v, np.ndarray):
+                new_record[new_k] = new_v
+            elif isinstance(new_v, dict):
+                new_record[new_k] = new_v
+            else:
+                if not np.isnan(new_v):
+                    new_record[new_k] = new_v
+        
         new_record = {}
         for k, v in record.items():
             if isinstance(v, dimod.SampleSet):
                 columns, values = get_dimod_sampleset_items(self, v)
                 for new_k, new_v in zip(columns, values):
-                    new_record[new_k] = new_v
+                    _update_record()
             elif v.__class__.__name__ == "DecodedSamples":
                 columns, values = get_jm_problem_decodedsamples_items(self, v)
                 for new_k, new_v in zip(columns, values):
-                    new_record[new_k] = new_v
+                    _update_record()
             else:
                 new_record[k] = v
         return new_record
@@ -220,18 +231,18 @@ class Experiment:
         return experiment
 
     def save(self):
-        self._table.save(f"{self._dirs.table_dir}/table.csv")
-        self._artifact.save(self._dirs.artifact_dir)
+        self._table.save(f"{self._dir.table_dir}/table.csv")
+        self._artifact.save(self._dir.artifact_dir)
 
     def log_table(self, record: dict):
         df = pd.DataFrame({key: [value] for key, value in record.items()})
-        file_name = f"{self._dirs.table_dir}/table.csv"
+        file_name = f"{self._dir.table_dir}/table.csv"
         df.to_csv(file_name, mode="a", header=not os.path.exists(file_name))
 
     def log_artifact(self):
         run_id = self.run_id
         if run_id in self._artifact.data.keys():
-            save_dir = f"{self._dirs.artifact_dir}/{run_id}"
+            save_dir = f"{self._dir.artifact_dir}/{run_id}"
             with open(f"{save_dir}/artifact.pkl", "wb") as f:
                 pickle.dump(self._artifact.data[run_id], f)
 
@@ -302,6 +313,8 @@ class _Table:
 
     num_dtypes = {
         "num_occurances": object,
+        "num_reads": int,
+        "num_sweeps": int,
         "num_feasible": int,
         "num_samples": int,
     }
@@ -438,14 +451,14 @@ class _Table:
 
     @classmethod
     def load(cls, experiment_id, benchmark_id, autosave, save_dir):
-        dirs = _Dir(
+        d = _Dir(
             experiment_id=experiment_id,
             benchmark_id=benchmark_id,
             autosave=autosave,
             save_dir=save_dir,
         )
         table = _Table()
-        table.data = pd.read_csv(f"{dirs.table_dir}/table.csv", index_col=0)
+        table.data = pd.read_csv(f"{d.table_dir}/table.csv", index_col=0)
         dtypes = _Table.load_dtypes(
             experiment_id=experiment_id,
             benchmark_id=benchmark_id,
@@ -457,13 +470,13 @@ class _Table:
 
     @classmethod
     def load_dtypes(cls, experiment_id, benchmark_id, autosave, save_dir):
-        dirs = _Dir(
+        d = _Dir(
             experiment_id=experiment_id,
             benchmark_id=benchmark_id,
             autosave=autosave,
             save_dir=save_dir,
         )
-        with open(f"{dirs.experiment_dir}/dtypes.pkl", "rb") as f:
+        with open(f"{d.experiment_dir}/dtypes.pkl", "rb") as f:
             return pickle.load(f)
 
     @staticmethod
@@ -528,7 +541,7 @@ class _Artifact:
 
     @classmethod
     def load(cls, experiment_id, benchmark_id, autosave, save_dir):
-        dirs = _Dir(
+        d = _Dir(
             experiment_id=experiment_id,
             benchmark_id=benchmark_id,
             autosave=autosave,
@@ -536,15 +549,15 @@ class _Artifact:
         )
         artifact = _Artifact()
 
-        dir_names = os.listdir(dirs.artifact_dir)
-        for d in dir_names:
-            load_dir = f"{dirs.artifact_dir}/{d}"
+        dir_names = os.listdir(d.artifact_dir)
+        for dn in dir_names:
+            load_dir = f"{d.artifact_dir}/{dn}"
             if os.path.exists(f"{load_dir}/artifact.pkl"):
                 with open(f"{load_dir}/artifact.pkl", "rb") as f:
-                    artifact._data[d] = pickle.load(f)
+                    artifact._data[dn] = pickle.load(f)
             if os.path.exists(f"{load_dir}/timestamp.txt"):
                 with open(f"{load_dir}/timestamp.txt", "r") as f:
-                    artifact._timestamp[d] = pd.Timestamp(f.read())
+                    artifact._timestamp[dn] = pd.Timestamp(f.read())
         return artifact
 
     def save(self, savepath):

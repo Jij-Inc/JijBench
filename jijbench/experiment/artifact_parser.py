@@ -7,7 +7,9 @@ if TYPE_CHECKING:
     from jijmodeling import DecodedSamples
 
 
-def get_dimod_sampleset_items(experiment: 'Experiment', response: 'SampleSet') -> Tuple[List[str], List]:
+def get_dimod_sampleset_items(
+    experiment: "Experiment", response: "SampleSet"
+) -> Tuple[List[str], List]:
     """extract table data from dimod.SampleSet
 
     This method is called in `Experiment._reconstruct_record`.
@@ -19,29 +21,50 @@ def get_dimod_sampleset_items(experiment: 'Experiment', response: 'SampleSet') -
     Returns:
         Tuple[List[str], List]: (columns, values)
     """
+    table = experiment._table
     energies: np.ndarray = response.record.energy
     num_occurrences = response.record.num_occurrences
-    columns = experiment._table.get_energy_columns()
-    columns += experiment._table.get_num_columns()
-    columns += experiment._table.get_time_columns()
+    num_reads = len(energies)
+    if "schedule" in response.info:
+        num_sweeps = response.info["schedule"]["num_sweeps"]
+    else:
+        num_sweeps = np.nan
+    num_feasible = np.nan
+    num_samples = np.nan
+
+    if "sampling_time" in response.info:
+        sampling_time = response.info["sampling_time"]
+    else:
+        sampling_time = np.nan
+    if "execution_time" in response.info.keys():
+        execution_time = response.info["execution_time"]
+    else:
+        execution_time = np.nan
+
+    columns = table.get_energy_columns()
+    columns += table.get_num_columns()
+    columns += table.get_time_columns()
     values = [
         energies,
         energies.min(),
         energies.mean(),
         energies.std(),
         num_occurrences,
-        np.nan,
-        np.nan
+        num_reads,
+        num_sweeps,
+        num_feasible,
+        num_samples,
+        sampling_time,
+        execution_time,
     ]
-    if "sampling_time" in response.info.keys():
-        values.append(response.info["sampling_time"])
-    if "execution_time" in response.info.keys():
-        values.append(response.info["execution_time"])
+
     return columns, values
 
 
-def get_jm_problem_decodedsamples_items(experiment: 'Experiment', decoded: 'DecodedSamples') -> Tuple[List[str], List]:
-    """extract table data from jijmodeling.DecodedSamples 
+def get_jm_problem_decodedsamples_items(
+    experiment: "Experiment", decoded: "DecodedSamples"
+) -> Tuple[List[str], List]:
+    """extract table data from jijmodeling.DecodedSamples
 
     This method is called in `Experiment._reconstruct_record`.
 
@@ -53,8 +76,14 @@ def get_jm_problem_decodedsamples_items(experiment: 'Experiment', decoded: 'Deco
         Tuple[List[str], List]: (columns, values)
     """
 
+    table = experiment._table
     energies: np.ndarray = decoded.energies
     objectives: np.ndarray = decoded.objectives
+    num_occurances = np.nan
+    num_reads = np.nan
+    num_sweeps = np.nan
+    num_feasible = len(decoded.feasibles())
+    num_samples = len(decoded.data)
     constraint_violations = {}
     for violation in decoded.constraint_violations:
         for const_name, v in violation.items():
@@ -62,9 +91,11 @@ def get_jm_problem_decodedsamples_items(experiment: 'Experiment', decoded: 'Deco
                 constraint_violations[const_name].append(v)
             else:
                 constraint_violations[const_name] = [v]
-    columns = experiment._table.get_energy_columns()
-    columns += experiment._table.get_objective_columns()
-    columns += experiment._table.get_num_columns()
+
+    columns = table.get_energy_columns()
+    columns += table.get_objective_columns()
+    columns += table.get_num_columns()
+
     values = [
         energies,
         energies.min(),
@@ -74,14 +105,16 @@ def get_jm_problem_decodedsamples_items(experiment: 'Experiment', decoded: 'Deco
         objectives.min(),
         objectives.mean(),
         objectives.std(),
-        np.nan,
-        len(decoded.feasibles()),
-        len(decoded.data),
+        num_occurances,
+        num_reads,
+        num_sweeps,
+        num_feasible,
+        num_samples,
     ]
-    
+
     for const_name, v in constraint_violations.items():
         v = np.array(v)
-        columns += experiment._table.rename_violation_columns(const_name)
+        columns += table.rename_violation_columns(const_name)
         values += [
             list(v),
             v.min(),

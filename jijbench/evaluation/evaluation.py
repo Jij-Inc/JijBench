@@ -31,7 +31,7 @@ class Evaluator:
     def re(self):
         return self.residual_energy
 
-    def calc_typical_metircs(self, opt_value=None, pr=0.99, expand=True):
+    def calc_typical_metrics(self, opt_value=None, pr=0.99, expand=True):
         metrics = pd.DataFrame()
         metrics["success_probability"] = self.ps(opt_value=opt_value, expand=expand)
         metrics["feasible_rate"] = self.fr(expand=expand)
@@ -43,7 +43,8 @@ class Evaluator:
         metrics["TTS(derived)"] = self.tts(pr=pr, solution="derived", expand=expand)
         return metrics
 
-    def apply(self, func, column, expand=True, axis=0):
+    def apply(self, func, column, expand=True, axis=1, **kwargs):
+        func = self.make_scorer(func, **kwargs)
         metrics = self.table.apply(func, axis=axis)
         if expand:
             self.table[column] = metrics
@@ -102,23 +103,24 @@ class _Scorer:
 
 class _Metrics:
     def time_to_solution(x, opt_value=None, pr=0.99, solution="optimal"):
-        if solution == "optiaml":
-            ps = _Metrics.success_probability(x, opt_value) + 1e-16
+        if solution == "optimal":
+            ps = _Metrics.success_probability(x, opt_value)
         elif solution == "feasible":
-            ps = _Metrics.feasible_rate(x) + 1e-16
+            ps = _Metrics.feasible_rate(x)
         elif solution == "derived":
-            ps = _Metrics.success_probability(x, x.energy_min) + 1e-16
+            ps = _Metrics.success_probability(x, x.energy_min)
         else:
             ps = np.nan
         return (
             np.log(1 - pr) / np.log(1 - ps) * x.execution_time
-            if ps < pr
-            else x.execution_time
         )
 
-    def success_probability(x, opt_value):
-        return (x.energy <= opt_value).sum() / len(x.energy)
-
+    def success_probability(x, opt_value=None):
+        if np.isnan(opt_value):
+            return np.nan
+        else:
+            return (x.energy <= opt_value).sum() / len(x.energy)
+        
     def feasible_rate(x):
         return x.num_feasible / x.num_samples
 

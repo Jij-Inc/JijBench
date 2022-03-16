@@ -82,7 +82,7 @@ def test_matrics_by_jijmodeling():
     assert "residual_energy" in columns
 
 
-def test_typical_metircs():
+def test_typical_metrics():
     sampler = oj.SASampler(num_reads=10)
     experiment = jb.Experiment(autosave=False)
     for _ in range(3):
@@ -94,7 +94,7 @@ def test_typical_metircs():
     opt_value = 1.0
     pr = 0.99
     expand = True
-    metrics = evaluator.calc_typical_metircs(opt_value=opt_value, pr=pr, expand=expand)
+    metrics = evaluator.calc_typical_metrics(opt_value=opt_value, pr=pr, expand=expand)
 
     table_columns = evaluator.table.columns
     metrics_columns = metrics.columns
