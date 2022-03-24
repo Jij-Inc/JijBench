@@ -7,12 +7,12 @@ if TYPE_CHECKING:
     from jijmodeling import DecodedSamples
 
 
-def get_dimod_sampleset_items(
+def _parse_dimod_sampleset(
     experiment: "Experiment", response: "SampleSet"
 ) -> Tuple[List[str], List]:
     """extract table data from dimod.SampleSet
 
-    This method is called in `Experiment._reconstruct_record`.
+    This method is called in `Experiment._parse_record`.
 
     Args:
         experiment (Experiment): experiment object
@@ -61,12 +61,12 @@ def get_dimod_sampleset_items(
     return columns, values
 
 
-def get_jm_problem_decodedsamples_items(
+def _parse_jm_problem_decodedsamples(
     experiment: "Experiment", decoded: "DecodedSamples"
 ) -> Tuple[List[str], List]:
     """extract table data from jijmodeling.DecodedSamples
 
-    This method is called in `Experiment._reconstruct_record`.
+    This method is called in `Experiment._prase_record`.
 
     Args:
         experiment (Experiment): experiment object

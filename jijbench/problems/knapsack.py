@@ -1,15 +1,17 @@
 import jijmodeling as jm
 from jijbench.problems.instance_loader import JijBenchInstance
 
+
 def knapsack_instance() -> JijBenchInstance:
     return JijBenchInstance(problem_name="knapsack")
+
 
 def knapsack():
     w = jm.Placeholder("weights", dim=1)
     v = jm.Placeholder("values", dim=1)
     n = jm.Placeholder("num_items")
     c = jm.Placeholder("capacity")
-    x = jm.Binary("x", shape=(n, ))
+    x = jm.Binary("x", shape=(n,))
 
     # i: itemの添字
     i = jm.Element("i", n)

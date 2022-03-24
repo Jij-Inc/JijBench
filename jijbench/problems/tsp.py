@@ -1,15 +1,17 @@
 import jijmodeling as jm
 from jijbench.problems.instance_loader import JijBenchInstance
 
+
 def tsp_instance() -> JijBenchInstance:
     return JijBenchInstance(problem_name="travelling_salesman")
 
+
 def travelling_salesman():
     # 問題
-    problem = jm.Problem('travelling_salesman')
+    problem = jm.Problem("travelling_salesman")
     dist = jm.Placeholder("dist", dim=2)
     N = jm.Placeholder("N")
-    
+
     x = jm.Binary("x", shape=(N, N))
     i = jm.Element("i", N)
     j = jm.Element("j", N)
@@ -23,10 +25,22 @@ def travelling_salesman():
 
     # const1: onehot for time
     const1 = x[t, :]
-    problem += jm.Constraint("onehot_time", const1 == 1, forall=[t, ])
+    problem += jm.Constraint(
+        "onehot_time",
+        const1 == 1,
+        forall=[
+            t,
+        ],
+    )
 
     # const2: onehot for location
     const2 = x[:, i]
-    problem += jm.Constraint("onehot_location", const2 == 1, forall=[i, ])
+    problem += jm.Constraint(
+        "onehot_location",
+        const2 == 1,
+        forall=[
+            i,
+        ],
+    )
 
     return problem
