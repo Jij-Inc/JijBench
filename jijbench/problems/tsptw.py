@@ -8,15 +8,15 @@ def tsptw_instance() -> JijBenchInstance:
 
 def travelling_salesman_with_time_windwos_problem():
     # 問題
-    problem = jm.Problem('travelling_salesman_with_time_windows')
+    problem = jm.Problem("travelling_salesman_with_time_windows")
 
     # 距離行列
     dist = jm.Placeholder("dist", dim=2)  # 距離行列
     N = jm.Placeholder("N")
-    e = jm.Placeholder("e", shape=(N, ))  # ready time
-    l = jm.Placeholder("l", shape=(N, ))  # due time
+    e = jm.Placeholder("e", shape=(N,))  # ready time
+    l = jm.Placeholder("l", shape=(N,))  # due time
     x = jm.Binary("x", shape=(N, N))
-    t = jm.LogEncIntArray("t", shape=(N, ), lower=e, upper=l)
+    t = jm.LogEncIntArray("t", shape=(N,), lower=e, upper=l)
 
     i = jm.Element("i", N)
     j = jm.Element("j", N)
@@ -28,11 +28,23 @@ def travelling_salesman_with_time_windwos_problem():
 
     # Const1: 都市iから出る辺は1つ
     term1 = jm.Sum((j, j != i), x[i, j])
-    problem += jm.Constraint("onehot_constraint1", term1 == 1, forall=[i, ])
+    problem += jm.Constraint(
+        "onehot_constraint1",
+        term1 == 1,
+        forall=[
+            i,
+        ],
+    )
 
     # Const2: 都市iに入る辺は1つ
     term2 = jm.Sum((j, j != i), x[j, i])
-    problem += jm.Constraint("onehot_constraint2", term2 == 1, forall=[i, ])
+    problem += jm.Constraint(
+        "onehot_constraint2",
+        term2 == 1,
+        forall=[
+            i,
+        ],
+    )
 
     # Const3: Time Windows制約
     term3 = t[i] + dist[i, j] - t[j]

@@ -1,8 +1,10 @@
 import jijmodeling as jm
 from jijbench.problems.instance_loader import JijBenchInstance
 
+
 def bin_packing_instance() -> JijBenchInstance:
     return JijBenchInstance(problem_name="bin_packing")
+
 
 def bin_packing():
     w = jm.Placeholder("w", dim=1)

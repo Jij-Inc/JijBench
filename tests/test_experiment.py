@@ -22,7 +22,7 @@ def test_run_id():
     row_num = 2
 
     for _ in range(row_num):
-        with experiment.start():
+        with experiment:
             experiment.store_as_table({"num_reads": 10})
             experiment.store_as_artifact({"dictobj": {"value": 10}})
 
@@ -43,7 +43,7 @@ def test_store():
     row_num = 2
 
     for _ in range(row_num):
-        with experiment.start():
+        with experiment:
             experiment.store({"num_reads": 10, "dictobj": {"value": 10}})
 
     cols = experiment.table.columns
@@ -60,7 +60,7 @@ def test_openjij():
     sampler = oj.SASampler()
     experiment = jb.Experiment(autosave=False)
 
-    with experiment.start():
+    with experiment:
         response = sampler.sample_qubo({(0, 1): 1})
         experiment.store({"result": response})
 
@@ -76,7 +76,7 @@ def test_openjij_iteration():
     experiment = jb.Experiment(autosave=False)
 
     for _ in range(3):
-        with experiment.start():
+        with experiment:
             response = sampler.sample_qubo({(0, 1): 1})
             experiment.store({"result": response})
 
@@ -101,7 +101,7 @@ def test_jijmodeling():
     sampler = oj.SASampler()
     experiment = jb.Experiment(autosave=False)
 
-    with experiment.start():
+    with experiment:
         bqm = pyq_model.to_bqm(feed_dict={"onehot": 1})
         response = sampler.sample(bqm)
         decoded = problem.decode(response, ph_value=ph_value)
@@ -131,7 +131,7 @@ def test_jijmodeling_iteration():
     experiment = jb.Experiment(autosave=False)
 
     for _ in range(3):
-        with experiment.start():
+        with experiment:
             bqm = pyq_model.to_bqm(feed_dict={"onehot": 1, "onehot2": 2})
             response = sampler.sample(bqm)
             decoded = problem.decode(response, ph_value=ph_value)
@@ -189,7 +189,7 @@ def test_auto_save():
     sampler = oj.SASampler()
     num_rows = 3
     for row in range(num_rows):
-        with experiment.start():
+        with experiment:
             response = sampler.sample_qubo({(0, 1): 1})
             experiment.store({"result": response})
         assert os.path.exists(
@@ -239,7 +239,7 @@ def test_store_same_timestamp():
     experiment = jb.Experiment(autosave=False)
 
     for _ in range(3):
-        with experiment.start():
+        with experiment:
             bqm = pyq_model.to_bqm()
             response = sampler.sample(bqm)
             decoded = problem.decode(response, ph_value=ph_value)
@@ -301,7 +301,7 @@ def test_load_iterobj():
     experiment.save()
     del experiment
 
-    experiment = jb.Experiment.load(experiment_id, benchmark_id)
+    experiment = jb.Experiment.load(experiment_id=experiment_id, benchmark_id=benchmark_id)
 
     assert type(experiment.table.loc[0, "1d_list"]) == list
     assert type(experiment.table.loc[0, "2d_list"]) == list
@@ -316,7 +316,7 @@ def test_sampling_and_execution_time():
     sampler = oj.SASampler()
     experiment = jb.Experiment(autosave=False)
 
-    with experiment.start():
+    with experiment:
         response = sampler.sample_qubo({(0, 1): 1})
         experiment.store({"result": response})
 
