@@ -1,7 +1,7 @@
 import os
 import pickle
 import pandas as pd
-from jijbench.objects.dir import Dir
+from jijbench.components.dir import Dir
 
 
 class Artifact:

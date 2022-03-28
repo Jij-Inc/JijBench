@@ -1,14 +1,10 @@
 import jijmodeling as jm
-from jijbench.problems.instance_loader import JijBenchInstance
+from .target import JijModelingTarget, DefaultInstanceMixin
 
 
-def tsp_instance() -> JijBenchInstance:
-    return JijBenchInstance(problem_name="travelling_salesman")
-
-
-def travelling_salesman():
+def _problem(problem_name):
     # 問題
-    problem = jm.Problem("travelling_salesman")
+    problem = jm.Problem(problem_name)
     dist = jm.Placeholder("dist", dim=2)
     N = jm.Placeholder("N")
 
@@ -44,3 +40,11 @@ def travelling_salesman():
     )
 
     return problem
+
+
+class TSP(JijModelingTarget, DefaultInstanceMixin):
+    problem_name = "travelling_salesman"
+    problem = _problem(problem_name)
+
+    def __init__(self):
+        super().__init__(self.problem, self.small_instance()[0])

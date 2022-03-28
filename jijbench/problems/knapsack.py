@@ -1,12 +1,8 @@
 import jijmodeling as jm
-from jijbench.problems.instance_loader import JijBenchInstance
+from .target import JijModelingTarget, DefaultInstanceMixin
 
 
-def knapsack_instance() -> JijBenchInstance:
-    return JijBenchInstance(problem_name="knapsack")
-
-
-def knapsack():
+def _problem(problem_name):
     w = jm.Placeholder("weights", dim=1)
     v = jm.Placeholder("values", dim=1)
     n = jm.Placeholder("num_items")
@@ -16,7 +12,7 @@ def knapsack():
     # i: itemの添字
     i = jm.Element("i", n)
 
-    problem = jm.Problem("knapsack")
+    problem = jm.Problem(problem_name)
 
     # objective function
     obj = jm.Sum(i, v[i] * x[i])
@@ -27,3 +23,11 @@ def knapsack():
     problem += const
 
     return problem
+
+
+class Knapsack(JijModelingTarget, DefaultInstanceMixin):
+    problem_name = "knapsack"
+    problem = _problem(problem_name)
+
+    def __init__(self):
+        super().__init__(self.problem, self.small_instance()[0])

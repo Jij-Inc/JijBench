@@ -1,43 +1,35 @@
-from gettext import install
-from jijbench.problems.tsptw import (
-    travelling_salesman_with_time_windows,
-    tsptw_instance,
-)
-from jijbench.problems.tsp import travelling_salesman, tsp_instance
-from jijbench.problems.knapsack import knapsack, knapsack_instance
+from jijbench.problems import TSP, TSPTW, Knapsack
 
 
 def test_tsptw():
-    instance = tsptw_instance()
-    small_list = instance.small_list()
-    assert len(small_list) > 0
+    target = TSPTW()
+    
+    assert len(target.small_instance()) > 0
+    assert len(target.medium_instance()) > 0
 
-    medium_list = instance.medium_list()
-    assert len(medium_list) > 0
-
-    ins_data = instance.get_instance("small", small_list[0])
+    instance_name = target.instance_names("small")[0]
+    ins_data = target.get_instance("small", instance_name)
     assert isinstance(ins_data, dict)
 
 
 def test_tsp():
-    tsp_ins = tsp_instance()
-    small_list = tsp_ins.small_list()
-    assert len(small_list) > 0
+    target = TSP()
+    
+    assert len(target.small_instance()) > 0
+    assert len(target.medium_instance()) > 0
 
-    medium_list = tsp_ins.medium_list()
-    assert len(medium_list) > 0
-
-    ins_data = tsp_ins.get_instance("small", small_list[0])
+    instance_name = target.instance_names("small")[0]
+    ins_data = target.get_instance("small", instance_name)
     assert isinstance(ins_data, dict)
 
 
 def test_knapsack():
-    instance = knapsack_instance()
-    small_list = instance.small_list()
-    assert len(small_list) > 0
+    target = Knapsack()
+    
+    assert len(target.small_instance()) > 0
+    assert len(target.medium_instance()) > 0
 
-    medium_list = instance.medium_list()
-    assert len(medium_list) > 0
-
-    ins_data = instance.get_instance("small", small_list[0])
+    instance_name = target.instance_names("small")[0]
+    ins_data = target.get_instance("small", instance_name)
     assert isinstance(ins_data, dict)
+

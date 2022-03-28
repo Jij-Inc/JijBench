@@ -1,14 +1,10 @@
 import jijmodeling as jm
-from jijbench.problems.instance_loader import JijBenchInstance
+from .target import JijModelingTarget, DefaultInstanceMixin
 
 
-def tsptw_instance() -> JijBenchInstance:
-    return JijBenchInstance(problem_name="travelling_salesman_with_time_windows")
-
-
-def travelling_salesman_with_time_windwos_problem():
+def _problem(problem_name):
     # 問題
-    problem = jm.Problem("travelling_salesman_with_time_windows")
+    problem = jm.Problem(problem_name)
 
     # 距離行列
     dist = jm.Placeholder("dist", dim=2)  # 距離行列
@@ -52,3 +48,11 @@ def travelling_salesman_with_time_windwos_problem():
     problem += jm.Constraint("time_window_constraint", term3 <= 0, forall=forall_list)
 
     return problem
+
+
+class TSPTW(JijModelingTarget, DefaultInstanceMixin):
+    problem_name = "travelling_salesman_with_time_windows"
+    problem = _problem(problem_name)
+
+    def __init__(self):
+        super().__init__(self.problem, self.small_instance()[0])

@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from typing import Union, Callable, Any
 from jijbench.experiment import Experiment
 
 
@@ -51,19 +52,27 @@ class Evaluator:
         return metrics
 
     def success_probability(
-        self, opt_value=None, column="success_probability", expand=True
+        self,
+        opt_value: Union[int, float] = None,
+        column: str = "success_probability",
+        expand: bool = True,
     ):
         scorer = Evaluator.make_scorer(
-            _Metrics.success_probability, opt_value=self._to_available(opt_value)
+            _Metrics.success_probability, opt_value=self._none_to_value(opt_value)
         )
         return self.apply(func=scorer, column=column, expand=expand, axis=1)
 
     def time_to_solution(
-        self, opt_value=None, pr=0.99, solution="optimal", column="TTS", expand=True
+        self,
+        opt_value: Union[int, float] = None,
+        pr: float = 0.99,
+        solution: str = "optimal",
+        column: str = "TTS",
+        expand: bool = True,
     ):
         scorer = Evaluator.make_scorer(
             _Metrics.time_to_solution,
-            opt_value=self._to_available(opt_value),
+            opt_value=self._none_to_value(opt_value),
             pr=pr,
             solution=solution,
         )
@@ -71,38 +80,47 @@ class Evaluator:
             func=scorer, column=f"{column}({solution})", expand=expand, axis=1
         )
 
-    def feasible_rate(self, column="feasible_rate", expand=True):
+    def feasible_rate(self, column: str = "feasible_rate", expand: bool = True):
         scorer = Evaluator.make_scorer(_Metrics.feasible_rate)
         return self.apply(func=scorer, column=column, expand=expand, axis=1)
 
-    def residual_energy(self, opt_value=None, column="residual_energy", expand=True):
+    def residual_energy(
+        self,
+        opt_value: Union[int, float] = None,
+        column: str = "residual_energy",
+        expand: bool = True,
+    ):
         scorer = Evaluator.make_scorer(
-            _Metrics.residual_energy, opt_value=self._to_available(opt_value)
+            _Metrics.residual_energy, opt_value=self._none_to_value(opt_value)
         )
         return self.apply(func=scorer, column=column, expand=expand, axis=1)
 
     @staticmethod
-    def make_scorer(score_func, **kwargs):
+    def make_scorer(score_func: Callable, **kwargs):
         return _Scorer(score_func, kwargs)
 
     @staticmethod
-    def _to_available(value):
-        if value is None:
-            value = np.nan
-        return value
+    def _none_to_value(value: Union[int, float]):
+        return value if value else np.nan
 
 
 class _Scorer:
-    def __init__(self, score_func, kwargs):
+    def __init__(self, score_func: Callable, kwargs):
         self._score_func = score_func
         self._kwargs = kwargs
 
-    def __call__(self, x):
+    def __call__(self, x: Any):
         return self._score_func(x, **self._kwargs)
 
 
 class _Metrics:
-    def time_to_solution(x, opt_value=None, pr=0.99, solution="optimal"):
+    def time_to_solution(
+        x: Any,
+        opt_value: Union[int, float],
+        *,
+        pr: float = 0.99,
+        solution: str = "optimal",
+    ):
         if solution == "optimal":
             ps = _Metrics.success_probability(x, opt_value)
         elif solution == "feasible":
@@ -111,18 +129,20 @@ class _Metrics:
             ps = _Metrics.success_probability(x, x.energy_min)
         else:
             ps = np.nan
-        return (
-            np.log(1 - pr) / np.log(1 - ps) * x.execution_time
-        )
+        return np.log(1 - pr) / np.log(1 - ps) * x.execution_time
 
-    def success_probability(x, opt_value=None):
+    def success_probability(x: Any, opt_value: Union[int, float]):
         if np.isnan(opt_value):
             return np.nan
         else:
-            return (x.energy <= opt_value).sum() / len(x.energy)
-        
-    def feasible_rate(x):
+            return (
+                np.nan
+                if np.isnan(x.energy).all()
+                else (x.energy <= opt_value).sum() / x.num_reads
+            )
+
+    def feasible_rate(x: Any):
         return x.num_feasible / x.num_samples
 
-    def residual_energy(x, opt_value):
+    def residual_energy(x: Any, opt_value: Union[int, float]):
         return (x.energy_mean - opt_value) / np.abs(opt_value)

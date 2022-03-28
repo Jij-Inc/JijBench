@@ -1,6 +1,5 @@
 import datetime
 import os
-import uuid
 import dimod
 import pickle
 import numpy as np
@@ -10,10 +9,7 @@ from jijbench.experiment._parser import (
     _parse_dimod_sampleset,
     _parse_jm_problem_decodedsamples,
 )
-from jijbench.objects.table import Table
-from jijbench.objects.artifact import Artifact
-from jijbench.objects.id import ID
-from jijbench.objects.dir import Dir, ExperimentResultDefaultDir
+from jijbench.components import Table, Artifact, ID, Dir, ExperimentResultDefaultDir
 
 
 np.set_printoptions(threshold=np.inf)
@@ -76,7 +72,7 @@ class Experiment:
         return self
 
     def __exit__(self, exception_type, exception_value, traceback):
-        self.close()
+        self.stop()
         pass
 
     def start(self):
@@ -85,7 +81,7 @@ class Experiment:
         self._table.data.loc[self._table.current_index] = np.nan
         return self
 
-    def close(self):
+    def stop(self):
         if self.autosave:
             record = self._table.data.loc[self._table.current_index].to_dict()
             self.log_table(record)
@@ -146,18 +142,15 @@ class Experiment:
         else:
             _timestamp = pd.Timestamp(timestamp)
 
-        ids_data = [self.run_id, self.experiment_id, self.benchmark_id, _timestamp]
+        ids_data = [self.benchmark_id, self.experiment_id, self.run_id, _timestamp]
         self._table.data.loc[index, ids] = ids_data
         record = self._parse_record(record)
         for key, value in record.items():
-            value_type = type(value)
-            if isinstance(value, dict):
-                self._table.data.at[index, key] = object
-                value_type = object
-            elif isinstance(value, list):
-                self._table.data.at[index, key] = object
-                value_type = object
-            elif isinstance(value, np.ndarray):
+            if isinstance(value, int):
+                value_type = type(value)
+            elif isinstance(value, float):
+                value_type = type(value)
+            else:
                 self._table.data.at[index, key] = object
                 value_type = object
             record[key] = value

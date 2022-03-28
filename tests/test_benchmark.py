@@ -1,9 +1,7 @@
 import os
 import shutil
 import jijbench as jb
-import openjij as oj
 import pytest
-import jijmodeling as jm
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -19,6 +17,8 @@ def pre_post_process():
 def test_simple_benchmark():
     bench = jb.Benchmark(
         {"num_reads": [1, 2], "num_sweeps": [10]},
+        solvers="SASampler",
+        targets="Knapsack",
     )
     bench.run()
 
@@ -30,10 +30,14 @@ def test_simple_benchmark():
 
 
 def test_custom_solver_benchmark():
+    import jijbench as jb
+
     def func():
         return "a", 1
 
-    bench = jb.Benchmark({"num_reads": [1, 2], "num_sweeps": [10]}, solver=func)
+    bench = jb.Benchmark(
+        {"num_reads": [1, 2], "num_sweeps": [10]}, solvers=func, targets="Knapsack"
+    )
     bench.run()
 
     assert bench.table["solver"][0] == func.__name__

@@ -39,7 +39,10 @@ def _parse_dimod_sampleset(
     if "execution_time" in response.info.keys():
         execution_time = response.info["execution_time"]
     else:
-        execution_time = np.nan
+        if "sampling_time" in response.info:
+            execution_time = response.info["sampling_time"] / num_reads
+        else:
+            execution_time = np.nan
 
     columns = table.get_energy_columns()
     columns += table.get_num_columns()
