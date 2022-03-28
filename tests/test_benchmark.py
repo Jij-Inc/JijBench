@@ -30,6 +30,8 @@ def test_simple_benchmark():
 
 
 def test_custom_solver_benchmark():
+    import jijbench as jb
+
     def func():
         return "a", 1
 

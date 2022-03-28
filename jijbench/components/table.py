@@ -3,7 +3,7 @@ import json
 import pickle
 import numpy as np
 import pandas as pd
-from jijbench.objects.dir import Dir
+from jijbench.components.dir import Dir
 
 
 class Table:

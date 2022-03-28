@@ -1,12 +1,8 @@
 import jijmodeling as jm
-from jijbench.problems.instance_loader import JijBenchInstance
+from .target import JijModelingTarget, InstanceMixin
 
 
-def bin_packing_instance() -> JijBenchInstance:
-    return JijBenchInstance(problem_name="bin_packing")
-
-
-def bin_packing():
+def _problem(problem_name):
     w = jm.Placeholder("w", dim=1)
     num_items = jm.Placeholder("num_items")
     c = jm.Placeholder("c")
@@ -21,7 +17,7 @@ def bin_packing():
     # j: binの添字
     j = jm.Element("j", num_items)
 
-    problem = jm.Problem("bin_packing")
+    problem = jm.Problem(problem_name)
 
     # objective function
     obj = y[:]
@@ -38,3 +34,11 @@ def bin_packing():
     problem += const2
 
     return problem
+
+
+class BinPacking(JijModelingTarget, InstanceMixin):
+    problem_name = "bin_packing"
+    problem = _problem(problem_name)
+
+    def __init__(self):
+        super().__init__(self.problem, self.small_instance()[0])

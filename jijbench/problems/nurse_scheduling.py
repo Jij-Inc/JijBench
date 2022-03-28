@@ -1,14 +1,10 @@
 import jijmodeling as jm
-from jijbench.problems.instance_loader import JijBenchInstance
+from .target import JijModelingTarget, InstanceMixin
 
 
-def nurse_scheduling_instance() -> JijBenchInstance:
-    return JijBenchInstance(problem_name="nurse_scheduling")
-
-
-def nurse_scheduling_problem():
+def _problem(problem_name):
     # 問題
-    problem = jm.Problem("nurse_scheduling")
+    problem = jm.Problem(problem_name)
 
     I = jm.Placeholder("I")  # 人の数
     D = jm.Placeholder("D")  # 日数 D%7=0 とし, 月曜日からstartするとする
@@ -146,3 +142,11 @@ def nurse_scheduling_problem():
     problem += jm.Constraint("cover_requirements", const10 == 0, forall=[d, t])
 
     return problem
+
+
+class NurseScheduling(JijModelingTarget, InstanceMixin):
+    problem_name = "nurse_scheduling"
+    problem = _problem(problem_name)
+
+    def __init__(self):
+        super().__init__(self.problem, self.small_instance()[0])

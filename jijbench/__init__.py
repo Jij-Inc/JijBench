@@ -1,12 +1,5 @@
-import jijbench.experiment
-import jijbench.evaluation
-
-from jijbench.problems import *
-from jijbench.benchmark import Benchmark
-from jijbench.experiment import Experiment
-from jijbench.evaluation import Evaluator
-
-# from jijbench._dir import _Dir
-#from jijbench._id import *
-#from jijbench._table import *
-#from jijbench._artifact import *
+from . import problems
+from .problems.target import JijModelingTarget, PyQUBOTarget, QUBOTarget
+from .benchmark import Benchmark
+from .experiment.experiment import Experiment
+from .evaluation.evaluation import Evaluator

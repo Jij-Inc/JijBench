@@ -1,6 +1,5 @@
 import datetime
 import os
-import uuid
 import dimod
 import pickle
 import numpy as np
@@ -10,10 +9,7 @@ from jijbench.experiment._parser import (
     _parse_dimod_sampleset,
     _parse_jm_problem_decodedsamples,
 )
-from jijbench.objects.table import Table
-from jijbench.objects.artifact import Artifact
-from jijbench.objects.id import ID
-from jijbench.objects.dir import Dir, ExperimentResultDefaultDir
+from jijbench.components import Table, Artifact, ID, Dir, ExperimentResultDefaultDir
 
 
 np.set_printoptions(threshold=np.inf)
