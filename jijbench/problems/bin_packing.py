@@ -1,5 +1,5 @@
 import jijmodeling as jm
-from .target import JijModelingTarget, InstanceMixin
+from .target import JijModelingTarget, DefaultInstanceMixin
 
 
 def _problem(problem_name):
@@ -36,7 +36,7 @@ def _problem(problem_name):
     return problem
 
 
-class BinPacking(JijModelingTarget, InstanceMixin):
+class BinPacking(JijModelingTarget, DefaultInstanceMixin):
     problem_name = "bin_packing"
     problem = _problem(problem_name)
 

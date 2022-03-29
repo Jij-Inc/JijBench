@@ -72,7 +72,7 @@ class Experiment:
         return self
 
     def __exit__(self, exception_type, exception_value, traceback):
-        self.close()
+        self.stop()
         pass
 
     def start(self):
@@ -81,7 +81,7 @@ class Experiment:
         self._table.data.loc[self._table.current_index] = np.nan
         return self
 
-    def close(self):
+    def stop(self):
         if self.autosave:
             record = self._table.data.loc[self._table.current_index].to_dict()
             self.log_table(record)

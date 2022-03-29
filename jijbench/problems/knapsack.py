@@ -1,5 +1,5 @@
 import jijmodeling as jm
-from .target import JijModelingTarget, InstanceMixin
+from .target import JijModelingTarget, DefaultInstanceMixin
 
 
 def _problem(problem_name):
@@ -25,7 +25,7 @@ def _problem(problem_name):
     return problem
 
 
-class Knapsack(JijModelingTarget, InstanceMixin):
+class Knapsack(JijModelingTarget, DefaultInstanceMixin):
     problem_name = "knapsack"
     problem = _problem(problem_name)
 

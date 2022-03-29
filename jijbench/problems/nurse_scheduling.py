@@ -1,5 +1,5 @@
 import jijmodeling as jm
-from .target import JijModelingTarget, InstanceMixin
+from .target import JijModelingTarget, DefaultInstanceMixin
 
 
 def _problem(problem_name):
@@ -144,7 +144,7 @@ def _problem(problem_name):
     return problem
 
 
-class NurseScheduling(JijModelingTarget, InstanceMixin):
+class NurseScheduling(JijModelingTarget, DefaultInstanceMixin):
     problem_name = "nurse_scheduling"
     problem = _problem(problem_name)
 

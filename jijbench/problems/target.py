@@ -4,7 +4,7 @@ from abc import abstractmethod
 from typing import List, Tuple, Dict, Union
 
 
-class Target:
+class BenchmarkTarget:
     @abstractmethod
     def __init__(self) -> None:
         pass
@@ -14,7 +14,7 @@ class Target:
         pass
 
 
-class JijModelingTarget(Target):
+class JijModelingTarget(BenchmarkTarget):
     def __init__(
         self, problem, instance: Union[Tuple[str, Dict], List[Tuple[str, Dict]]]
     ):
@@ -31,7 +31,7 @@ class JijModelingTarget(Target):
             return [(self.problem, instance) for instance in self.instance]
 
 
-class PyQUBOTarget(Target):
+class PyQUBOTarget(BenchmarkTarget):
     def __init__(self):
         pass
 
@@ -39,7 +39,7 @@ class PyQUBOTarget(Target):
         return super().parse()
 
 
-class QUBOTarget(Target):
+class QUBOTarget(BenchmarkTarget):
     def __init__(self, qubo, bias=None):
         self.qubo = qubo
         self.bias = bias
@@ -48,7 +48,7 @@ class QUBOTarget(Target):
         return super().parse()
 
 
-class InstanceMixin:
+class DefaultInstanceMixin:
     def _instance_dir(self, size: str):
         instance_dir = (
             pathlib.Path(__file__).parent / "Instances" / size / self.problem_name

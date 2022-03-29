@@ -1,5 +1,5 @@
 import jijmodeling as jm
-from .target import JijModelingTarget, InstanceMixin
+from .target import JijModelingTarget, DefaultInstanceMixin
 
 
 def _problem(problem_name):
@@ -42,7 +42,7 @@ def _problem(problem_name):
     return problem
 
 
-class TSP(JijModelingTarget, InstanceMixin):
+class TSP(JijModelingTarget, DefaultInstanceMixin):
     problem_name = "travelling_salesman"
     problem = _problem(problem_name)
 

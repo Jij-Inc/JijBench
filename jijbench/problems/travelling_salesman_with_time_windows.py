@@ -1,5 +1,5 @@
 import jijmodeling as jm
-from .target import JijModelingTarget, InstanceMixin
+from .target import JijModelingTarget, DefaultInstanceMixin
 
 
 def _problem(problem_name):
@@ -50,7 +50,7 @@ def _problem(problem_name):
     return problem
 
 
-class TSPTW(JijModelingTarget, InstanceMixin):
+class TSPTW(JijModelingTarget, DefaultInstanceMixin):
     problem_name = "travelling_salesman_with_time_windows"
     problem = _problem(problem_name)
 
