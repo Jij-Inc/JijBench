@@ -76,14 +76,14 @@ class Benchmark:
             for problem, instance in target.parse():
                 for solver in self.solvers:
                     if sync:
-                        self._run_by_default(solver, problem, instance)
+                        self._run_by_sync(solver, problem, instance)
                     else:
                         if "openjij" in solver.name:
-                            self._run_by_default(solver, problem, instance)
-                        else:
                             self._run_by_sync(solver, problem, instance)
+                        else:
+                            self._run_by_async(solver, problem, instance)
 
-    def _run_by_sync(self, solver, problem, instance, **kwargs):
+    def _run_by_async(self, solver, problem, instance, **kwargs):
         _, ph_value = instance
         idx = [
             s in inspect.getsource(solver.function)
@@ -121,15 +121,16 @@ class Benchmark:
                         solver_args |= {"solution_id": solution_id}
                         while True:
                             try:
-                                with experiment:
-                                    ret = solver(**solver_args)
-                                    ret = solver.to_named_ret(ret)
-                                    record |= dict(
-                                        [(k, v) for k, v in zip(self.params.keys(), r)]
-                                    )
-                                    record |= {"i": i, "solution_id": solution_id} | ret
-                                    experiment.store(record)
-                                break
+                                ret = solver(**solver_args)
+                                if "APIStatus.SUCCESS" in str(ret):
+                                    with experiment:
+                                        ret = solver.to_named_ret(ret)
+                                        record |= dict(
+                                            [(k, v) for k, v in zip(self.params.keys(), r)]
+                                        )
+                                        record |= {"i": i, "solution_id": solution_id} | ret
+                                        experiment.store(record)
+                                    break
                             except DataError:
                                 pass
                     experiment.table.sort_values("i", inplace=True)
@@ -139,7 +140,7 @@ class Benchmark:
             self._artifact.data |= experiment.artifact
             self._experiments.append(experiment)
 
-    def _run_by_default(self, solver, problem, instance):
+    def _run_by_sync(self, solver, problem, instance):
         experiment = Experiment(benchmark_id=self._id.benchmark_id)
         solver_args, record = self._setup_experiment(solver, problem, instance, True)
         for r in itertools.product(*self.params.values()):

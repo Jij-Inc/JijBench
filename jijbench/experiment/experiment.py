@@ -146,14 +146,11 @@ class Experiment:
         self._table.data.loc[index, ids] = ids_data
         record = self._parse_record(record)
         for key, value in record.items():
-            value_type = type(value)
-            if isinstance(value, dict):
-                self._table.data.at[index, key] = object
-                value_type = object
-            elif isinstance(value, list):
-                self._table.data.at[index, key] = object
-                value_type = object
-            elif isinstance(value, np.ndarray):
+            if isinstance(value, int):
+                value_type = type(value)
+            elif isinstance(value, float):
+                value_type = type(value)
+            else:
                 self._table.data.at[index, key] = object
                 value_type = object
             record[key] = value

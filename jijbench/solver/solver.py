@@ -116,10 +116,7 @@ class DefaultSolver:
             parameters = inspect.signature(sampler.sample_model).parameters
             kwargs = {k: w for k, w in kwargs.items() if k in parameters}
             response = sampler.sample_model(problem, ph_value, sync=sync, **kwargs)
-            decoded = problem.decode(response, ph_value=ph_value)
-            return response, decoded
         else:
             response = sampler.get_result(solution_id=kwargs["solution_id"])
-            decoded = problem.decode(response, ph_value=ph_value)
-            return response, decoded
-    
+        decoded = problem.decode(response, ph_value=ph_value)
+        return response, decoded
