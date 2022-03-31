@@ -29,6 +29,8 @@ class JijModelingTarget(BenchmarkTarget):
                 return [(self.problem, instance) for instance in self.instance]
         elif isinstance(self.instance, list):
             return [(self.problem, instance) for instance in self.instance]
+        else:
+            return
 
 
 class PyQUBOTarget(BenchmarkTarget):
@@ -36,7 +38,7 @@ class PyQUBOTarget(BenchmarkTarget):
         pass
 
     def parse(self):
-        return super().parse()
+        pass
 
 
 class QUBOTarget(BenchmarkTarget):
@@ -45,7 +47,7 @@ class QUBOTarget(BenchmarkTarget):
         self.bias = bias
 
     def parse(self):
-        return super().parse()
+        pass
 
 
 class DefaultInstanceMixin:

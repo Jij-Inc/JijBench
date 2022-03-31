@@ -10,9 +10,9 @@ class Table:
     """Table template"""
 
     id_dtypes = {
-        "run_id": object,
-        "experiment_id": object,
         "benchmark_id": object,
+        "experiment_id": object,
+        "run_id": object,
         "timestamp": pd.Timestamp,
     }
     energy_dtypes = {

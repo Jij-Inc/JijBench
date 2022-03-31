@@ -1,6 +1,7 @@
 import os
 import inspect
 import itertools
+from urllib import response
 import jijzept as jz
 import numpy as np
 import pandas as pd
@@ -89,7 +90,7 @@ class Benchmark:
             s in inspect.getsource(solver.function)
             for s in DefaultSolver.jijzept_sampler_names
         ]
-        solution_ids = []
+        args_map = {}
         if any(idx):
             for i_name, b in enumerate(idx):
                 if b:
@@ -99,25 +100,18 @@ class Benchmark:
                     )
                     parameters = inspect.signature(sampler.sample_model).parameters
                     for i, r in enumerate(itertools.product(*self.params.values())):
-                        solver_args = dict(
-                            [(k, v) for k, v in zip(self.params.keys(), r)]
-                        )
-                        solver_args = {
-                            k: w for k, w in solver_args.items() if k in parameters
-                        }
-                        solution_ids.append(
-                            (
-                                i,
-                                sampler.sample_model(
-                                    problem, ph_value, sync=False, **solver_args
-                                ).solution_id,
-                            )
-                        )
+                        args = dict([(k, v) for k, v in zip(self.params.keys(), r)])
+                        solver_args = {k: w for k, w in args.items() if k in parameters}
+                        solution_id = sampler.sample_model(
+                            problem, ph_value, sync=False, **solver_args
+                        ).solution_id
+                        args_map[(i, solution_id)] = args
+
                     experiment = Experiment(benchmark_id=self._id.benchmark_id)
-                    solver_args, record = self._setup_experiment(
-                        solver, problem, instance, False
-                    )
-                    for i, solution_id in solution_ids:
+                    for (i, solution_id), args in args_map.items():
+                        solver_args, record = self._setup_experiment(
+                            solver, problem, instance, False
+                        )
                         solver_args |= {"solution_id": solution_id}
                         while True:
                             try:
@@ -125,10 +119,8 @@ class Benchmark:
                                 if "APIStatus.SUCCESS" in str(ret):
                                     with experiment:
                                         ret = solver.to_named_ret(ret)
-                                        record |= dict(
-                                            [(k, v) for k, v in zip(self.params.keys(), r)]
-                                        )
-                                        record |= {"i": i, "solution_id": solution_id} | ret
+                                        record |= args | solver_args | {"i": i} | ret
+                                        del record["problem"], record["ph_value"]
                                         experiment.store(record)
                                     break
                             except DataError:

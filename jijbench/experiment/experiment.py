@@ -142,7 +142,7 @@ class Experiment:
         else:
             _timestamp = pd.Timestamp(timestamp)
 
-        ids_data = [self.run_id, self.experiment_id, self.benchmark_id, _timestamp]
+        ids_data = [self.benchmark_id, self.experiment_id, self.run_id, _timestamp]
         self._table.data.loc[index, ids] = ids_data
         record = self._parse_record(record)
         for key, value in record.items():
