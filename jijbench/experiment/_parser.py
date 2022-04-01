@@ -7,6 +7,42 @@ if TYPE_CHECKING:
     from jijmodeling import DecodedSamples
 
 
+def _parse_response(
+    experiment: "Experiment", response: "SampleSet"
+) -> Tuple[List[str], List]:
+    table = experiment._table
+    info = response.info
+
+    energies = info["energies"]
+    num_occurrences = response.record.num_occurrences
+    num_reads = info["num_reads"]
+    num_sweeps = info["num_sweeps"]
+    solving_time = info["solving_time"]
+    total_time = info["total_time"]
+
+    num_feasible = np.nan
+    num_samples = np.nan
+
+    columns = table.get_energy_columns()
+    columns += table.get_num_columns()
+    columns += table.get_time_columns()
+    values = [
+        energies,
+        energies.min(),
+        energies.mean(),
+        energies.std(),
+        num_occurrences,
+        num_reads,
+        num_sweeps,
+        num_feasible,
+        num_samples,
+        total_time,
+        solving_time,
+    ]
+
+    return columns, values
+
+
 def _parse_dimod_sampleset(
     experiment: "Experiment", response: "SampleSet"
 ) -> Tuple[List[str], List]:
@@ -22,7 +58,7 @@ def _parse_dimod_sampleset(
         Tuple[List[str], List]: (columns, values)
     """
     table = experiment._table
-    energies: np.ndarray = response.record.energy
+    energies = response.record.energy
     num_occurrences = response.record.num_occurrences
     num_reads = len(energies)
     if "schedule" in response.info:
@@ -80,7 +116,7 @@ def _parse_jm_problem_decodedsamples(
     """
 
     table = experiment._table
-    energies: np.ndarray = decoded.energies
+    energies = decoded.energies
     objectives: np.ndarray = decoded.objectives
     num_occurances = np.nan
     num_reads = np.nan

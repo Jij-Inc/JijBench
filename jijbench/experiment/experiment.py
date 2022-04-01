@@ -1,10 +1,12 @@
-import datetime
 import os
+import re
 import dimod
 import pickle
+import datetime
 import numpy as np
 import pandas as pd
-from typing import Any, Dict, List, Optional, Union
+import jijmodeling as jm
+from typing import Any, Callable, Dict, List, Optional, Union
 from jijbench.experiment._parser import (
     _parse_dimod_sampleset,
     _parse_jm_problem_decodedsamples,
@@ -73,7 +75,6 @@ class Experiment:
 
     def __exit__(self, exception_type, exception_value, traceback):
         self.stop()
-        pass
 
     def start(self):
         self._id.reset(kind="run")
@@ -146,10 +147,13 @@ class Experiment:
         self._table.data.loc[index, ids] = ids_data
         record = self._parse_record(record)
         for key, value in record.items():
-            if isinstance(value, int):
+            if isinstance(value, (int, float)):
                 value_type = type(value)
-            elif isinstance(value, float):
-                value_type = type(value)
+            elif isinstance(value, Callable):
+                value_type = str
+                value = re.split(
+                    r" at| of", re.split(r"function |method ", str(value))[-1]
+                )[0]
             else:
                 self._table.data.at[index, key] = object
                 value_type = object
@@ -195,7 +199,7 @@ class Experiment:
                 columns, values = _parse_dimod_sampleset(self, v)
                 for new_k, new_v in zip(columns, values):
                     _update_record()
-            elif v.__class__.__name__ == "DecodedSamples":
+            elif isinstance(v, jm.DecodedSamples):
                 columns, values = _parse_jm_problem_decodedsamples(self, v)
                 for new_k, new_v in zip(columns, values):
                     _update_record()
