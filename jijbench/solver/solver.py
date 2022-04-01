@@ -63,7 +63,7 @@ class DefaultSolver:
     jijzept_config = None
     dwave_config = None
     openjij_sampler_names = ["SASampler", "SQASampler"]
-    jijzept_sampler_names = ["JijSASampler"]
+    jijzept_sampler_names = ["JijSASampler", "JijSQASampler", "JijSwapMovingSampler"]
 
     @property
     def SASampler(self):
@@ -76,6 +76,14 @@ class DefaultSolver:
     @property
     def JijSASampler(self):
         return self.jijzept_sa_sampler_sample_model
+    
+    @property
+    def JijSQASampler(self):
+        return self.jijzept_sqa_sampler_sample_model
+    
+    @property
+    def JijSwapMovingSampler(self):
+        return self.jijzept_swapmoving_sampler_sample_model
 
     @classmethod
     def openjij_sa_sampler_sample(cls, problem, ph_value, feed_dict=None, **kwargs):
@@ -96,6 +104,24 @@ class DefaultSolver:
             problem,
             ph_value,
             **kwargs,
+        )
+        
+    @classmethod
+    def jijzept_sqa_sampler_sample_model(cls, problem, ph_value, **kwargs):
+        return cls._sample_by_jijzept(
+            jz.JijSQASampler,
+            problem,
+            ph_value,
+            **kwargs
+        )
+        
+    @classmethod
+    def jijzept_swapmoving_sampler_sample_model(cls, problem, ph_value, **kwargs):
+        return cls._sample_by_jijzept(
+            jz.JijSwapMovingSampler,
+            problem,
+            ph_value,
+            **kwargs
         )
 
     @staticmethod
