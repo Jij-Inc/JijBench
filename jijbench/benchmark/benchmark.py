@@ -150,7 +150,7 @@ class Benchmark:
     @staticmethod
     def _setup_experiment(solver, problem, instance, sync):
         instance_name, ph_value = instance
-        opt_value = ph_value.pop("opt_value", np.nan)
+        opt_value = ph_value["opt_value"] if "opt_value" in ph_value else np.nan
 
         solver_args = {"problem": problem, "ph_value": ph_value, "sync": sync}
         record = {
