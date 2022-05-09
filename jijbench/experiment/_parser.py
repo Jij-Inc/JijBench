@@ -22,7 +22,7 @@ def _parse_dimod_sampleset(
         Tuple[List[str], List]: (columns, values)
     """
     table = experiment._table
-    energies: np.ndarray = response.record.energy
+    energies = response.record.energy
     num_occurrences = response.record.num_occurrences
     num_reads = len(energies)
     if "schedule" in response.info:
@@ -80,7 +80,7 @@ def _parse_jm_problem_decodedsamples(
     """
 
     table = experiment._table
-    energies: np.ndarray = decoded.energies
+    energies = decoded.energies
     objectives: np.ndarray = decoded.objectives
     num_occurances = np.nan
     num_reads = np.nan
