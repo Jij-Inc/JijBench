@@ -1,5 +1,5 @@
 from typing import Union
-from jijbench.components.dir import ExperimentResultDefaultDir
+from .dir import ExperimentResultDefaultDir
 
 
 class JijBenchObject:

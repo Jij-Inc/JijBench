@@ -1,6 +1,6 @@
 import functools
-from jijbench import JijModelingTarget
 from jijbench import problems
+from jijbench import JijModelingTarget
 from jijbench.solver import CallableSolver
 
 

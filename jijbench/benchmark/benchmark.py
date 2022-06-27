@@ -33,7 +33,7 @@ class Benchmark:
         self.params = params
         self.id_rules = id_rules
 
-        self._set_solver(solvers)
+        self._set_solvers(solvers)
         self._set_targets(targets)
         self._id = ID(benchmark_id=benchmark_id)
         self._experiments = []
@@ -48,7 +48,7 @@ class Benchmark:
         return self._solver
 
     @validation.on_solver
-    def _set_solver(self, solvers):
+    def _set_solvers(self, solvers):
         self._solver = solvers
 
     @property

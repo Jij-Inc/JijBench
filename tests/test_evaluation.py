@@ -27,9 +27,9 @@ def test_matrics_by_openjij():
     evaluator = jb.Evaluator(experiment)
     opt_value = 1.0
     expand = True
-    evaluator.tts(opt_value=opt_value, solution="optimal", expand=expand)
-    evaluator.tts(solution="feasible", expand=expand)
-    evaluator.tts(solution="derived", expand=expand)
+    evaluator.tts(opt_value=opt_value, solution_type="optimal", expand=expand)
+    evaluator.tts(solution_type="feasible", expand=expand)
+    evaluator.tts(solution_type="derived", expand=expand)
     evaluator.success_probability(opt_value=opt_value, expand=expand)
     evaluator.feasible_rate(expand=expand)
     evaluator.residual_energy(opt_value=opt_value, expand=expand)
@@ -65,9 +65,9 @@ def test_matrics_by_jijmodeling():
     evaluator = jb.Evaluator(experiment)
     opt_value = 1.0
     expand = True
-    evaluator.tts(opt_value=opt_value, solution="optimal", expand=expand)
-    evaluator.tts(solution="feasible", expand=expand)
-    evaluator.tts(solution="derived", expand=expand)
+    evaluator.tts(opt_value=opt_value, solution_type="optimal", expand=expand)
+    evaluator.tts(solution_type="feasible", expand=expand)
+    evaluator.tts(solution_type="derived", expand=expand)
     evaluator.success_probability(opt_value=opt_value, expand=expand)
     evaluator.feasible_rate(expand=expand)
     evaluator.residual_energy(opt_value=opt_value, expand=expand)
