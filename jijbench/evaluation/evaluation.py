@@ -38,10 +38,10 @@ class Evaluator:
         metrics["feasible_rate"] = self.fr(expand=expand)
         metrics["residual_energy"] = self.re(opt_value=opt_value, expand=expand)
         metrics["TTS(optimal)"] = self.tts(
-            opt_value=opt_value, pr=pr, solution="optimal", expand=expand
+            opt_value=opt_value, pr=pr, solution_type="optimal", expand=expand
         )
-        metrics["TTS(feasible)"] = self.tts(pr=pr, solution="feasible", expand=expand)
-        metrics["TTS(derived)"] = self.tts(pr=pr, solution="derived", expand=expand)
+        metrics["TTS(feasible)"] = self.tts(pr=pr, solution_type="feasible", expand=expand)
+        metrics["TTS(derived)"] = self.tts(pr=pr, solution_type="derived", expand=expand)
         return metrics
 
     def apply(self, func, column, expand=True, axis=1, **kwargs):
@@ -66,7 +66,7 @@ class Evaluator:
         self,
         opt_value: Union[int, float] = None,
         pr: float = 0.99,
-        solution: str = "optimal",
+        solution_type: str = "optimal",
         column: str = "TTS",
         expand: bool = True,
     ):
@@ -74,10 +74,10 @@ class Evaluator:
             _Metrics.time_to_solution,
             opt_value=self._none_to_value(opt_value),
             pr=pr,
-            solution=solution,
+            solution_type=solution_type,
         )
         return self.apply(
-            func=scorer, column=f"{column}({solution})", expand=expand, axis=1
+            func=scorer, column=f"{column}({solution_type})", expand=expand, axis=1
         )
 
     def feasible_rate(self, column: str = "feasible_rate", expand: bool = True):
@@ -119,13 +119,13 @@ class _Metrics:
         opt_value: Union[int, float],
         *,
         pr: float = 0.99,
-        solution: str = "optimal",
+        solution_type: str = "optimal",
     ):
-        if solution == "optimal":
+        if solution_type == "optimal":
             ps = _Metrics.success_probability(x, opt_value)
-        elif solution == "feasible":
+        elif solution_type == "feasible":
             ps = _Metrics.feasible_rate(x)
-        elif solution == "derived":
+        elif solution_type == "derived":
             ps = _Metrics.success_probability(x, x.energy_min)
         else:
             ps = np.nan

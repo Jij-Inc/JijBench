@@ -1,9 +1,10 @@
-from jijbench.problems import TSP, TSPTW, Knapsack
+import jijbench as jb
+from jijbench.problem import TSP, TSPTW, Knapsack
 
 
 def test_tsptw():
     target = TSPTW()
-    
+
     assert len(target.small_instance()) > 0
     assert len(target.medium_instance()) > 0
 
@@ -14,7 +15,7 @@ def test_tsptw():
 
 def test_tsp():
     target = TSP()
-    
+
     assert len(target.small_instance()) > 0
     assert len(target.medium_instance()) > 0
 
@@ -25,7 +26,7 @@ def test_tsp():
 
 def test_knapsack():
     target = Knapsack()
-    
+
     assert len(target.small_instance()) > 0
     assert len(target.medium_instance()) > 0
 
@@ -33,3 +34,24 @@ def test_knapsack():
     ins_data = target.get_instance("small", instance_name)
     assert isinstance(ins_data, dict)
 
+
+def test_get_default_problem():
+    problem = jb.get_problem("TSP")
+    assert problem.name == "travelling_salesman"
+
+    problem = jb.get_problem("TSPTW")
+    assert problem.name == "travelling_salesman_with_time_windows"
+
+    problem = jb.get_problem("Knapsack")
+    assert problem.name == "knapsack"
+
+    problem = jb.get_problem("BinPacking")
+    assert problem.name == "bin_packing"
+
+
+def test_get_default_instance_data():
+    instance_data = jb.get_instance_data("TSP")
+
+    assert isinstance(instance_data[0], tuple)
+    assert isinstance(instance_data[0][0], str)
+    assert isinstance(instance_data[0][1], dict)
