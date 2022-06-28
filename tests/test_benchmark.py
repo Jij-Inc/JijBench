@@ -82,6 +82,15 @@ def sample_model(problem, instance_data):
     return response
 
 
+def decode(problem, instance_data):
+    pyq_model = problem.to_pyqubo(instance_data).compile()
+    multipliers = {const_name: 1 for const_name in problem.constraints.keys()}
+    bqm = pyq_model.to_bqm(feed_dict=multipliers)
+    sampler = oj.SASampler()
+    response = sampler.sample(bqm)
+    return problem.decode(response, instance_data)
+
+
 def test_set_problem_in_benchmark(problem, problem_list):
     bench = jb.Benchmark({"dummy": [1]}, solver="SASampler", problem=problem)
 
@@ -225,6 +234,35 @@ def test_benchmark_with_custom_sample_model_for_multi_problem(
         assert bench.table["solver"].iloc[0] == sample_model.__name__
         assert "solver_return_values[0]" not in columns
         assert bench.table["problem_name"].iloc[0] == "knapsack"
+
+
+def test_benchmark_with_custom_decode(
+    problem,
+    ph_value,
+    ph_value_list,
+    instance_data,
+    instance_data_list,
+):
+    import numpy as np
+    
+    for d in [ph_value, ph_value_list, instance_data, instance_data_list]:
+        bench = jb.Benchmark(
+            {
+                "num_reads": [1, 2],
+                "num_sweeps": [10],
+                "multipliers": [{"knapsack_constraint": 1}],
+            },
+            solver=decode,
+            problem=problem,
+            instance_data=d,
+        )
+        bench.run()
+        columns = bench.table.columns
+
+        assert bench.table["solver"].iloc[0] == decode.__name__
+        assert "solver_return_values[0]" not in columns
+        assert bench.table["problem_name"].iloc[0] == "knapsack"
+        assert isinstance(bench.table["objective"].iloc[0], np.ndarray)
 
 
 def test_benchmark_with_any_problem_and_instance_data():

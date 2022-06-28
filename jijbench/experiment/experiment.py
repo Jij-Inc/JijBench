@@ -1,9 +1,11 @@
-import datetime
 import os
+import re
 import dimod
 import pickle
+import datetime
 import numpy as np
 import pandas as pd
+import jijmodeling as jm
 from typing import Any, Callable, Dict, List, Optional, Union
 from jijbench.experiment._parser import (
     _parse_dimod_sampleset,
@@ -149,7 +151,9 @@ class Experiment:
                 value_type = type(value)
             elif isinstance(value, Callable):
                 value_type = str
-                value = value.__name__
+                value = re.split(
+                    r" at| of", re.split(r"function |method ", str(value))[-1]
+                )[0]
             else:
                 self._table.data.at[index, key] = object
                 value_type = object
@@ -195,7 +199,7 @@ class Experiment:
                 columns, values = _parse_dimod_sampleset(self, v)
                 for new_k, new_v in zip(columns, values):
                     _update_record()
-            elif v.__class__.__name__ == "DecodedSamples":
+            elif isinstance(v, jm.DecodedSamples):
                 columns, values = _parse_jm_problem_decodedsamples(self, v)
                 for new_k, new_v in zip(columns, values):
                     _update_record()
