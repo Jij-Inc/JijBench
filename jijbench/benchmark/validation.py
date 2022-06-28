@@ -32,7 +32,7 @@ def on_problem(fn):
             if problem is None:
                 fn(obj, problem)
             else:
-                raise Exception("対応していない問題のtypeです。")
+                raise Exception("problem of this type is not supported.")
 
     return wrapper
 
@@ -51,7 +51,7 @@ def on_instance_data(fn):
             if instance_data is None:
                 fn(obj, instance_data)
             else:
-                raise Exception("対応していないインスタンスデータのtypeです")
+                raise Exception("problem of this type is not supported.")
 
     return wrapper
 
@@ -70,7 +70,7 @@ def _tuple_to_instance_data(d):
     if _is_tuple_to_instance_data(d):
         return [d]
     else:
-        raise Exception("このフォーマットのインスタンスデータには対応していません")
+        raise Exception("instance_data of this type is not supported.")
 
 
 def _list_to_instance_data(d):
@@ -79,20 +79,20 @@ def _list_to_instance_data(d):
             if _is_tuple_to_instance_data(d[0][0]):
                 return d
             else:
-                raise Exception("このフォーマットのインスタンスデータには対応していません")
+                raise Exception("instance_data of this type is not supported.")
         elif isinstance(d[0][0], dict):
             return [
                 [(f"Unnamed[{i}][{j}]", dj) for j, dj in enumerate(di)]
                 for i, di in enumerate(d)
             ]
         else:
-            Exception("このフォーマットのインスタンスデータには対応していません")
+            Exception("instance_data of this type is not supported.")
     elif isinstance(d[0], tuple):
         if _is_tuple_to_instance_data(d[0]):
             return [d]
         else:
-            raise Exception("このフォーマットのインスタンスデータには対応していません")
+            raise Exception("instance_data of this type is not supported.")
     elif isinstance(d[0], dict):
         return [[(f"Unnamed[{i}]", di) for i, di in enumerate(d)]]
     else:
-        raise Exception("このフォーマットのインスタンスデータには対応していません")
+        raise Exception("instance_data of this type is not supported.")
