@@ -1,33 +1,98 @@
-import os
-import inspect
-import itertools
-from tkinter.filedialog import Open
-import jijzept as jz
+import inspect, itertools, os
+
+from typing import Callable, Dict, List, Optional, Tuple, Union
+
 import jijmodeling as jm
+import jijzept as jz
 import numpy as np
 import pandas as pd
-from typing import List, Tuple, Dict, Union, Callable, Optional
-from jijmodeling.transpilers.type_annotations import PH_VALUES_INTERFACE
-from jijmodeling.exceptions import DataError
-from jijbench.experiment import Experiment
-from jijbench.evaluation import Evaluator
-from jijbench.components import (
-    Table,
-    Artifact,
-    ID,
-    ExperimentResultDefaultDir,
-)
-from jijbench.solver import DefaultSolver
+
 from jijbench.benchmark import validation
+from jijbench.components import ID, Artifact, ExperimentResultDefaultDir, Table
+from jijbench.evaluation import Evaluator
+from jijbench.experiment import Experiment
+from jijbench.solver import DefaultSolver
+from jijmodeling.exceptions import DataError
+from jijmodeling.transpilers.type_annotations import PH_VALUES_INTERFACE
 
 
 class Benchmark:
+    """Define benchmark.
+
+    Parameters
+    ----------
+    params: Dict[str, List]
+        Dictionary with parameters names (`str`) as keys and lists of
+        parameter settings to try as values. This enables searching over any sequence
+        of parameter settings.
+    solver: Union[str, Callable, List[Union[str, Callable]]]
+        If `solver` represents a single solver, one can use:
+        - a single string for default solver name;
+        - a callable that return any objects.
+        If `solver` represents multiple solvers, one can use:
+        - a list of default solver names and callable.
+        Default solver names is {SASampler, SQASampler, JijSASampler, JijSQASampler, JijSwapMovingSampler}.
+        See https://www.ref.documentation.jijzept.com/reference/sampler/ for more infomation about solvers.
+        The callables allow for flexible benchmark.
+        If parameter name(`str`) of `params` exists in argument names of callable, it is passed to them.
+        However, if passing mathematical models and instance data to callables, `problem` and` instance_data` is also able to use.
+    problem: Optional[Union[jm.Problem, List[jm.Problem]]]
+        Defaults to None.
+        Mathematical model defined by JijModeling or list of them.
+        See https://www.ref.jijmodeling.jijzept.com/ for more information about JijModeling.
+    instance_data: Optional[
+        Union[
+            PH_VALUES_INTERFACE,
+            List[PH_VALUES_INTERFACE],
+            List[List[PH_VALUES_INTERFACE]],
+            Tuple[str, PH_VALUES_INTERFACE],
+            List[Tuple[str, PH_VALUES_INTERFACE]],
+            List[List[Tuple[str, PH_VALUES_INTERFACE]]],
+        ]
+    ]:
+        Defaults to None.
+        Instance data for `problem`.
+        If `instance_data` represents a single instance data, one can use:
+        - PH_VALUES_INTERFACE (see https://www.documentation.jijzept.com/tutorial/binary_ilp about PH_VALUES_INTERFACE);
+        - Tuple[str, PH_VALUES_INTERFACE], which `str` means instance data name.
+        If `instance_data` represents multiple instance data, one can use:
+        - List[PH_VALUES_INTERFACE], in this case, `problme` is a single;
+        - List[List[PH_VALUES_INTERFACE]], in this case, `problem` is multiple;
+        - List[Tuple[str, PH_VALUES_INTERFACE]], in this case `problem is a single`;
+        - List[List[Tuple[str, PH_VALUES_INTERFACE]]], in this case `problem is multiple`.
+    solver_return_name: Optional[Dict[str, List[str]]]
+        Defaults to None.
+        Name solver return values for callable `solver`.
+        These are used columns of `table`(pd.DataFrame) attribute.
+    benchmark_id: Union[int, str]
+        Defaults to None.
+        ID to distinguish different benchmarks.
+    id_rule: Union[str, Dict[str, str]]
+        Defaults to "uuid".
+        Rule to automatically assign IDs
+    jijzept_config: Optional[str]
+        Defaults to None.
+        If it is used JijZept by `solver`, this needs.
+    dwave_config: Optional[str]
+        Defaults to None.
+        If it is used Dwave by `solver`, this needs.
+    
+    Attributes
+    ----------
+    table: pandas.DataFrame
+        DataFrame to store benchmark result. This save with csv.
+    artifact: Dict
+        Dictionary to store benchmark result. This save python objects that cat't save by csv with pickle
+    experiments: List[Experiment]
+        List of Experiment. A experiment id is issued for each combination of `params`.
+    """
+        
     def __init__(
         self,
         params: Dict[str, List],
-        solver: Callable,
+        solver: Union[str, Callable, List[Union[str, Callable]]],
         *,
-        problem: Optional[jm.Problem] = None,
+        problem: Optional[Union[jm.Problem, List[jm.Problem]]] = None,
         instance_data: Optional[
             Union[
                 PH_VALUES_INTERFACE,
@@ -41,11 +106,11 @@ class Benchmark:
         solver_return_name: Optional[Dict[str, List[str]]] = None,
         benchmark_id: Union[int, str] = None,
         id_rule: Union[str, Dict[str, str]] = "uuid",
-        jijzept_config=None,
-        dwave_config=None,
+        jijzept_config: Optional[str] = None,
+        dwave_config: Optional[str] = None,
     ):
         self.params = params
-        self.sosolver_return_name = solver_return_name
+        self.solver_return_name = solver_return_name
         self.id_rules = id_rule
 
         self._set_solver(solver)
@@ -95,7 +160,12 @@ class Benchmark:
     def artifact(self):
         return self._artifact.data
 
-    def run(self, show_solver_ret_columns=True, sync=True):
+    def run(self, sync=True):
+        """_summary_
+
+        Args:
+            sync (bool, optional): _description_. Defaults to True.
+        """
         if self._problem is None:
             problem = [None]
         else:
@@ -153,7 +223,7 @@ class Benchmark:
                                     with experiment:
                                         ret = solver.to_named_ret(ret)
                                         record |= args | solver_args | {"i": i} | ret
-                                        del record["problem"], record["ph_value"]
+                                        del record["problem"], record["instance_data"]
                                         experiment.store(record)
                                     break
                             except DataError:
@@ -162,6 +232,7 @@ class Benchmark:
                     experiment.table.drop("i", axis=1, inplace=True)
 
             self._table.data = pd.concat([self._table.data, experiment.table])
+            self._table.data.reset_index(drop=True, inplace=True)
             self._artifact.data |= experiment.artifact
             self._experiments.append(experiment)
 
@@ -180,6 +251,7 @@ class Benchmark:
                 record |= ret
                 experiment.store(record)
         self._table.data = pd.concat([self._table.data, experiment.table])
+        self._table.data.reset_index(drop=True, inplace=True)
         self._artifact.data |= experiment.artifact
         self._experiments.append(experiment)
 
@@ -207,9 +279,28 @@ class Benchmark:
         return solver_args, record
 
     def compare(self, key, values=None):
+        """_summary_
+
+        Args:
+            key (_type_): _description_
+            values (_type_, optional): _description_. Defaults to None.
+
+        Returns:
+            _type_: _description_
+        """
         return self._table.data.pivot(columns=key, values=values)
 
     def evaluate(self, opt_value=None, pr=0.99, expand=True):
+        """_summary_
+
+        Args:
+            opt_value (_type_, optional): _description_. Defaults to None.
+            pr (float, optional): _description_. Defaults to 0.99.
+            expand (bool, optional): _description_. Defaults to True.
+
+        Returns:
+            _type_: _description_
+        """
         table = Table()
         metrics = pd.DataFrame()
         for experiment in self._experiments:
@@ -224,6 +315,8 @@ class Benchmark:
                 ]
             )
             table.data = pd.concat([table.data, experiment.table])
+        table.data.reset_index(drop=True, inplace=True)
+        metrics.reset_index(drop=True, inplace=True)
         self._table = table
         return metrics
 
@@ -249,6 +342,17 @@ class Benchmark:
         autosave: bool = True,
         save_dir: str = ExperimentResultDefaultDir,
     ):
+        """_summary_
+
+        Args:
+            benchmark_id (Union[int, str]): _description_
+            experiment_id (Union[int, str, List[Union[int, str]]], optional): _description_. Defaults to None.
+            autosave (bool, optional): _description_. Defaults to True.
+            save_dir (str, optional): _description_. Defaults to ExperimentResultDefaultDir.
+
+        Returns:
+            _type_: _description_
+        """
         experiments = []
         table = Table()
         artifact = Artifact()
