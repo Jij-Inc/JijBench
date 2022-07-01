@@ -1,1 +1,1 @@
-recursive-include jijbench/problems/Instances **
+recursive-include jijbench/problem/Instances **
