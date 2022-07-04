@@ -14,8 +14,9 @@ def pre_post_process():
     # preprocess
     yield
     # postprocess
-    if os.path.exists("./.jb_results"):
-        shutil.rmtree("./.jb_results")
+    norm_path = os.path.normcase("./.jb_results")
+    if os.path.exists(norm_path):
+        shutil.rmtree(norm_path)
 
 
 def test_run_id():
