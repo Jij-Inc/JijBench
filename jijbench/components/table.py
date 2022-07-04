@@ -5,8 +5,9 @@ import json, pickle, re
 import numpy as np
 import pandas as pd
 
-from .dir import Dir
+from jijbench.components.dir import Dir
 
+__all__ = []
 
 class Table:
     """Table template"""
