@@ -4,6 +4,7 @@
 
 #For Dev Dependency 
 pre-commit
+notebook
 isort
 black 
 autoflake
