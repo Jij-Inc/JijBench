@@ -68,6 +68,8 @@ jobs:
           set -eux
           python -m pip install --upgrade pip setuptools wheel build 
           pip-sync requirements.txt build-requirements.txt test-requirements.txt
+      - name: Test Build 
+        run: python setup.py bdist_wheel
       - name: Test
         if: always()
         shell: bash
