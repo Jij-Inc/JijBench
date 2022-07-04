@@ -50,7 +50,7 @@ jobs:
       - name: UTF-8 
         run: |
           sudo apt-get install nkf
-          find . -type f -print0 | xargs -0 nkf -Lu -W --overwrite
+          find ./jijbench -type f -print0 | xargs -0 nkf -Lu -W --overwrite
       - name: Remove Unused
         run: |
           set -eux 
