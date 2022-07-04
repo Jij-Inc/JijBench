@@ -1,4 +1,4 @@
 -c requirements.txt
 
-scikit-build
+setuptools_scm[toml]
 cython 
