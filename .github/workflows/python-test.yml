@@ -15,9 +15,10 @@ jobs:
   Python-Test:
     if: ${{ !contains(github.head_ref, 'dependabot/github_actions') }}
     #if: ${{github.event_name == 'workflow_dispatch'}}
-    runs-on: ubuntu-latest
+    runs-on:  ${{ matrix.os }}
     strategy:
      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
         python-version: ['3.9']
     steps:
       - uses: actions/checkout@v3
