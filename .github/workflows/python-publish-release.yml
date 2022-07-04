@@ -10,7 +10,7 @@ on:
 
 jobs:
   Python-Build:
-    name: Build Wheels ${{ matrix.arch }}.
+    name: Build Wheels
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: true
