@@ -96,5 +96,8 @@ setup(
     cmdclass={"build_ext": build_ext},
     ext_modules=cython_extension(),
     packages=find_namespace_packages(include=["jijbench*"]),
+    package_data={
+        "": ["*.json", "*.JSON"],
+    },
     include_package_data=True,
 )
