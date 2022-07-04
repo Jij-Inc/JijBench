@@ -49,8 +49,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.github_token }}
       - name: UTF-8 
         run: |
-          find . -type f -name "*.py" -exec nkf -wd --overwrite {} \;
-          find . -type f -name "*.json" -exec nkf -wd --overwrite {} \;
+          find ./jijbench -type f | xargs -n 10 nkf -Lu -W --overwrite
       - name: Remove Unused
         run: |
           set -eux 
