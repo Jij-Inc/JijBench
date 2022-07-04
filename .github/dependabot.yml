@@ -1,0 +1,39 @@
+version: 2
+
+registries:
+  python-jfrog:
+    type: python-index
+    url: https://jij.jfrog.io/artifactory/api/pypi/Jij-Private/simple
+    username: ${{ secrets.JFROG_USER }}
+    password: ${{ secrets.JFROG_PASSWORD }}
+    
+updates:
+- package-ecosystem: docker
+  directory: "/"
+  schedule:
+    interval: "daily"
+  allow:
+      # Allow both direct and indirect updates for all packages
+      - dependency-type: "all"
+- package-ecosystem: github-actions
+  directory: "/"
+  schedule:
+    interval: "daily" 
+  allow:
+      # Allow both direct and indirect updates for all packages
+      - dependency-type: "all"
+      
+- package-ecosystem: pip 
+  directory: "/" 
+  insecure-external-code-execution: allow
+  versioning-strategy: auto
+  registries: 
+   - python-jfrog
+  schedule:
+    interval: "daily"
+  allow:
+      # Allow both direct and indirect updates for all packages
+      - dependency-type: "all"
+  labels:
+      - "python"
+      - "dependencies"
