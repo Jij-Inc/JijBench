@@ -13,9 +13,9 @@ setup(
         "setuptools-git-versioning",
     ],
     install_requires=[
-        "openjij",
-        "numpy",
-        "pandas",
-        "matplotlib",
+        "openjij ~= 0.5.8",
+        "numpy ~= 1.23.0",
+        "pandas ~= 1.4.3",
+        "matplotlib ~= 3.5.2",
     ],
 )
