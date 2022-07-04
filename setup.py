@@ -89,7 +89,7 @@ setup(
         "openjij ~= 0.5.8",
         "jijzept ~= 1.10.9",
         "jijmodeling ~= 0.9.25",
-        "numpy < 1.23.0",
+        "numpy < 1.24.0",
         "pandas ~= 1.4.3",
         "matplotlib ~= 3.5.2",
         'pyqubo<1.1.0; python_version < "3.10"',
