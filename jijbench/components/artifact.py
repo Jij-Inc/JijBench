@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os, pickle
 
 import pandas as pd
