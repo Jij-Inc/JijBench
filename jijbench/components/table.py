@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import json, pickle, re, os
+import json, os, pickle, re
 
 import numpy as np
 import pandas as pd
@@ -8,6 +8,7 @@ import pandas as pd
 from jijbench.components.dir import Dir
 
 __all__ = []
+
 
 class Table:
     """Table template"""
@@ -179,7 +180,9 @@ class Table:
             save_dir=save_dir,
         )
         table = cls()
-        table.data = pd.read_csv(os.path.normcase(f"{d.table_dir}/table.csv"), index_col=0)
+        table.data = pd.read_csv(
+            os.path.normcase(f"{d.table_dir}/table.csv"), index_col=0
+        )
         dtypes = cls.load_dtypes(
             benchmark_id=benchmark_id,
             experiment_id=experiment_id,

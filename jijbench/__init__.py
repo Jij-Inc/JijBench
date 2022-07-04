@@ -7,4 +7,5 @@ from jijbench.evaluation.evaluation import Evaluator
 from jijbench.experiment import Experiment
 from jijbench.problem import problem
 from jijbench.problem.get import get_instance_data, get_problem
+
 __all__ = []

@@ -8,6 +8,7 @@ from jijbench.components.dir import Dir
 
 __all__ = []
 
+
 class Artifact:
     def __init__(self):
         self._data = {}

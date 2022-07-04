@@ -20,6 +20,7 @@ from jijbench.solver import DefaultSolver
 
 __all__ = []
 
+
 class Benchmark:
     """Define benchmark.
 
@@ -226,7 +227,9 @@ class Benchmark:
                                 if "APIStatus.SUCCESS" in str(ret):
                                     with experiment:
                                         ret = solver.to_named_ret(ret)
-                                        record.update(args | solver_args | {"i": i} | ret)
+                                        record.update(
+                                            args | solver_args | {"i": i} | ret
+                                        )
                                         del record["problem"], record["instance_data"]
                                         experiment.store(record)
                                     break
@@ -247,7 +250,9 @@ class Benchmark:
         )
         for r in itertools.product(*self.params.values()):
             with experiment:
-                solver_args.update(dict([(k, v) for k, v in zip(self.params.keys(), r)]))
+                solver_args.update(
+                    dict([(k, v) for k, v in zip(self.params.keys(), r)])
+                )
                 ret = solver(**solver_args)
                 ret = solver.to_named_ret(ret)
                 solver_args.update(ret)

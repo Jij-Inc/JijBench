@@ -196,7 +196,8 @@ def test_auto_save():
             response = sampler.sample_qubo({(0, 1): 1})
             experiment.store({"result": response})
         assert os.path.exists(
-            experiment._dir.artifact_dir + os.path.normcase(f"/{experiment.run_id}/timestamp.txt")
+            experiment._dir.artifact_dir
+            + os.path.normcase(f"/{experiment.run_id}/timestamp.txt")
         )
         load_experiment = jb.Experiment.load(
             experiment_id=experiment.experiment_id, benchmark_id=experiment.benchmark_id
@@ -214,7 +215,8 @@ def test_custome_dir_save():
             response = sampler.sample_qubo({(0, 1): 1})
             experiment.store({"result": response})
         assert os.path.exists(
-            experiment._dir.artifact_dir + os.path.normcase(f"/{experiment.run_id}/timestamp.txt")
+            experiment._dir.artifact_dir
+            + os.path.normcase(f"/{experiment.run_id}/timestamp.txt")
         )
         # print(experiment.run_id)
         load_experiment = jb.Experiment.load(

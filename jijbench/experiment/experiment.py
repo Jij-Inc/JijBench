@@ -89,7 +89,9 @@ class Experiment:
             self.log_table(record)
             self.log_artifact()
 
-        self._table.save_dtypes(os.path.normcase(f"{self._dir.experiment_dir}/dtypes.pkl"))
+        self._table.save_dtypes(
+            os.path.normcase(f"{self._dir.experiment_dir}/dtypes.pkl")
+        )
         self._table.current_index += 1
 
     def store(

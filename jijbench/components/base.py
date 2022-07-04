@@ -6,6 +6,7 @@ from jijbench.components.dir import ExperimentResultDefaultDir
 
 __all__ = []
 
+
 class JijBenchObject:
     @classmethod
     def load(

@@ -4,6 +4,7 @@ import uuid
 
 __all__ = []
 
+
 class ID:
     """ID template"""
 

@@ -9,6 +9,7 @@ import openjij as oj
 
 __all__ = []
 
+
 class CallableSolver:
     def __init__(self, solver):
         self.function = self._parse_solver(solver)

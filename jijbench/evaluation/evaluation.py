@@ -137,7 +137,7 @@ class _Metrics:
             ps = _Metrics.success_probability(x, x.energy_min)
         else:
             ps = np.nan
-        with np.errstate(divide='warn'):    
+        with np.errstate(divide="warn"):
             result = np.log(1 - pr) / np.log(1 - ps) * x.execution_time
         return result
 
