@@ -76,7 +76,7 @@ jobs:
         with:
           package-dir: .
         env:
-          CIBW_BUILD: 'cp38-* cp39-*'
+          CIBW_BUILD: "cp38-* cp39-*"
           CIBW_ARCHS: ${{ matrix.arch }}
           CIBW_PLATFORM: ${{ matrix.CIBW_PLATFORM }}
           CIBW_ENVIRONMENT: ${{ matrix.CIBW_ENVIRONMENT }}
