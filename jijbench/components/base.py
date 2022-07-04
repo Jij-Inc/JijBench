@@ -2,8 +2,9 @@ from __future__ import annotations
 
 from typing import Union
 
-from .dir import ExperimentResultDefaultDir
+from jijbench.components.dir import ExperimentResultDefaultDir
 
+__all__ = []
 
 class JijBenchObject:
     @classmethod
