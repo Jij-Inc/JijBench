@@ -51,6 +51,12 @@ jobs:
         run: |
           sudo apt-get install nkf
           find ./jijbench -type f -print0 | xargs -0 nkf -Lu -W --overwrite
+          find . -name '*.py' -type f -print0 | xargs -0 nkf -Lu -W --overwrite
+          find . -name '*.json' -type f -print0 | xargs -0 nkf -Lu -W --overwrite
+          nkf -Lu -W --overwrite LICENSE.txt
+          nkf -Lu -W --overwrite MANIFEST.in
+          nkf -Lu -W --overwrite pyproject.toml
+          nkf -Lu -W --overwrite setup.cfg
       - name: Remove Unused
         run: |
           set -eux 
