@@ -218,14 +218,14 @@ class Benchmark:
                         solver_args, record = self._setup_experiment(
                             solver, problem, instance_data, False
                         )
-                        solver_args |= {"solution_id": solution_id}
+                        solver_args.update({"solution_id": solution_id})
                         while True:
                             try:
                                 ret = solver(**solver_args)
                                 if "APIStatus.SUCCESS" in str(ret):
                                     with experiment:
                                         ret = solver.to_named_ret(ret)
-                                        record |= args | solver_args | {"i": i} | ret
+                                        record.update(args | solver_args | {"i": i} | ret)
                                         del record["problem"], record["instance_data"]
                                         experiment.store(record)
                                     break
@@ -236,7 +236,7 @@ class Benchmark:
 
             self._table.data = pd.concat([self._table.data, experiment.table])
             self._table.data.reset_index(drop=True, inplace=True)
-            self._artifact.data |= experiment.artifact
+            self._artifact.data.update(experiment.artifact)
             self._experiments.append(experiment)
 
     def _run_by_sync(self, solver, problem, instance_data):
@@ -246,16 +246,16 @@ class Benchmark:
         )
         for r in itertools.product(*self.params.values()):
             with experiment:
-                solver_args |= dict([(k, v) for k, v in zip(self.params.keys(), r)])
+                solver_args.update(dict([(k, v) for k, v in zip(self.params.keys(), r)]))
                 ret = solver(**solver_args)
                 ret = solver.to_named_ret(ret)
-                solver_args |= ret
-                record |= dict([(k, v) for k, v in zip(self.params.keys(), r)])
-                record |= ret
+                solver_args.update(ret)
+                record.update(dict([(k, v) for k, v in zip(self.params.keys(), r)]))
+                record.update(ret)
                 experiment.store(record)
         self._table.data = pd.concat([self._table.data, experiment.table])
         self._table.data.reset_index(drop=True, inplace=True)
-        self._artifact.data |= experiment.artifact
+        self._artifact.data.update(experiment.artifact)
         self._experiments.append(experiment)
 
     @staticmethod
@@ -373,7 +373,7 @@ class Benchmark:
             )
             experiments.append(experiment)
             table.data = pd.concat([table.data, experiment.table])
-            artifact.data |= experiment.artifact
+            artifact.data.update(experiment.artifact)
 
         bench = cls([], benchmark_id=benchmark_id)
         bench._experiments = experiments
