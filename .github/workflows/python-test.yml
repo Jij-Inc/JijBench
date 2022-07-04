@@ -34,12 +34,14 @@ jobs:
           cat python_version.txt
           du -a
       - name: Install dependencies
+        shell: bash
         run: |
           set -eux
           python -m pip install pip-tools
           pip-compile -h 
           pip-sync -h
       - name: pip-compile
+        shell: bash
         run: |
           set -eux
           echo "::group::requirements.txt"
@@ -62,6 +64,7 @@ jobs:
             ${{ runner.os }}-pip-${{ hashFiles('python_version.txt') }}-${{ hashFiles('requirements.txt') }}
             ${{ runner.os }}-pip-${{ hashFiles('python_version.txt') }}
       - name: pip-sync
+        shell: bash
         run: |
           set -eux
           python -m pip install --upgrade pip setuptools wheel build 
