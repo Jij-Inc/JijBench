@@ -49,7 +49,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.github_token }}
       - name: UTF-8 
         run: |
-          apt-get install nkf
+          sudo apt-get install nkf
           find . -type f -print0 | xargs -0 nkf -Lu -W --overwrite
       - name: Remove Unused
         run: |
