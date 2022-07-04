@@ -32,7 +32,6 @@ jobs:
           set -eux
           python --version > python_version.txt
           cat python_version.txt
-          du -a
       - name: Install dependencies
         shell: bash
         run: |
