@@ -22,7 +22,7 @@ class Dir:
         self._experiment_dir = os.path.normcase(f"{self._benchmark_dir}/{self.experiment_id}")
 
         self._table_dir: str = self._dir_template.format(
-            save_dir=os.path.normcase(self.save_dir),
+            save_dir=self.save_dir,
             benchmark_id=self.benchmark_id,
             kind="tables",
             experiment_id=self.experiment_id,
