@@ -4,8 +4,9 @@ import os, pickle
 
 import pandas as pd
 
-from .dir import Dir
+from jijbench.components.dir import Dir
 
+__all__ = []
 
 class Artifact:
     def __init__(self):
