@@ -96,7 +96,7 @@ pip-compile build-requirements.in
 pip-compile test-requirements.in 
 pip-compile dev-requirements.in 
 pip-compile format-requirement.in
-pip-sync requirements.txt build-requirements.txt test-requirements.txt dev-requirements.txt format-requirement.txt 
+pip-sync requirements.txt build-requirements.txt test-requirements.txt dev-requirements.txt format-requirements.txt 
 ``` 
 Format
 ```
