@@ -45,11 +45,11 @@ Use [`pip-tools`](https://github.com/jazzband/pip-tools).
 
 ```sh
 pip install pip-tools
-pip-compile --no-header --no-emit-index-url --extra-index-url https://JFROG_USER_NAME:JFROG_PASSWORD@jij.jfrog.io/artifactory/api/pypi/Jij-Private/simple
+pip-compile 
 pip-compile build-requirements.in 
 pip-compile test-requirements.in 
 pip-compile dev-requirements.in 
-pip-sync requirements.txt build-requirements.txt dev-requirements.txt test-requirements.txt --extra-index-url https://JFROG_USER_NAME:JFROG_PASSWORD@jij.jfrog.io/artifactory/api/pypi/Jij-Private/simple
+pip-sync requirements.txt build-requirements.txt dev-requirements.txt test-requirements.txt 
 ```
 
 4. Install the module
@@ -67,10 +67,10 @@ https://docs.python.org/3.9/distutils/introduction.html
 
 ```sh 
 pip install pip-tools
-pip-compile --no-header --no-emit-index-url --extra-index-url https://JFROG_USER_NAME:JFROG_PASSWORD@jij.jfrog.io/artifactory/api/pypi/Jij-Private/simple
+pip-compile 
 pip-compile build-requirements.in 
 pip-compile test-requirements.in 
-pip-sync requirements.txt build-requirements.txt --extra-index-url https://JFROG_USER_NAME:JFROG_PASSWORD@jij.jfrog.io/artifactory/api/pypi/Jij-Private/simple
+pip-sync requirements.txt build-requirements.txt 
 python pip -m  install .
 openjijsolver
 ```
@@ -80,10 +80,10 @@ This test runs with [pytest](https://docs.pytest.org/en/7.1.x/) and [pytest-runn
 
 ```sh 
 pip install pip-tools
-pip-compile --no-header --no-emit-index-url --extra-index-url https://JFROG_USER_NAME:JFROG_PASSWORD@jij.jfrog.io/artifactory/api/pypi/Jij-Private/simple
+pip-compile 
 pip-compile build-requirements.in 
 pip-compile test-requirements.in 
-pip-sync requirements.txt build-requirements.txt test-requirements.txt --extra-index-url https://JFROG_USER_NAME:JFROG_PASSWORD@jij.jfrog.io/artifactory/api/pypi/Jij-Private/simple
+pip-sync requirements.txt build-requirements.txt test-requirements.txt 
 python setup.py test
 ```
 
@@ -91,12 +91,12 @@ python setup.py test
 
 ```sh
 pip install pip-tools
-pip-compile --no-header --no-emit-index-url --extra-index-url https://JFROG_USER_NAME:JFROG_PASSWORD@jij.jfrog.io/artifactory/api/pypi/Jij-Private/simple
+pip-compile 
 pip-compile build-requirements.in 
 pip-compile test-requirements.in 
 pip-compile dev-requirements.in 
 pip-compile format-requirement.in
-pip-sync requirements.txt build-requirements.txt test-requirements.txt dev-requirements.txt format-requirement.txt --extra-index-url https://JFROG_USER_NAME:JFROG_PASSWORD@jij.jfrog.io/artifactory/api/pypi/Jij-Private/simple
+pip-sync requirements.txt build-requirements.txt test-requirements.txt dev-requirements.txt format-requirement.txt 
 ``` 
 Format
 ```
