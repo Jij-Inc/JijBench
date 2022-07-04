@@ -4,7 +4,9 @@ import os, pickle
 
 import pandas as pd
 
-from .dir import Dir
+from jijbench.components.dir import Dir
+
+__all__ = []
 
 
 class Artifact:
@@ -40,21 +42,21 @@ class Artifact:
 
         dir_names = os.listdir(d.artifact_dir)
         for dn in dir_names:
-            load_dir = f"{d.artifact_dir}/{dn}"
-            if os.path.exists(f"{load_dir}/artifact.pkl"):
-                with open(f"{load_dir}/artifact.pkl", "rb") as f:
+            load_dir = os.path.normcase(f"{d.artifact_dir}/{dn}")
+            if os.path.exists(os.path.normcase(f"{load_dir}/artifact.pkl")):
+                with open(os.path.normcase(f"{load_dir}/artifact.pkl"), "rb") as f:
                     artifact.data[dn] = pickle.load(f)
-            if os.path.exists(f"{load_dir}/timestamp.txt"):
-                with open(f"{load_dir}/timestamp.txt", "r") as f:
+            if os.path.exists(os.path.normcase(f"{load_dir}/timestamp.txt")):
+                with open(os.path.normcase(f"{load_dir}/timestamp.txt"), "r") as f:
                     artifact.timestamp[dn] = pd.Timestamp(f.read())
         return artifact
 
     def save(self, savepath):
         for run_id, v in self._data.items():
-            save_dir = f"{savepath}/{run_id}"
-            with open(f"{save_dir}/artifact.pkl", "wb") as f:
+            save_dir = os.path.normcase(f"{savepath}/{run_id}")
+            with open(os.path.normcase(f"{save_dir}/artifact.pkl"), "wb") as f:
                 pickle.dump(v, f)
 
             timestamp = self._timestamp[run_id]
-            with open(f"{save_dir}/timestamp.txt", "w") as f:
+            with open(os.path.normcase(f"{save_dir}/timestamp.txt"), "w") as f:
                 f.write(str(timestamp))

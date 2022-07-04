@@ -18,6 +18,8 @@ from jijbench.evaluation import Evaluator
 from jijbench.experiment import Experiment
 from jijbench.solver import DefaultSolver
 
+__all__ = []
+
 
 class Benchmark:
     """Define benchmark.
@@ -225,7 +227,9 @@ class Benchmark:
                                 if "APIStatus.SUCCESS" in str(ret):
                                     with experiment:
                                         ret = solver.to_named_ret(ret)
-                                        record.update(args | solver_args | {"i": i} | ret)
+                                        record.update(
+                                            args | solver_args | {"i": i} | ret
+                                        )
                                         del record["problem"], record["instance_data"]
                                         experiment.store(record)
                                     break
@@ -246,7 +250,9 @@ class Benchmark:
         )
         for r in itertools.product(*self.params.values()):
             with experiment:
-                solver_args.update(dict([(k, v) for k, v in zip(self.params.keys(), r)]))
+                solver_args.update(
+                    dict([(k, v) for k, v in zip(self.params.keys(), r)])
+                )
                 ret = solver(**solver_args)
                 ret = solver.to_named_ret(ret)
                 solver_args.update(ret)
@@ -362,7 +368,7 @@ class Benchmark:
         experiment_ids = (
             experiment_id
             if experiment_id
-            else os.listdir(f"{save_dir}/benchmark_{benchmark_id}")
+            else os.listdir(os.path.normcase(f"{save_dir}/benchmark_{benchmark_id}"))
         )
         for experiment_id in experiment_ids:
             experiment = Experiment.load(

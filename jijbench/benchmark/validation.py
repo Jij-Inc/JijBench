@@ -6,6 +6,8 @@ import jijmodeling as jm
 
 from jijbench.solver import CallableSolver
 
+__all__ = []
+
 
 def on_solver(fn):
     @functools.wraps(fn)
