@@ -63,18 +63,6 @@ python setup.py install
 ```
 https://docs.python.org/3.9/distutils/introduction.html
 
-### Run 
-
-```sh 
-pip install pip-tools
-pip-compile 
-pip-compile build-requirements.in 
-pip-compile test-requirements.in 
-pip-sync requirements.txt build-requirements.txt 
-python pip -m  install .
-openjijsolver
-```
-
 ### Test Python
 This test runs with [pytest](https://docs.pytest.org/en/7.1.x/) and [pytest-runner](https://github.com/pytest-dev/pytest-runner/)
 
