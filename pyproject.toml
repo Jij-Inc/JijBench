@@ -93,6 +93,7 @@ reportDuplicateImport = 'warning'
 [tool.cibuildwheel]
 build-verbosity = 1
 dependency-versions = "latest"
+build = ["cp38-*", "cp39-*"]
 skip = ["pp*", "*musllinux_x86_64", "*musllinux_aarch64"]
 
 [tool.cibuildwheel.linux]
