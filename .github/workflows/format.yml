@@ -38,7 +38,7 @@ jobs:
         shell: bash
         run: |
           set -eux
-          pip-sync format-requirement.txt
+          pip-sync format-requirements.txt
       - name: Git Config
         run: |
           set -eux
