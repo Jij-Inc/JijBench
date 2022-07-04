@@ -7,13 +7,14 @@ import jijzept as jz
 import numpy as np
 import pandas as pd
 
+from jijmodeling.exceptions import DataError
+from jijmodeling.transpilers.type_annotations import PH_VALUES_INTERFACE
+
 from jijbench.benchmark import validation
 from jijbench.components import ID, Artifact, ExperimentResultDefaultDir, Table
 from jijbench.evaluation import Evaluator
 from jijbench.experiment import Experiment
 from jijbench.solver import DefaultSolver
-from jijmodeling.exceptions import DataError
-from jijmodeling.transpilers.type_annotations import PH_VALUES_INTERFACE
 
 
 class Benchmark:
@@ -76,7 +77,7 @@ class Benchmark:
     dwave_config: Optional[str]
         Defaults to None.
         If it is used Dwave by `solver`, this needs.
-    
+
     Attributes
     ----------
     table: pandas.DataFrame
@@ -86,7 +87,7 @@ class Benchmark:
     experiments: List[Experiment]
         List of Experiment. A experiment id is issued for each combination of `params`.
     """
-        
+
     def __init__(
         self,
         params: Dict[str, List],

@@ -1,7 +1,8 @@
-import json
-import pathlib
+import json, pathlib
+
+from typing import Dict, List, Tuple, Union
+
 import jijmodeling as jm
-from typing import List, Tuple, Dict, Union
 
 
 class JijModelingTarget:

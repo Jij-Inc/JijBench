@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-import jijbench as jb
+import os, shutil
 
-import os
-import shutil
-import openjij as oj
 import jijmodeling as jm
+import openjij as oj
 import pytest
+
+import jijbench as jb
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -16,7 +16,6 @@ def pre_post_process():
     # postprocess
     if os.path.exists("./.jb_results"):
         shutil.rmtree("./.jb_results")
-        pass
 
 
 @pytest.fixture
@@ -246,7 +245,7 @@ def test_benchmark_with_custom_decode(
     instance_data_list,
 ):
     import numpy as np
-    
+
     for d in [ph_value, ph_value_list, instance_data, instance_data_list]:
         bench = jb.Benchmark(
             {

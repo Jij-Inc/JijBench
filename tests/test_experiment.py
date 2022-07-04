@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-import os
-import shutil
-import jijbench as jb
+import os, shutil
+
+import jijmodeling as jm
 import openjij as oj
 import pytest
-import jijmodeling as jm
+
+import jijbench as jb
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -15,7 +16,6 @@ def pre_post_process():
     # postprocess
     if os.path.exists("./.jb_results"):
         shutil.rmtree("./.jb_results")
-        pass
 
 
 def test_run_id():
@@ -273,11 +273,11 @@ def test_insert_iterobj_into_table():
         }
         experiment.store_as_table(record)
 
-    assert type(experiment.table.loc[0, "1d_list"]) == list
-    assert type(experiment.table.loc[0, "2d_list"]) == list
-    assert type(experiment.table.loc[0, "1d_array"]) == np.ndarray
-    assert type(experiment.table.loc[0, "nd_array"]) == np.ndarray
-    assert type(experiment.table.loc[0, "dict"]) == dict
+    assert isinstance(experiment.table.loc[0, "1d_list"], list)
+    assert isinstance(experiment.table.loc[0, "2d_list"], list)
+    assert isinstance(experiment.table.loc[0, "1d_array"], np.ndarray)
+    assert isinstance(experiment.table.loc[0, "nd_array"], np.ndarray)
+    assert isinstance(experiment.table.loc[0, "dict"], dict)
 
 
 def test_load_iterobj():
@@ -303,18 +303,20 @@ def test_load_iterobj():
     experiment.save()
     del experiment
 
-    experiment = jb.Experiment.load(experiment_id=experiment_id, benchmark_id=benchmark_id)
+    experiment = jb.Experiment.load(
+        experiment_id=experiment_id, benchmark_id=benchmark_id
+    )
 
-    assert type(experiment.table.loc[0, "1d_list"]) == list
-    assert type(experiment.table.loc[0, "2d_list"]) == list
-    assert type(experiment.table.loc[0, "1d_array"]) == np.ndarray
-    assert type(experiment.table.loc[0, "nd_array"]) == np.ndarray
-    assert type(experiment.table.loc[0, "dict"]) == dict
+    assert isinstance(experiment.table.loc[0, "1d_list"], list)
+    assert isinstance(experiment.table.loc[0, "2d_list"], list)
+    assert isinstance(experiment.table.loc[0, "1d_array"], np.ndarray)
+    assert isinstance(experiment.table.loc[0, "nd_array"], np.ndarray)
+    assert isinstance(experiment.table.loc[0, "dict"], dict)
 
 
 def test_sampling_and_execution_time():
     import numpy as np
-    
+
     sampler = oj.SASampler()
     experiment = jb.Experiment(autosave=False)
 
@@ -323,10 +325,10 @@ def test_sampling_and_execution_time():
         experiment.store({"result": response})
 
     experiment.table.dropna(axis="columns", inplace=True)
-    
-    assert type(experiment.table.sampling_time[0]) == np.float64
-    assert type(experiment.table.execution_time[0]) == np.float64
-    
+
+    assert isinstance(experiment.table.sampling_time[0], np.float64)
+    assert isinstance(experiment.table.execution_time[0], np.float64)
+
     d = jm.Placeholder("d")
     x = jm.Binary("x", shape=(2,))
     problem = jm.Problem("sample")
@@ -348,4 +350,3 @@ def test_sampling_and_execution_time():
 
     assert np.isnan(experiment.table.sampling_time[0])
     assert np.isnan(experiment.table.execution_time[0])
-    

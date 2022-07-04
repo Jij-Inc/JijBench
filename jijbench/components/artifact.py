@@ -1,6 +1,7 @@
-import os
-import pickle
+import os, pickle
+
 import pandas as pd
+
 from .dir import Dir
 
 

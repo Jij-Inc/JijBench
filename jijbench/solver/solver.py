@@ -1,7 +1,9 @@
 import inspect
-import openjij as oj
-import jijzept as jz
+
 from typing import Callable
+
+import jijzept as jz
+import openjij as oj
 
 
 class CallableSolver:
@@ -76,23 +78,27 @@ class DefaultSolver:
     @property
     def JijSASampler(self):
         return self.jijzept_sa_sampler_sample_model
-    
+
     @property
     def JijSQASampler(self):
         return self.jijzept_sqa_sampler_sample_model
-    
+
     @property
     def JijSwapMovingSampler(self):
         return self.jijzept_swapmoving_sampler_sample_model
 
     @classmethod
-    def openjij_sa_sampler_sample(cls, problem, instance_data, feed_dict=None, **kwargs):
+    def openjij_sa_sampler_sample(
+        cls, problem, instance_data, feed_dict=None, **kwargs
+    ):
         return cls._sample_by_openjij(
             oj.SASampler, problem, instance_data, feed_dict, **kwargs
         )
 
     @classmethod
-    def openjij_sqa_sampler_sample(cls, problem, instance_data, feed_dict=None, **kwargs):
+    def openjij_sqa_sampler_sample(
+        cls, problem, instance_data, feed_dict=None, **kwargs
+    ):
         return cls._sample_by_openjij(
             oj.SQASampler, problem, instance_data, feed_dict, **kwargs
         )
@@ -105,23 +111,17 @@ class DefaultSolver:
             instance_data,
             **kwargs,
         )
-        
+
     @classmethod
     def jijzept_sqa_sampler_sample_model(cls, problem, instance_data, **kwargs):
         return cls._sample_by_jijzept(
-            jz.JijSQASampler,
-            problem,
-            instance_data,
-            **kwargs
+            jz.JijSQASampler, problem, instance_data, **kwargs
         )
-        
+
     @classmethod
     def jijzept_swapmoving_sampler_sample_model(cls, problem, instance_data, **kwargs):
         return cls._sample_by_jijzept(
-            jz.JijSwapMovingSampler,
-            problem,
-            instance_data,
-            **kwargs
+            jz.JijSwapMovingSampler, problem, instance_data, **kwargs
         )
 
     @staticmethod

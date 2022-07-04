@@ -1,6 +1,8 @@
+from typing import Any, Callable, Union
+
 import numpy as np
 import pandas as pd
-from typing import Union, Callable, Any
+
 from jijbench.experiment import Experiment
 
 
@@ -40,8 +42,12 @@ class Evaluator:
         metrics["TTS(optimal)"] = self.tts(
             opt_value=opt_value, pr=pr, solution_type="optimal", expand=expand
         )
-        metrics["TTS(feasible)"] = self.tts(pr=pr, solution_type="feasible", expand=expand)
-        metrics["TTS(derived)"] = self.tts(pr=pr, solution_type="derived", expand=expand)
+        metrics["TTS(feasible)"] = self.tts(
+            pr=pr, solution_type="feasible", expand=expand
+        )
+        metrics["TTS(derived)"] = self.tts(
+            pr=pr, solution_type="derived", expand=expand
+        )
         return metrics
 
     def apply(self, func, column, expand=True, axis=1, **kwargs):

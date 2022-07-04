@@ -1,6 +1,8 @@
 from typing import List, Tuple
-from jijbench import problem
+
 from jijmodeling.transpilers.type_annotations import PH_VALUES_INTERFACE
+
+from jijbench import problem
 
 
 def get_problem(problem_name):
