@@ -91,6 +91,7 @@ setup(
         "numpy < 1.23.0",
         "pandas ~= 1.4.3",
         "matplotlib ~= 3.5.2",
+        'pyqubo<1.1.0; python_version < "3.10"',
     ],
     cmdclass={"build_ext": build_ext},
     ext_modules=cython_extension(),
