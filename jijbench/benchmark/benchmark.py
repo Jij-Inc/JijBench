@@ -18,6 +18,7 @@ from jijbench.evaluation import Evaluator
 from jijbench.experiment import Experiment
 from jijbench.solver import DefaultSolver
 
+__all__ = []
 
 class Benchmark:
     """Define benchmark.
