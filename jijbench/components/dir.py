@@ -27,36 +27,36 @@ class Dir:
             kind="tables",
             experiment_id=self.experiment_id,
         )
-        self._artifact_dir: str = os.path.normcase(self._dir_template.format(
-            save_dir=os.path.normcase(self.save_dir),
+        self._artifact_dir: str = self._dir_template.format(
+            save_dir=self.save_dir,
             benchmark_id=self.benchmark_id,
             kind="artifact",
             experiment_id=self.experiment_id,
-        ))
+        )
 
     @property
     def benchmark_dir(self) -> str:
-        return os.path.normcase(self._benchmark_dir)
+        return self._benchmark_dir
 
     @property
     def experiment_dir(self) -> str:
-        return os.path.normcase(self._experiment_dir)
+        return self._experiment_dir
 
     @property
     def table_dir(self) -> str:
-        return os.path.normcase(self._table_dir)
+        return self._table_dir
 
     @property
     def artifact_dir(self) -> str:
-        return os.path.normcase(self._artifact_dir)
+        return self._artifact_dir
 
     def make_dirs(self, run_id, experiment_id=None, benchmark_id=None):
-        self._table_dir = os.path.normcase(self._rename_dir(
+        self._table_dir = self._rename_dir(
             kind="tables", experiment_id=experiment_id, benchmark_id=benchmark_id
-        ))
-        self._artifact_dir = os.path.normcase(self._rename_dir(
+        )
+        self._artifact_dir = self._rename_dir(
             kind="artifact", experiment_id=experiment_id, benchmark_id=benchmark_id
-        ))
+        )
         os.makedirs(self._table_dir, exist_ok=True)
         os.makedirs(os.path.normcase(f"{self._artifact_dir}/{run_id}"), exist_ok=True)
 
@@ -74,10 +74,10 @@ class Dir:
         self._benchmark_dir = os.path.normcase(f"{self.save_dir}/benchmark_{benchmark_id}")
         self._experiment_dir = os.path.normcase(f"{self._benchmark_dir}/{experiment_id}")
 
-        d = os.path.normcase(self._dir_template.format(
-            save_dir=os.path.normcase(self.save_dir),
+        dir_path = self._dir_template.format(
+            save_dir=self.save_dir,
             benchmark_id=benchmark_id,
             kind=kind,
             experiment_id=experiment_id,
-        ))
-        return d
+        )
+        return dir_path
