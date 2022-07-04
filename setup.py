@@ -84,6 +84,7 @@ def cython_extension():
 
 setup(
     setup_requires=setup_requires,
+    #依存ライブラリとそのバージョン
     install_requires=[
         "openjij ~= 0.5.8",
         "jijzept ~= 1.10.9",
