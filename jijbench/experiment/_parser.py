@@ -1,10 +1,14 @@
-import numpy as np
+from __future__ import annotations
+
 from typing import TYPE_CHECKING, List, Tuple
 
+import numpy as np
+
 if TYPE_CHECKING:
-    from jijbench.experiment.experiment import Experiment
     from dimod import SampleSet
     from jijmodeling import DecodedSamples
+
+    from jijbench.experiment.experiment import Experiment
 
 
 def _parse_response(

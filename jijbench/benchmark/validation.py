@@ -1,5 +1,9 @@
+from __future__ import annotations
+
 import functools
+
 import jijmodeling as jm
+
 from jijbench.solver import CallableSolver
 
 

@@ -1,7 +1,10 @@
-import json
-import pathlib
+from __future__ import annotations
+
+import json, pathlib
+
+from typing import Dict, List, Tuple, Union
+
 import jijmodeling as jm
-from typing import List, Tuple, Dict, Union
 
 
 class JijModelingTarget:

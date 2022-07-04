@@ -1,5 +1,6 @@
-import os
+from __future__ import annotations
 
+import os
 
 ExperimentResultDefaultDir = "./.jb_results"
 

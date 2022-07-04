@@ -1,0 +1,17 @@
+-c requirements.txt
+-c build-requirements.txt
+
+mypy
+pytest
+pytest-mypy
+pytest-mypy-plugins
+pytest-mypy-testing
+pytest-mock
+pytest-cov
+pytest-html
+pytest-runner
+pytest-randomly
+pytest-spec
+pytest-asyncio
+pytest-cython
+coverage

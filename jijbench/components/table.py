@@ -1,8 +1,10 @@
-import re
-import json
-import pickle
+from __future__ import annotations
+
+import json, pickle, re
+
 import numpy as np
 import pandas as pd
+
 from .dir import Dir
 
 

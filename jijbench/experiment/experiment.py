@@ -1,18 +1,19 @@
-import os
-import re
+from __future__ import annotations
+
+import datetime, os, pickle, re
+
+from typing import Any, Callable, Dict, List, Optional, Union
+
 import dimod
-import pickle
-import datetime
+import jijmodeling as jm
 import numpy as np
 import pandas as pd
-import jijmodeling as jm
-from typing import Any, Callable, Dict, List, Optional, Union
+
+from jijbench.components import ID, Artifact, Dir, ExperimentResultDefaultDir, Table
 from jijbench.experiment._parser import (
     _parse_dimod_sampleset,
     _parse_jm_problem_decodedsamples,
 )
-from jijbench.components import Table, Artifact, ID, Dir, ExperimentResultDefaultDir
-
 
 np.set_printoptions(threshold=np.inf)
 

@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 from typing import Union
+
 from .dir import ExperimentResultDefaultDir
 
 
@@ -10,7 +13,7 @@ class JijBenchObject:
         benchmark_id: Union[int, str],
         experiment_id: Union[int, str] = None,
         autosave: bool = True,
-        save_dir: str = ExperimentResultDefaultDir
+        save_dir: str = ExperimentResultDefaultDir,
     ):
         pass
 
@@ -21,6 +24,6 @@ class JijBenchObject:
         benchmark_id: Union[int, str],
         experiment_id: Union[int, str] = None,
         autosave: bool = True,
-        save_dir: str = ExperimentResultDefaultDir
+        save_dir: str = ExperimentResultDefaultDir,
     ):
         pass

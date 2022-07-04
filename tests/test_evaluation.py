@@ -1,10 +1,13 @@
-import os
-import shutil
-import jijbench as jb
+from __future__ import annotations
+
+import os, shutil
+
 import jijmodeling as jm
-import openjij as oj
 import numpy as np
+import openjij as oj
 import pytest
+
+import jijbench as jb
 
 
 @pytest.fixture(scope="function", autouse=True)
