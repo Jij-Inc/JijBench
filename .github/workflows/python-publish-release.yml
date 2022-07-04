@@ -50,9 +50,9 @@ jobs:
             arch: arm64
             CIBW_PLATFORM: macos
             
-          - os: windows-latest
-            arch: AMD64
-            CIBW_PLATFORM: windows
+          #- os: windows-latest
+          #  arch: AMD64
+          #  CIBW_PLATFORM: windows
             
     steps:
       - uses: actions/checkout@v3
