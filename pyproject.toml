@@ -1,20 +1,107 @@
-[tool.poetry]
-name = "jijbench"
-version = "0.1.0"
-description = ""
-authors = ["Jij Inc."]
-
-[tool.poetry.dependencies]
-python = ">=3.9,<3.10"
-pytest = "^6.2.5"
-jijzept = "^1.9.1"
-openjij = "^0.4.6"
-matplotlib = "^3.5.1"
-pandas = "^1.4.0"
-
-[tool.poetry.dev-dependencies]
-jupyter = "^1.0.0"
-
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = [
+   'setuptools_scm[toml]', 
+   'setuptools',
+   'wheel',
+   'build',
+   "Cython",
+   ]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+write_to = "jijbench/_version.py"
+
+[tool.pytest.ini_options]
+#-n auto --forked
+addopts = "-vv -s --color=yes --code-highlight=yes --doctest-cython --cov-context=test --cov --cov-append --cov-report term  --cov-config .coveragerc --junit-xml=result.xml --randomly-seed=last"
+#addopts = "--doctest-cython -s"
+testpaths = [
+    "tests",
+]
+console_output_style = "count"
+log_auto_indent = true
+
+[tool.flake8] 
+show-source = true
+statistics = true
+doctests = true
+max-complexity = 10
+max-line-length = 999 
+
+[tool.isort]
+profile= "black"
+multi_line_output = 3
+force_grid_wrap = 0
+include_trailing_comma = false
+ensure_newline_before_comments = true
+use_parentheses = true 
+balanced_wrapping = false
+lines_between_types = 1
+#order_by_type = true 
+combine_as_imports = true
+combine_star = true
+combine_straight_imports = true
+group_by_package = true
+auto_identify_namespace_packages = true
+src_paths = ["jijbench", "tests"]
+
+[tool.black]
+target-version = ['py39', 'py310']
+
+[tool.mypy]
+plugins = [
+  "pydantic.mypy"
+]
+ignore_missing_imports = true
+#show_traceback = true
+warn_return_any = true
+warn_unused_configs = true
+warn_unreachable = true
+namespace_packages = true
+explicit_package_bases = true
+follow_imports = "silent"
+warn_redundant_casts = true
+warn_unused_ignores = true
+disallow_any_generics = true
+check_untyped_defs = true
+no_implicit_reexport = true
+# for strict mypy: (this is the tricky one :-))
+disallow_untyped_defs = true
+
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true
+warn_untyped_fields = true
+
+[tool.pyright]
+pythonVersion = "3.9"
+typeCheckingMode = "basic"
+include = [
+    "jijbench", 
+    "tests",
+  ]
+ignore = [ 
+  "*.c", 
+  "*.so",
+]
+reportImportCycles = 'warning'
+reportUnusedImport = 'warning'
+reportUnusedVariable =  'warning'
+reportDuplicateImport = 'warning'
+
+[tool.cibuildwheel]
+build-verbosity = 1
+dependency-versions = "latest"
+skip = ["pp*", "*musllinux_x86_64", "*musllinux_aarch64"]
+
+[tool.cibuildwheel.linux]
+archs = ["x86_64", "aarch64"]
+build-frontend = "build"
+manylinux-x86_64-image ="quay.io/pypa/manylinux_2_28_x86_64:latest"
+manylinux-aarch64-image = "quay.io/pypa/manylinux_2_28_aarch64:latest"
+
+[tool.cibuildwheel.macos]
+build-frontend = "build"
+
+[tool.cibuildwheel.windows]

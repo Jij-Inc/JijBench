@@ -1,0 +1,46 @@
+JijZept SDK Terms of Use
+
+Please read these terms and conditions carefully before using JijZept SDK.
+
+1. Interpretation and Definitions
+
+The words in which the initial letter is capitalized have meanings defined under the following conditions. The following definitions shall have the same meaning regardless of whether they appear in singular or in the plural.
+
+For these Terms and Conditions:
+
+(a) "JijZept Service" means a cloud service for optimization calculation infrastructure provided by Jij Inc.
+(b) "JijZept SDK" represents a set of software tools including "JijZept-Client" and "JijModeling" for developing programs that access the JijZept Services. This term includes sample programs provided by us.
+(c) Company (referred to as either "the Company", "We", "Us" or "Our" in this Agreement) refers to Jij Inc., 1-4-6 Nezu, Bunkyo-Ku, Tokyo 113-0031.
+(d) "Access Token" means a token necessary for connecting to the JijZept service.
+
+2. Acknowledgment
+
+These are the Terms and Conditions governing the use of JijZept SDK and the agreement that operates between the User and the Company.
+These Terms and Conditions set out the rights and obligations of all users regarding the use of JijZept SDK.
+
+Your use of JijZept SDK is conditioned on Your acceptance of and compliance with these Terms and Conditions. These Terms and Conditions apply to all users who use JijZept SDK.
+
+3. Copyright
+
+(a) All intellectual property rights, including copyrights (the rights outlined in Articles 27 and 28 of the Copyright Act of Japan), trademarks, patents, etc., related to the Service and JijZept SDK belong to the Company or third parties who have granted licenses to us and are not transferred to you by agreeing to these Terms of Use. 
+(b) This license does not entitle you to receive provision or disclosure of source code for any part of JijZept SDK. However, this does not apply to sample programs, OSS, etc., that we voluntarily release to the public or that we are required to release based on a license from third parties.
+
+4. JijZept Service
+
+You must enter into a separate JijZept service agreement to access the JijZept Service using the JijZept SDK.
+
+5. Prohibitions
+
+(a) Analyzing the structure, functions of JijZept Service and JijZept SDK by reverse engineering, decompiling, disassembling, or other means or to obtain the source code of JijZept SDK.
+(b) Duplicating or adapting all or part of the client software contained in the Software without the Company's prior consent.
+(c) Publishing a copy of the JijZept SDK on a computer network that can be accessible by a third party.
+(d) Disclosing access tokens to a third party or publishing them.
+(e) Other use beyond the scope permitted by these Terms of Use.
+
+6.  Limitation of liability
+
+(a) The Company does not guarantee the accuracy, effectiveness, or optimality of the calculation results of JijZept SDK and JijZept Service.
+(b) The Company shall not be liable for any failure of the Software to operate when the User uses or uses the Software for the User's customer by incorporating or linking it with the User-provided Software.
+(c) The User shall be responsible for confirming and examining the suitability of the relevant foreign laws and regulations applicable to the use of the Software. The Company shall not be liable for any legal liabilities related to the appropriate foreign laws and regulations.
+
+Enacted 1 July 2021.

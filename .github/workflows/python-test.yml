@@ -1,31 +1,101 @@
-name: Test
+name: python-test
 
 on:
   workflow_dispatch:
   push:
-    branches: [main, master]
-  pull_request:
-    types: [opened, reopened, synchronize]
-
-
-
+    branches:
+      - main
+  pull_request: 
+    types: 
+      - opened 
+      - reopened 
+      - synchronize
+ 
 jobs:
-  pytest:
-    name: Run pytest
-    runs-on: ubuntu-latest
+  Python-Test:
+    if: ${{ !contains(github.head_ref, 'dependabot/github_actions') }}
+    #if: ${{github.event_name == 'workflow_dispatch'}}
+    runs-on:  ${{ matrix.os }}
     strategy:
-      matrix:
-        python-version: [3.9]
+     matrix:
+        os: [ubuntu-latest, macos-latest]
+        python-version: ['3.9']
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
-          python-version: ${{ matrix.python-version }}
-      - name: install poetry
-        run: python3 -m pip install poetry
-      - name: install packages
-        run: python3 -m poetry install --no-interaction
-      - name: run test
-        run: poetry run pytest tests
+          python-version:  ${{ matrix.python-version }}
+      - name: Get Python Version
+        shell: bash
+        run: |
+          set -eux
+          python --version > python_version.txt
+          cat python_version.txt
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -eux
+          python -m pip install pip-tools
+          pip-compile -h 
+          pip-sync -h
+      - name: pip-compile
+        shell: bash
+        run: |
+          set -eux
+          echo "::group::requirements.txt"
+          pip-compile --verbose 
+          echo "::endgroup::"
+          echo "::group::build-requirements.txt"
+          pip-compile --verbose build-requirements.in 
+          echo "::endgroup::"
+          echo "::group::test-requirements.txt"
+          pip-compile --verbose test-requirements.in 
+          echo "::endgroup::"
+      - uses: actions/cache@v3
+        if: always()
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('python_version.txt') }}-${{ hashFiles('requirements.txt') }}-${{ hashFiles('build-requirements.txt') }}-${{ hashFiles('test-requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-${{ hashFiles('python_version.txt') }}-${{ hashFiles('requirements.txt') }}-${{ hashFiles('build-requirements.txt') }}-${{ hashFiles('test-requirements.txt') }}
+            ${{ runner.os }}-pip-${{ hashFiles('python_version.txt') }}-${{ hashFiles('requirements.txt') }}-${{ hashFiles('build-requirements.txt') }}
+            ${{ runner.os }}-pip-${{ hashFiles('python_version.txt') }}-${{ hashFiles('requirements.txt') }}
+            ${{ runner.os }}-pip-${{ hashFiles('python_version.txt') }}
+      - name: pip-sync
+        shell: bash
+        run: |
+          set -eux
+          python -m pip install --upgrade pip setuptools wheel build 
+          pip-sync requirements.txt build-requirements.txt test-requirements.txt
+      - name: Test Build 
+        run: python setup.py bdist_wheel
+      - name: Test
+        if: always()
+        shell: bash
+        run: |
+          set -eux
+          python setup.py test 
+      - name: Publish Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v1
+        if: ${{ runner.os == 'Linux' && always()}}
+        with:
+          files: ./result.xml
+          github_token: ${{ github.token }}
+          check_name: "Python Test Report"
+          report_individual_runs: true
+      - name: Generate
+        shell: bash
+        run: |
+          set -eux
+          python -m coverage xml
+          python -m coverage json
+          python -m coverage lcov
+      - uses: codecov/codecov-action@v3
+        continue-on-error: true
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          env_vars: OS
+          files: coverage.xml, coverage.json, coverage.lcov
+          fail_ci_if_error: true
+          verbose: true 
