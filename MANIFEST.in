@@ -1,1 +1,24 @@
-recursive-include jijbench/problem/Instances **
+include setup.py
+include setup.cfg
+include LICENSE
+include pyproject.toml
+
+
+global-exclude .clang-format
+global-exclude .pre-commit-config.yaml
+global-exclude codecov.yml
+global-exclude requirements.txt
+global-exclude dev-requirements.in
+global-exclude format-requirements.in
+global-exclude lint-requirements.in
+global-exclude lint-requirements.txt
+global-exclude dev-requirements.txt
+global-exclude format-requirements.txt
+global-exclude build-requirements.in
+global-exclude build-requirements.txt
+global-exclude test-requirements.in
+global-exclude test-requirements.txt
+global-exclude .gitignore 
+
+prune .github
+prune .git
