@@ -86,6 +86,7 @@ setup(
     setup_requires=setup_requires,
     install_requires=[
         "openjij ~= 0.5.8",
+        "jijzept ~= 1.10.9",
         "jijmodeling ~= 0.9.25",
         "numpy < 1.23.0",
         "pandas ~= 1.4.3",
