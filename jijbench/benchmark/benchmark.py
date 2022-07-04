@@ -363,7 +363,7 @@ class Benchmark:
         experiment_ids = (
             experiment_id
             if experiment_id
-            else os.listdir(f"{save_dir}/benchmark_{benchmark_id}")
+            else os.listdir(os.path.normcase(f"{save_dir}/benchmark_{benchmark_id}"))
         )
         for experiment_id in experiment_ids:
             experiment = Experiment.load(
