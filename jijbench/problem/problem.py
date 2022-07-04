@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-import json, pathlib
+import json, pathlib, os
 
 from typing import Dict, List, Tuple, Union
 
 import jijmodeling as jm
 
+__all__ = []
 
 class JijModelingTarget:
     def __init__(
@@ -20,7 +21,7 @@ class DefaultInstanceMixin:
         instance_dir = (
             pathlib.Path(__file__).parent / "Instances" / size / self.problem_name
         )
-        return instance_dir
+        return os.path.normcase(instance_dir)
 
     def instance_names(self, size: str) -> List[str]:
         instance_dir = self._instance_dir(size)
