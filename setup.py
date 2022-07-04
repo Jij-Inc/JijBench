@@ -87,7 +87,7 @@ setup(
     install_requires=[
         "openjij ~= 0.5.8",
         "jijmodeling ~= 0.9.25",
-        "numpy ~= 1.23.0",
+        "numpy < 1.23.0",
         "pandas ~= 1.4.3",
         "matplotlib ~= 3.5.2",
     ],
