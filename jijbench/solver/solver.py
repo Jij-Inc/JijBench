@@ -7,6 +7,8 @@ from typing import Callable
 import jijzept as jz
 import openjij as oj
 
+__all__ = []
+
 
 class CallableSolver:
     def __init__(self, solver):

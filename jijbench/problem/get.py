@@ -6,6 +6,8 @@ from jijmodeling.transpilers.type_annotations import PH_VALUES_INTERFACE
 
 from jijbench import problem
 
+__all__ = []
+
 
 def get_problem(problem_name):
     return getattr(problem, problem_name).problem

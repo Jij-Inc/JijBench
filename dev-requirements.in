@@ -5,6 +5,7 @@
 #For Dev Dependency 
 pre-commit
 notebook
+matplotlib
 isort
 black 
 autoflake

@@ -1,10 +1,12 @@
 from __future__ import annotations
 
-import json, pathlib
+import json, os, pathlib
 
 from typing import Dict, List, Tuple, Union
 
 import jijmodeling as jm
+
+__all__ = []
 
 
 class JijModelingTarget:
@@ -18,13 +20,19 @@ class JijModelingTarget:
 class DefaultInstanceMixin:
     def _instance_dir(self, size: str):
         instance_dir = (
-            pathlib.Path(__file__).parent / "Instances" / size / self.problem_name
+            pathlib.Path(__file__)
+            .parent.joinpath("Instances")
+            .joinpath(size)
+            .joinpath(self.problem_name)
         )
         return instance_dir
 
     def instance_names(self, size: str) -> List[str]:
         instance_dir = self._instance_dir(size)
-        instance_names = [p.name.split(".")[0] for p in instance_dir.glob("**/*.json")]
+        instance_names = [
+            p.name.split(".")[0]
+            for p in instance_dir.glob(os.path.join("**", "*.json"))
+        ]
         return instance_names
 
     def small_instance(self) -> List[Tuple[str, Dict]]:
@@ -47,7 +55,7 @@ class DefaultInstanceMixin:
 
     def load(self, size: str, instance_name: str):
         instance_file_path = None
-        for file_path in self._instance_dir(size).glob("**/*.json"):
+        for file_path in self._instance_dir(size).glob(os.path.join("**", "*.json")):
             if file_path.name.split(".")[0] == instance_name:
                 instance_file_path = file_path
         if instance_file_path is None:

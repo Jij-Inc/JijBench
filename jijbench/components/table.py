@@ -1,11 +1,13 @@
 from __future__ import annotations
 
-import json, pickle, re
+import json, os, pickle, re
 
 import numpy as np
 import pandas as pd
 
-from .dir import Dir
+from jijbench.components.dir import Dir
+
+__all__ = []
 
 
 class Table:
@@ -166,7 +168,7 @@ class Table:
         dtypes = {}
         for i, v in zip(index, self._data.loc[self._current_index]):
             dtypes[i] = type(v)
-        with open(savepath, "wb") as f:
+        with open(os.path.normcase(savepath), "wb") as f:
             pickle.dump(dtypes, f)
 
     @classmethod
@@ -178,7 +180,9 @@ class Table:
             save_dir=save_dir,
         )
         table = cls()
-        table.data = pd.read_csv(f"{d.table_dir}/table.csv", index_col=0)
+        table.data = pd.read_csv(
+            os.path.normcase(f"{d.table_dir}/table.csv"), index_col=0
+        )
         dtypes = cls.load_dtypes(
             benchmark_id=benchmark_id,
             experiment_id=experiment_id,
@@ -196,7 +200,7 @@ class Table:
             autosave=autosave,
             save_dir=save_dir,
         )
-        with open(f"{d.experiment_dir}/dtypes.pkl", "rb") as f:
+        with open(os.path.normcase(f"{d.experiment_dir}/dtypes.pkl"), "rb") as f:
             return pickle.load(f)
 
     @staticmethod

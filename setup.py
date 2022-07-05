@@ -84,14 +84,15 @@ def cython_extension():
 
 setup(
     setup_requires=setup_requires,
-    #依存ライブラリとそのバージョン
+    # 依存ライブラリとそのバージョン
     install_requires=[
         "openjij ~= 0.5.8",
         "jijzept ~= 1.10.9",
         "jijmodeling ~= 0.9.25",
-        "numpy < 1.23.0",
+        "numpy < 1.24.0",
         "pandas ~= 1.4.3",
-        "matplotlib ~= 3.5.2",
+        'dimod <= 0.10.17; python_version < "3.10"',
+        'dimod < 0.12.0; python_version >= "3.10"',
         'pyqubo<1.1.0; python_version < "3.10"',
     ],
     cmdclass={"build_ext": build_ext},

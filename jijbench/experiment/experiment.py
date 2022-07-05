@@ -32,7 +32,7 @@ class Experiment:
         save_dir: str = ExperimentResultDefaultDir,
     ):
         self.autosave = autosave
-        self.save_dir = save_dir
+        self.save_dir = os.path.normcase(save_dir)
 
         self._id = ID(
             benchmark_id=benchmark_id,
@@ -44,7 +44,7 @@ class Experiment:
             benchmark_id=self._id.benchmark_id,
             experiment_id=self._id.experiment_id,
             autosave=autosave,
-            save_dir=save_dir,
+            save_dir=os.path.normcase(save_dir),
         )
 
         # initialize table index
@@ -89,7 +89,9 @@ class Experiment:
             self.log_table(record)
             self.log_artifact()
 
-        self._table.save_dtypes(f"{self._dir.experiment_dir}/dtypes.pkl")
+        self._table.save_dtypes(
+            os.path.normcase(f"{self._dir.experiment_dir}/dtypes.pkl")
+        )
         self._table.current_index += 1
 
     def store(
@@ -222,39 +224,39 @@ class Experiment:
             benchmark_id=benchmark_id,
             experiment_id=experiment_id,
             autosave=autosave,
-            save_dir=save_dir,
+            save_dir=os.path.normcase(save_dir),
         )
         experiment._table = Table.load(
             benchmark_id=benchmark_id,
             experiment_id=experiment_id,
             autosave=autosave,
-            save_dir=save_dir,
+            save_dir=os.path.normcase(save_dir),
         )
         experiment._artifact = Artifact.load(
             benchmark_id=benchmark_id,
             experiment_id=experiment_id,
             autosave=autosave,
-            save_dir=save_dir,
+            save_dir=os.path.normcase(save_dir),
         )
         return experiment
 
     def save(self):
-        self._table.save(f"{self._dir.table_dir}/table.csv")
+        self._table.save(os.path.normcase(f"{self._dir.table_dir}/table.csv"))
         self._artifact.save(self._dir.artifact_dir)
 
     def log_table(self, record: dict):
         index = [self._table.current_index]
         df = pd.DataFrame({key: [value] for key, value in record.items()}, index=index)
-        file_name = f"{self._dir.table_dir}/table.csv"
+        file_name = os.path.normcase(f"{self._dir.table_dir}/table.csv")
         df.to_csv(file_name, mode="a", header=not os.path.exists(file_name))
 
     def log_artifact(self):
         run_id = self.run_id
         if run_id in self._artifact.data.keys():
-            save_dir = f"{self._dir.artifact_dir}/{run_id}"
-            with open(f"{save_dir}/artifact.pkl", "wb") as f:
+            save_dir = os.path.normcase(f"{self._dir.artifact_dir}/{run_id}")
+            with open(os.path.normcase(f"{save_dir}/artifact.pkl"), "wb") as f:
                 pickle.dump(self._artifact.data[run_id], f)
 
             timestamp = self._artifact.timestamp[run_id]
-            with open(f"{save_dir}/timestamp.txt", "w") as f:
+            with open(os.path.normcase(f"{save_dir}/timestamp.txt"), "w") as f:
                 f.write(str(timestamp))

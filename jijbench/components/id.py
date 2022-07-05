@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import uuid
 
+__all__ = []
+
 
 class ID:
     """ID template"""

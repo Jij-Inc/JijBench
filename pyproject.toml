@@ -18,6 +18,7 @@ addopts = "-vv -s --color=yes --code-highlight=yes --doctest-cython --cov-contex
 testpaths = [
     "tests",
 ]
+asyncio_mode = "auto"
 console_output_style = "count"
 log_auto_indent = true
 
@@ -93,6 +94,7 @@ reportDuplicateImport = 'warning'
 [tool.cibuildwheel]
 build-verbosity = 1
 dependency-versions = "latest"
+build = ["cp38-*", "cp39-*"]
 skip = ["pp*", "*musllinux_x86_64", "*musllinux_aarch64"]
 
 [tool.cibuildwheel.linux]
