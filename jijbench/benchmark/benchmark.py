@@ -386,3 +386,17 @@ class Benchmark:
         bench._table = table
         bench._artifacat = artifact
         return bench
+
+
+def load(
+    benchmark_id: Union[int, str],
+    experiment_id: Union[int, str, List[Union[int, str]]] = None,
+    autosave: bool = True,
+    save_dir: str = ExperimentResultDefaultDir,
+):
+    return Benchmark.load(
+        benchmark_id=benchmark_id,
+        experiment_id=experiment_id,
+        autosave=autosave,
+        save_dir=save_dir,
+    )
