@@ -1,26 +1,30 @@
 [build-system]
 requires = [
-   'setuptools_scm[toml]', 
+   'setuptools-git-versioning', 
    'setuptools',
    'wheel',
    'build',
-   "Cython",
    ]
 build-backend = "setuptools.build_meta"
 
-[tool.setuptools_scm]
-write_to = "jijbench/_version.py"
+[tool.setuptools-git-versioning]
+enabled = true
+dev_template = "{tag}" 
+dirty_template = "{tag}" 
+version_file = "jijbench/_version.py"
 
 [tool.pytest.ini_options]
-#-n auto --forked
-addopts = "-vv -s --color=yes --code-highlight=yes --doctest-cython --cov-context=test --cov --cov-append --cov-report term  --cov-config .coveragerc --junit-xml=result.xml --randomly-seed=last"
-#addopts = "--doctest-cython -s"
+addopts = "-vv --doctest-modules --color=yes --code-highlight=yes --cov-context=test --cov --cov-append --cov-report term  --junit-xml=result.xml --randomly-seed=last"
 testpaths = [
     "tests",
 ]
-asyncio_mode = "auto"
+spec_header_format = "{module_path}:"
+spec_test_format = "{result} {name}"
+log_level = "INFO"
 console_output_style = "count"
 log_auto_indent = true
+junit_logging = "all"
+asyncio_mode = "auto"
 
 [tool.flake8] 
 show-source = true
@@ -98,10 +102,7 @@ build = ["cp38-*", "cp39-*"]
 skip = ["pp*", "*musllinux_x86_64", "*musllinux_aarch64"]
 
 [tool.cibuildwheel.linux]
-archs = ["x86_64", "aarch64"]
 build-frontend = "build"
-manylinux-x86_64-image ="quay.io/pypa/manylinux_2_28_x86_64:latest"
-manylinux-aarch64-image = "quay.io/pypa/manylinux_2_28_aarch64:latest"
 
 [tool.cibuildwheel.macos]
 build-frontend = "build"

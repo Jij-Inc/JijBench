@@ -1,4 +1,4 @@
 -c requirements.txt
 
-setuptools_scm[toml]
-cython 
+setuptools-git-versioning
+pytest-runner

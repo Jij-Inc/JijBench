@@ -4,6 +4,7 @@ import os, shutil
 
 import jijmodeling as jm
 import openjij as oj
+from jijbench import benchmark
 import pytest
 
 import jijbench as jb
@@ -313,3 +314,34 @@ def test_benchmark_with_callable_args():
     columns = bench.table.columns
     assert sample_model.__name__ in columns
     assert isinstance(bench.table[sample_model.__name__][0], str)
+
+
+def test_benchmark_with_multisolver():
+    def func1(x):
+        return 2 * x
+
+    def func2(x):
+        return 3 * x
+
+    bench = jb.Benchmark(params={"x": [1, 2, 3]}, solver=[func1, func2])
+    bench.run()
+
+    columns = bench.table.columns
+
+    assert "solver" in columns
+    assert "func1" in bench.table["solver"].values
+    assert "func2" in bench.table["solver"].values
+
+
+def test_load():
+    def func1(x):
+        return 2 * x
+
+    bench = jb.Benchmark(params={"x": [1, 2, 3]}, solver=func1, benchmark_id="test")
+    bench.run()
+
+    del bench
+
+    bench = jb.load(benchmark_id="test")
+
+    assert "func1" in bench.table["solver"].values

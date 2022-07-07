@@ -2,14 +2,17 @@
 __pycache__/
 *.py[cod]
 *$py.class
-
+assets/ 
+report.html
+result.xml
 # C extensions
 *.so
-
-
+jijbench/_version.py
+**/_version.py
 python_version.txt
 format-requirements.txt
 test-requirements.txt
+docs-requirements.txt
 requirements.txt 
 result.xml
 build-requirements.txt 
@@ -149,6 +152,6 @@ backup/
 # Mac
 .DS_Store
 
-notebook/.results/
-
 .jb_results/
+
+__marker__*
