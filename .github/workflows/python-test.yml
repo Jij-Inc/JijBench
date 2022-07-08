@@ -79,15 +79,6 @@ jobs:
         run: |
           set -eux
           python setup.py test 
-      - name: Publish Test Results
-        uses: EnricoMi/publish-unit-test-result-action@v2
-        if: ${{ runner.os == 'Linux' && always()}}
-        continue-on-error: true
-        with:
-          files: ./result.xml
-          github_token: ${{ github.token }}
-          check_name: "Python Test Report"
-          report_individual_runs: true
       - name: Generate
         shell: bash
         if: always()
