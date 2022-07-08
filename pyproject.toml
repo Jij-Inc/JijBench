@@ -22,6 +22,7 @@ log_level = "INFO"
 console_output_style = "count"
 log_auto_indent = true
 junit_logging = "all"
+asyncio_mode = "auto"
 
 [tool.flake8] 
 show-source = true
