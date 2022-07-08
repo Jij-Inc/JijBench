@@ -52,10 +52,14 @@ jobs:
           echo "::group::test-requirements.txt"
           pip-compile test-requirements.in 
           echo "::endgroup::"
+      - name: Get pip cache dir
+        id: pip-cache
+        run: |
+          set -eux
+          echo "::set-output name=dir::$(python -m pip cache dir)"    
       - uses: actions/cache@v3
-        if: always()
         with:
-          path: ~/.cache/pip
+          path: ${{ steps.pip-cache.outputs.dir }}
           key: ${{ runner.os }}-pip-${{ hashFiles('python_version.txt') }}-${{ hashFiles('requirements.txt') }}-${{ hashFiles('build-requirements.txt') }}-${{ hashFiles('test-requirements.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-${{ hashFiles('python_version.txt') }}-${{ hashFiles('requirements.txt') }}-${{ hashFiles('build-requirements.txt') }}-${{ hashFiles('test-requirements.txt') }}
@@ -71,7 +75,6 @@ jobs:
       - name: Test Build 
         run: python setup.py bdist_wheel
       - name: Test
-        if: always()
         shell: bash
         run: |
           set -eux
