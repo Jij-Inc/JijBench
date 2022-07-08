@@ -1,17 +1,12 @@
 codecov:
   ci:
-    - github.com
-  require_ci_to_pass: false
-  notify:
-    wait_for_ci: false
-   
+  - github.com
 comment:
   behavior: default
-  layout: "reach, diff, flags, files"
+  layout: reach, diff, flags, files
   require_base: no
   require_changes: false
   require_head: no
-  
 coverage:
   status:
     patch:
@@ -26,12 +21,6 @@ coverage:
         only_pulls: false
         target: auto
         if_ci_failed: error
-      
-flag_management:
-  default_rules: 
-    carryforward: true
-ignore:
-  - "tests"
- 
+
 github_checks:
   annotations: true
