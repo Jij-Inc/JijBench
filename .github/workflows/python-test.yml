@@ -81,15 +81,12 @@ jobs:
           python setup.py test 
       - name: Generate
         shell: bash
-        if: always()
-        continue-on-error: true
         run: |
           set -eux
           python -m coverage xml
           python -m coverage json
           python -m coverage lcov
       - uses: codecov/codecov-action@v3
-        if: always()
         continue-on-error: true
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
