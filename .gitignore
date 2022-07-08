@@ -145,6 +145,6 @@ Results/
 # Mac
 .DS_Store
 
-notebook/.results/
-
 .jb_results/
+
+__marker__*

@@ -137,10 +137,12 @@ class _Metrics:
             ps = _Metrics.success_probability(x, x.energy_min)
         else:
             ps = np.nan
-        with np.errstate(divide="warn"):
-            result = np.log(1 - pr) / np.log(1 - ps) * x.execution_time
-        return result
-
+        if ps >= 1e-16:
+            ps -= 1e-16
+        else:
+            ps += 1e-16
+        return np.log(1 - pr) / np.log(1 - ps) * x.execution_time
+    
     def success_probability(x: Any, opt_value: Union[int, float]):
         if np.isnan(opt_value):
             return np.nan
