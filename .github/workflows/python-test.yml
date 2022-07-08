@@ -93,7 +93,7 @@ jobs:
         continue-on-error: true
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          env_vars: OS
+          env_vars: OS, ${{ matrix.python-version }}
           files: coverage.xml, coverage.json, coverage.lcov
           fail_ci_if_error: false
           verbose: true 
