@@ -2,7 +2,6 @@
 
 [![Test](https://github.com/Jij-Inc/JijBenchmark/actions/workflows/python-test.yml/badge.svg)](https://github.com/Jij-Inc/JijBenchmark/actions/workflows/python-test.yml)
 [![codecov](https://codecov.io/gh/Jij-Inc/JijBenchmark/branch/main/graph/badge.svg?token=55341HSOIB)](https://codecov.io/gh/Jij-Inc/JijBenchmark)
-
 # How to use
 
 ## Install from JFrog
