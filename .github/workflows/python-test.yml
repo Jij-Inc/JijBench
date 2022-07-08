@@ -82,6 +82,7 @@ jobs:
       - name: Publish Test Results
         uses: EnricoMi/publish-unit-test-result-action@v2
         if: ${{ runner.os == 'Linux' && always()}}
+        continue-on-error: true
         with:
           files: ./result.xml
           github_token: ${{ github.token }}
@@ -89,12 +90,15 @@ jobs:
           report_individual_runs: true
       - name: Generate
         shell: bash
+        if: always()
+        continue-on-error: true
         run: |
           set -eux
           python -m coverage xml
           python -m coverage json
           python -m coverage lcov
       - uses: codecov/codecov-action@v3
+        if: always()
         continue-on-error: true
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
