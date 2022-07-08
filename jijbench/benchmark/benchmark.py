@@ -182,15 +182,15 @@ class Benchmark:
             instance_data = self._instance_data
 
         for solver in self.solver:
-            for problem, instance_data_list in zip(problem, instance_data):
-                for instance_data in instance_data_list:
+            for problem_i, instance_data_i in zip(problem, instance_data):
+                for instance_data_ij in instance_data_i:
                     if sync:
-                        self._run_by_sync(solver, problem, instance_data)
+                        self._run_by_sync(solver, problem_i, instance_data_ij)
                     else:
                         if "openjij" in solver.name:
-                            self._run_by_sync(solver, problem, instance_data)
+                            self._run_by_sync(solver, problem_i, instance_data_ij)
                         else:
-                            self._run_by_async(solver, problem, instance_data)
+                            self._run_by_async(solver, problem_i, instance_data_ij)
 
     def _run_by_async(self, solver, problem, instance_data, **kwargs):
         _, ph_value = instance_data
@@ -381,8 +381,22 @@ class Benchmark:
             table.data = pd.concat([table.data, experiment.table])
             artifact.data.update(experiment.artifact)
 
-        bench = cls([], benchmark_id=benchmark_id)
+        bench = cls([], lambda: (), benchmark_id=benchmark_id)
         bench._experiments = experiments
         bench._table = table
         bench._artifacat = artifact
         return bench
+
+
+def load(
+    benchmark_id: Union[int, str],
+    experiment_id: Union[int, str, List[Union[int, str]]] = None,
+    autosave: bool = True,
+    save_dir: str = ExperimentResultDefaultDir,
+):
+    return Benchmark.load(
+        benchmark_id=benchmark_id,
+        experiment_id=experiment_id,
+        autosave=autosave,
+        save_dir=save_dir,
+    )
