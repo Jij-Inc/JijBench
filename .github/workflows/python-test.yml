@@ -97,5 +97,5 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           env_vars: OS
           files: coverage.xml, coverage.json, coverage.lcov
-          fail_ci_if_error: true
+          fail_ci_if_error: false
           verbose: true 
