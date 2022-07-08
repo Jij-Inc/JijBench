@@ -12,7 +12,7 @@ build-backend = "setuptools.build_meta"
 write_to = "jijbench/_version.py"
 
 [tool.pytest.ini_options]
-addopts = "-vv --doctest-modules --diff-symbols --color=yes --code-highlight=yes --cov-context=test --cov --cov-append --cov-report term  --junit-xml=result.xml --randomly-seed=last"
+addopts = "-vv --doctest-modules --color=yes --code-highlight=yes --cov-context=test --cov --cov-append --cov-report term  --junit-xml=result.xml --randomly-seed=last"
 testpaths = [
     "tests",
 ]
