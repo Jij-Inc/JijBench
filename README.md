@@ -44,7 +44,7 @@ Use [`pip-tools`](https://github.com/jazzband/pip-tools).
 
 ```sh
 pip install pip-tools
-pip-compile 
+pip-compile setup.cfg
 pip-compile build-requirements.in 
 pip-compile test-requirements.in 
 pip-compile dev-requirements.in 
@@ -67,7 +67,7 @@ This test runs with [pytest](https://docs.pytest.org/en/7.1.x/) and [pytest-runn
 
 ```sh 
 pip install pip-tools
-pip-compile 
+pip-compile setup.cfg
 pip-compile build-requirements.in 
 pip-compile test-requirements.in 
 pip-sync requirements.txt build-requirements.txt test-requirements.txt 
@@ -78,7 +78,7 @@ python setup.py test
 
 ```sh
 pip install pip-tools
-pip-compile 
+pip-compile setup.cfg
 pip-compile build-requirements.in 
 pip-compile test-requirements.in 
 pip-compile dev-requirements.in 

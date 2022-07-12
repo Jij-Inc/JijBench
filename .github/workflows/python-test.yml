@@ -44,7 +44,7 @@ jobs:
         run: |
           set -eux
           echo "::group::requirements.txt"
-          pip-compile 
+          pip-compile setup.cfg
           echo "::endgroup::"
           echo "::group::build-requirements.txt"
           pip-compile build-requirements.in 

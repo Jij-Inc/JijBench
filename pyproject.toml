@@ -4,7 +4,6 @@ requires = [
    'setuptools',
    'wheel',
    'build',
-   "Cython",
    ]
 build-backend = "setuptools.build_meta"
 
