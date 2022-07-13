@@ -14,13 +14,13 @@ coverage:
         informational: true
         only_pulls: false
         target: auto
-        if_ci_failed: error
+        
     project:
       default:
         informational: true
         only_pulls: false
         target: auto
-        if_ci_failed: error
+        
 
 github_checks:
   annotations: true
