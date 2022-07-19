@@ -56,10 +56,6 @@ jobs:
             
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
-        name: Install Python
-        with:
-          python-version: '3.8'
       - name: Set up QEMU
         if: ${{ runner.os == 'Linux'  && matrix.arch == 'aarch64'}}
         uses: docker/setup-qemu-action@v2
@@ -73,15 +69,12 @@ jobs:
           install: true
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.8.0
-        with:
-          package-dir: .
         env:
           CIBW_ARCHS: ${{ matrix.arch }}
           CIBW_PLATFORM: ${{ matrix.CIBW_PLATFORM }}
           CIBW_ENVIRONMENT: ${{ matrix.CIBW_ENVIRONMENT }}
           CIBW_MANYLINUX_X86_64_IMAGE: ${{ matrix.CIBW_MANYLINUX_X86_64_IMAGE }}
           CIBW_MANYLINUX_AARCH64_IMAGE: ${{ matrix.CIBW_MANYLINUX_AARCH64_IMAGE }}
-          CIBW_PROJECT_REQUIRES_PYTHON: ">=3.8"
       - uses: actions/upload-artifact@v3
         with:
           name: package
