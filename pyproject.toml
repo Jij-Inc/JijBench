@@ -1,14 +1,17 @@
 [build-system]
 requires = [
-   'setuptools_scm[toml]', 
+   'setuptools-git-versioning', 
    'setuptools',
    'wheel',
    'build',
    ]
 build-backend = "setuptools.build_meta"
 
-[tool.setuptools_scm]
-write_to = "jijbench/_version.py"
+[tool.setuptools-git-versioning]
+enabled = true
+dev_template = "{tag}" 
+dirty_template = "{tag}" 
+version_file = "jijbench/_version.py"
 
 [tool.pytest.ini_options]
 addopts = "-vv --doctest-modules --color=yes --code-highlight=yes --cov-context=test --cov --cov-append --cov-report term  --junit-xml=result.xml --randomly-seed=last"
