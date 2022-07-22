@@ -2,7 +2,9 @@
 __pycache__/
 *.py[cod]
 *$py.class
-
+assets/ 
+report.html
+result.xml
 # C extensions
 *.so
 jijbench/_version.py
