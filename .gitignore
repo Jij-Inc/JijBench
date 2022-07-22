@@ -6,7 +6,7 @@ __pycache__/
 # C extensions
 *.so
 jijbench/_version.py
-
+**/_version.py
 python_version.txt
 format-requirements.txt
 test-requirements.txt
