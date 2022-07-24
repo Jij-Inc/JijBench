@@ -36,7 +36,7 @@ jobs:
           external_repository: Jij-Inc/JijZept-References
           publish_branch: main
           publish_dir: ./site
-          destination_dir: docsjijbench
+          destination_dir: docs/jijbench
           user_name: 'github-actions[bot]'
           user_email: 'github-actions[bot]@users.noreply.github.com'
           commit_message: ${{ github.event.head_commit.message }}
