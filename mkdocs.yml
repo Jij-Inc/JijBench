@@ -20,6 +20,8 @@ plugins:
       nav_file: SUMMARY.md
   - section-index:
   - mkdocstrings:
+      watch:
+      - jijbench
       default_handler: python
       handlers:
         python:

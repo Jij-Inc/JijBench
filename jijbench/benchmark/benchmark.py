@@ -23,73 +23,42 @@ __all__ = []
 
 class Benchmark:
     """Define benchmark.
+    Args:
+        params (Dict[str, List]): Parameters to be swept in the benchmark. key is parameter name. list is list of value of a parameter.
+        solver (str | Callable | List[str | Callable]): solver name or callable solver method. You can set multiple solvers by using list. Accepted `str` type solver names are `{SASampler, SQASampler, JijSASampler, JijSQASampler, JijSwapMovingSampler}`.
+            See [jijzept.sampler](https://www.ref.documentation.jijzept.com/reference/sampler/) for more infomation about solvers.
+            The callables allow for flexible benchmark.
+            If parameter name(`str`) of `params` exists in argument names of callable, it is passed to them.
+            However, if passing mathematical models and instance data to callables, `problem` and` instance_data` is also able to use.
 
-    Parameters
-    ----------
-    params: Dict[str, List]
-        Dictionary with parameters names (`str`) as keys and lists of
-        parameter settings to try as values. This enables searching over any sequence
-        of parameter settings.
-    solver: Union[str, Callable, List[Union[str, Callable]]]
-        If `solver` represents a single solver, one can use:
-        - a single string for default solver name;
-        - a callable that return any objects.
-        If `solver` represents multiple solvers, one can use:
-        - a list of default solver names and callable.
-        Default solver names is {SASampler, SQASampler, JijSASampler, JijSQASampler, JijSwapMovingSampler}.
-        See https://www.ref.documentation.jijzept.com/reference/sampler/ for more infomation about solvers.
-        The callables allow for flexible benchmark.
-        If parameter name(`str`) of `params` exists in argument names of callable, it is passed to them.
-        However, if passing mathematical models and instance data to callables, `problem` and` instance_data` is also able to use.
-    problem: Optional[Union[jm.Problem, List[jm.Problem]]]
-        Defaults to None.
-        Mathematical model defined by JijModeling or list of them.
-        See https://www.ref.jijmodeling.jijzept.com/ for more information about JijModeling.
-    instance_data: Optional[
-        Union[
-            PH_VALUES_INTERFACE,
-            List[PH_VALUES_INTERFACE],
-            List[List[PH_VALUES_INTERFACE]],
-            Tuple[str, PH_VALUES_INTERFACE],
-            List[Tuple[str, PH_VALUES_INTERFACE]],
-            List[List[Tuple[str, PH_VALUES_INTERFACE]]],
-        ]
-    ]:
-        Defaults to None.
-        Instance data for `problem`.
-        If `instance_data` represents a single instance data, one can use:
-        - PH_VALUES_INTERFACE (see https://www.documentation.jijzept.com/tutorial/binary_ilp about PH_VALUES_INTERFACE);
-        - Tuple[str, PH_VALUES_INTERFACE], which `str` means instance data name.
-        If `instance_data` represents multiple instance data, one can use:
-        - List[PH_VALUES_INTERFACE], in this case, `problme` is a single;
-        - List[List[PH_VALUES_INTERFACE]], in this case, `problem` is multiple;
-        - List[Tuple[str, PH_VALUES_INTERFACE]], in this case `problem is a single`;
-        - List[List[Tuple[str, PH_VALUES_INTERFACE]]], in this case `problem is multiple`.
-    solver_return_name: Optional[Dict[str, List[str]]]
-        Defaults to None.
-        Name solver return values for callable `solver`.
-        These are used columns of `table`(pd.DataFrame) attribute.
-    benchmark_id: Union[int, str]
-        Defaults to None.
-        ID to distinguish different benchmarks.
-    id_rule: Union[str, Dict[str, str]]
-        Defaults to "uuid".
-        Rule to automatically assign IDs
-    jijzept_config: Optional[str]
-        Defaults to None.
-        If it is used JijZept by `solver`, this needs.
-    dwave_config: Optional[str]
-        Defaults to None.
-        If it is used Dwave by `solver`, this needs.
+        problem (jm.Problem | List[jm.Problem] | None, optional): Mathematical model defined by JijModeling or list of them. Defaults to None.
+            See [jijmodeling's reference](https://www.ref.jijmodeling.jijzept.com/) for more information about JijModeling.
 
-    Attributes
-    ----------
-    table: pandas.DataFrame
-        DataFrame to store benchmark result. This save with csv.
-    artifact: Dict
-        Dictionary to store benchmark result. This save python objects that cat't save by csv with pickle
-    experiments: List[Experiment]
-        List of Experiment. A experiment id is issued for each combination of `params`.
+        instance_data (PH_VALUES_INTERFACE | List[PH_VALUES_INTERFACE] | List[List[PH_VALUES_INTERFACE]] | Tuple[str, PH_VALUES_INTERFACE] | List[Tuple[str, PH_VALUES_INTERFACE]] | List[List[Tuple[str, PH_VALUES_INTERFACE]]] | None, optional): Instance data for `problem`. Defaults to None.
+            If `instance_data` represents a single instance data, one can use:
+            - PH_VALUES_INTERFACE (see https://www.documentation.jijzept.com/tutorial/binary_ilp about PH_VALUES_INTERFACE);
+            - Tuple[str, PH_VALUES_INTERFACE], which `str` means instance data name.
+            If `instance_data` represents multiple instance data, one can use:
+            - List[PH_VALUES_INTERFACE], in this case, `problme` is a single;
+            - List[List[PH_VALUES_INTERFACE]], in this case, `problem` is multiple;
+            - List[Tuple[str, PH_VALUES_INTERFACE]], in this case `problem is a single`;
+            - List[List[Tuple[str, PH_VALUES_INTERFACE]]], in this case `problem is multiple`.
+
+        solver_return_name (Dict[str, List[str]] | None, optional): Name solver return values for callable `solver`. Defaults to None.
+            Name solver return values for callable `solver`.
+            These are used columns of `table`(pd.DataFrame) attribute.
+        benchmark_id (int | str | None, optional): ID to distinguish different benchmarks. Defaults to None.
+        id_rule (str | Dict[str, str], optional): Rule to automatically assign IDs. Defaults to "uuid".
+        jijzept_config (str | None, optional): If it is used JijZept by `solver`, this needs. Defaults to None.
+        dwave_config (str | None, optional): If it is used Dwave by `solver`, this needs. Defaults to None.
+
+    Attributes:
+        table (pandas.DataFrame):
+            DataFrame to store benchmark result. This save with csv.
+        artifact (Dict):
+            Dictionary to store benchmark result. This save python objects that cat't save by csv with pickle
+        experiments (List[Experiment]):
+            List of Experiment. A experiment id is issued for each combination of `params`.
     """
 
     def __init__(
@@ -109,7 +78,7 @@ class Benchmark:
             ]
         ] = None,
         solver_return_name: Optional[Dict[str, List[str]]] = None,
-        benchmark_id: Union[int, str] = None,
+        benchmark_id: Optional[Union[int, str]] = None,
         id_rule: Union[str, Dict[str, str]] = "uuid",
         jijzept_config: Optional[str] = None,
         dwave_config: Optional[str] = None,
@@ -166,10 +135,10 @@ class Benchmark:
         return self._artifact.data
 
     def run(self, sync=True):
-        """_summary_
+        """run benchmark
 
         Args:
-            sync (bool, optional): _description_. Defaults to True.
+            sync (bool, optional): True -> sync mode, False -> async mode. Defaults to True.
         """
         if self._problem is None:
             problem = [None]
@@ -288,14 +257,14 @@ class Benchmark:
         return solver_args, record
 
     def compare(self, key, values=None):
-        """_summary_
+        """ Row-by-Row comparison
 
         Args:
-            key (_type_): _description_
-            values (_type_, optional): _description_. Defaults to None.
+            key (_type_): columns of table.
+            values (_type_, optional): values to be compared . Defaults to None.
 
         Returns:
-            _type_: _description_
+            pandas.DataFrame: self._table.data.pivot(columns=key, values=values)
         """
         return self._table.data.pivot(columns=key, values=values)
 
