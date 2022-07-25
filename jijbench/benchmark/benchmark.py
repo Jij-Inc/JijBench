@@ -80,18 +80,20 @@ class Benchmark:
         solver_return_name: Optional[Dict[str, List[str]]] = None,
         benchmark_id: Optional[Union[int, str]] = None,
         id_rule: Union[str, Dict[str, str]] = "uuid",
+        save_dir: str = ExperimentResultDefaultDir,
         jijzept_config: Optional[str] = None,
         dwave_config: Optional[str] = None,
     ):
         self.params = params
         self.solver_return_name = solver_return_name
         self.id_rules = id_rule
+        self.save_dir = save_dir
 
         self._set_solver(solver)
         self._set_problem(problem)
         self._set_instance_data(instance_data)
         self._id = ID(benchmark_id=benchmark_id)
-        self._experiments = []
+        self._experiments: List[Experiment] = []
         self._table = Table()
         self._artifact = Artifact()
 
@@ -121,6 +123,10 @@ class Benchmark:
     @validation.on_instance_data
     def _set_instance_data(self, instance_data):
         self._instance_data = instance_data
+
+    @property
+    def id(self):
+        self._id.benchmark_id
 
     @property
     def experiments(self):
@@ -184,7 +190,7 @@ class Benchmark:
                         ).solution_id
                         args_map[(i, solution_id)] = args
 
-                    experiment = Experiment(benchmark_id=self._id.benchmark_id)
+                    experiment = Experiment(benchmark_id=self._id.benchmark_id, save_dir=self.save_dir)
                     for (i, solution_id), args in args_map.items():
                         solver_args, record = self._setup_experiment(
                             solver, problem, instance_data, False
@@ -213,7 +219,7 @@ class Benchmark:
             self._experiments.append(experiment)
 
     def _run_by_sync(self, solver, problem, instance_data):
-        experiment = Experiment(benchmark_id=self._id.benchmark_id)
+        experiment = Experiment(benchmark_id=self._id.benchmark_id, save_dir=self.save_dir)
         solver_args, record = self._setup_experiment(
             solver, problem, instance_data, True
         )
@@ -257,7 +263,7 @@ class Benchmark:
         return solver_args, record
 
     def compare(self, key, values=None):
-        """ Row-by-Row comparison
+        """Row-by-Row comparison
 
         Args:
             key (_type_): columns of table.

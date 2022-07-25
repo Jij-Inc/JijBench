@@ -360,3 +360,5 @@ def test_save():
         params={"x": [1, 2, 3]}, solver=func1, benchmark_id="test", save_dir=save_dir
     )
     bench.run()
+    
+    shutil.rmtree(save_dir)
