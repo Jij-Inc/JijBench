@@ -26,8 +26,8 @@ class Experiment:
     def __init__(
         self,
         *,
-        benchmark_id: Union[int, str] = None,
-        experiment_id: Union[int, str] = None,
+        benchmark_id: Optional[Union[int, str]] = None,
+        experiment_id: Optional[Union[int, str]] = None,
         autosave: bool = True,
         save_dir: str = ExperimentResultDefaultDir,
     ):

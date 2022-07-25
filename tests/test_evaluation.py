@@ -31,9 +31,9 @@ def test_matrics_by_openjij():
     evaluator = jb.Evaluator(experiment)
     opt_value = 1.0
     expand = True
-    evaluator.tts(opt_value=opt_value, solution_type="optimal", expand=expand)
-    evaluator.tts(solution_type="feasible", expand=expand)
-    evaluator.tts(solution_type="derived", expand=expand)
+    evaluator.time_to_solution(opt_value=opt_value, solution_type="optimal", expand=expand)
+    evaluator.time_to_solution(solution_type="feasible", expand=expand)
+    evaluator.time_to_solution(solution_type="derived", expand=expand)
     evaluator.success_probability(opt_value=opt_value, expand=expand)
     evaluator.feasible_rate(expand=expand)
     evaluator.residual_energy(opt_value=opt_value, expand=expand)
@@ -118,7 +118,7 @@ def test_typical_metrics():
     assert "residual_energy" in metrics_columns
 
 
-def test_matrics_for_nan_column():
+def test_metrics_for_nan_column():
     sampler = oj.SASampler(num_reads=10)
     experiment = jb.Experiment(autosave=False)
     for _ in range(3):
@@ -134,3 +134,23 @@ def test_matrics_for_nan_column():
     tts = evaluator.tts(opt_value=opt_value, pr=pr, expand=expand)
     for v in tts:
         assert np.isnan(v)
+
+
+def test_success_probability():
+    d = jm.Placeholder("d", dim=1)
+    x = jm.Binary("x", shape=(d.shape[0].set_latex("n")))
+    i = jm.Element("i", d.shape[0])
+    problem = jm.Problem("simple_problem")
+    problem += jm.Sum(i d[i] * x[i])
+    problem += jm.Constraint("onehot", jm.Sum(i, d[i] * x[i] == 1)
+    instance_data = {"d": [1, 2]}
+    
+    from jijbench.evaluation.metrics import time_to_solution
+    becnh = jb.Benchmark(
+        params={"multipliers":[{"onehot": 1}, {"onehot": 2}, {"onehot": 3}]},
+        solver="SASampler",
+        problem=problem,
+        instance_data=instance_data
+    )
+    bench.run()
+    print(bench.table)
