@@ -282,7 +282,6 @@ class NurseScheduling(JijModelingTarget, DefaultInstanceMixin):
         problem += jm.Constraint(
             "days_off", x[i, do, t] == 0, forall=[i, (do, do > 0), t]
         )
-        print(problem.constraints["days_off"])
 
         # Constraint10: 必要人数に関する制約
         const10 = jm.Sum(i, x[i, d, t]) - z[d, t] + y[d, t] - u[d, t]

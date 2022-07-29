@@ -289,7 +289,7 @@ class Benchmark:
         metrics = pd.DataFrame()
         for experiment in self._experiments:
             evaluator = Evaluator(experiment)
-            opt_value = experiment.table["opt_value"][0]
+            opt_value = experiment.table["opt_value"][0] if opt_value is None else opt_value
             metrics = pd.concat(
                 [
                     metrics,
