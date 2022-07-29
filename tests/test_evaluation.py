@@ -1,8 +1,8 @@
 from __future__ import annotations
-from ftplib import ftpcp
 
 import pytest
 import os, shutil
+import copy
 
 import dimod
 import numpy as np
@@ -385,3 +385,27 @@ def test_evaluate_for_multi_const_problem(bench_for_multi_const_problem):
     assert metrics["TTS(optimal)"][0] == np.inf
     assert metrics["TTS(feasible)"][0] == 1.0
     assert metrics["TTS(derived)"][0] == np.log(1 - 0.7) / np.log(1 - 0.4)
+
+
+def test_warning():
+    def solve():
+        pass
+
+    opt_value = 0.0
+    bench = jb.Benchmark(params={"dummy": [0]}, solver=solve)
+    bench.run()
+
+    evaluator = jb.Evaluator(bench)
+    evaluator.calc_typical_metrics(opt_value=opt_value)
+
+    evaluator.table.at[0, "objective"] = np.array([0])
+    evaluator.calc_typical_metrics(opt_value=opt_value)
+
+    evaluator.table.execution_time = 0
+    evaluator.calc_typical_metrics(opt_value=opt_value)
+
+    evaluator.table.at[0, "num_occurrences"] = np.array([0])
+    evaluator.calc_typical_metrics(opt_value=opt_value)
+
+    evaluator.table.num_feasible = 0
+    evaluator.calc_typical_metrics(opt_value=opt_value, pr=np.nan)

@@ -114,8 +114,14 @@ class Evaluator:
         Returns:
             pandas.Series: Success Probability.
         """
-        scorer = make_scorer(success_probability, opt_value=opt_value)
-        return self.apply(func=scorer, column=column, expand=expand, axis=1)
+
+        return self.apply(
+            func=success_probability,
+            opt_value=opt_value,
+            column=column,
+            expand=expand,
+            axis=1,
+        )
 
     def optimal_time_to_solution(
         self,
@@ -136,13 +142,13 @@ class Evaluator:
             pandas.Series: Time to Solution for optimal value.
         """
 
-        scorer = make_scorer(
-            optimal_time_to_solution,
+        return self.apply(
+            func=optimal_time_to_solution,
             opt_value=opt_value,
             pr=pr,
-        )
-        return self.apply(
-            func=scorer, column=f"{column}", expand=expand, axis=1
+            column=f"{column}",
+            expand=expand,
+            axis=1,
         )
 
     def feasible_time_to_solution(
@@ -161,9 +167,13 @@ class Evaluator:
         Returns:
             pandas.Series: Time to Solution for feasible.
         """
-        scorer = make_scorer(feasible_time_to_solution, pr=pr)
+
         return self.apply(
-            func=scorer, column=f"{column}", expand=expand, axis=1
+            func=feasible_time_to_solution,
+            pr=pr,
+            column=f"{column}",
+            expand=expand,
+            axis=1,
         )
 
     def derived_time_to_solution(
@@ -182,12 +192,13 @@ class Evaluator:
         Returns:
             pandas.Series: Time to Solution for min value among obtained objective.
         """
-        scorer = make_scorer(
-            derived_time_to_solution,
-            pr=pr,
-        )
+
         return self.apply(
-            func=scorer, column=f"{column}", expand=expand, axis=1
+            func=derived_time_to_solution,
+            pr=pr,
+            column=f"{column}",
+            expand=expand,
+            axis=1,
         )
 
     def feasible_rate(self, column: str = "feasible_rate", expand: bool = True):
@@ -200,8 +211,8 @@ class Evaluator:
         Returns:
             pandas.Series: Feasible rate.
         """
-        scorer = make_scorer(feasible_rate)
-        return self.apply(func=scorer, column=column, expand=expand, axis=1)
+
+        return self.apply(func=feasible_rate, column=column, expand=expand, axis=1)
 
     def residual_energy(
         self,
@@ -209,32 +220,21 @@ class Evaluator:
         column: str = "residual_energy",
         expand: bool = True,
     ):
-        if solution_type == "optimal":
-            ps = _Metrics.success_probability(x, opt_value)
-        elif solution_type == "feasible":
-            ps = _Metrics.feasible_rate(x)
-        elif solution_type == "derived":
-            ps = _Metrics.success_probability(x, x.energy_min)
-        else:
-            ps = np.nan
-        if ps >= 1e-16:
-            ps -= 1e-16
-        else:
-            ps += 1e-16
-        return np.log(1 - pr) / np.log(1 - ps) * x.execution_time
+        """Residual energy
 
-    def success_probability(x: Any, opt_value: Union[int, float]):
-        if np.isnan(opt_value):
-            return np.nan
-        else:
-            return (
-                np.nan
-                if np.isnan(x.energy).all()
-                else (x.energy <= opt_value).sum() / x.num_reads
-            )
+        Args:
+            opt_value (float, optional): Optimal value for instance_data.
+            column (str, optional): Column name for metircs table that is pandas.Dataframe. Defaults to "residual_energy".
+            expand (bool, optional): Whether to expand table with evaluation results. Defaults to True.
 
-    def feasible_rate(x: Any):
-        return x.num_feasible / x.num_samples
+        Returns:
+            pandas.Series: Residual energy.
+        """
 
-    def residual_energy(x: Any, opt_value: Union[int, float]):
-        return (x.energy_mean - opt_value) / np.abs(opt_value)
+        return self.apply(
+            func=residual_energy,
+            opt_value=opt_value,
+            column=column,
+            expand=expand,
+            axis=1,
+        )
