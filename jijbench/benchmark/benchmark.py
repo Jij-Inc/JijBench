@@ -12,10 +12,10 @@ import pandas as pd
 from jijmodeling.exceptions import DataError
 from jijmodeling.transpilers.type_annotations import PH_VALUES_INTERFACE
 
+from jijbench.experiment.experiment import Experiment
+from jijbench.evaluation.evaluation import Evaluator
 from jijbench.benchmark import validation
 from jijbench.components import ID, Artifact, ExperimentResultDefaultDir, Table
-from jijbench.evaluation import Evaluator
-from jijbench.experiment import Experiment
 from jijbench.solver import DefaultSolver
 
 __all__ = []
@@ -23,6 +23,7 @@ __all__ = []
 
 class Benchmark:
     """Define benchmark.
+
     Args:
         params (Dict[str, List]): Parameters to be swept in the benchmark. key is parameter name. list is list of value of a parameter.
         solver (str | Callable | List[str | Callable]): solver name or callable solver method. You can set multiple solvers by using list. Accepted `str` type solver names are `{SASampler, SQASampler, JijSASampler, JijSQASampler, JijSwapMovingSampler}`.
