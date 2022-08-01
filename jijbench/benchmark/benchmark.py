@@ -257,7 +257,7 @@ class Benchmark:
         return solver_args, record
 
     def compare(self, key, values=None):
-        """ Row-by-Row comparison
+        """Row-by-Row comparison
 
         Args:
             key (_type_): columns of table.

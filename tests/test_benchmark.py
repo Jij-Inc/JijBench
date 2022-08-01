@@ -4,7 +4,6 @@ import os, shutil
 
 import jijmodeling as jm
 import openjij as oj
-from jijbench import benchmark
 import pytest
 
 import jijbench as jb
