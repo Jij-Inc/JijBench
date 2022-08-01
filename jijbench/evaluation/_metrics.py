@@ -29,7 +29,7 @@ def time_to_solution(
     elif solution_type == "feasible":
         ps = feasible_rate(x)
     elif solution_type == "derived":
-        ps = success_probability(x, x.energy_min)
+        ps = success_probability(x, x.obj_min)
     else:
         ps = np.nan
 

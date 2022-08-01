@@ -141,16 +141,18 @@ def test_success_probability():
     x = jm.Binary("x", shape=(d.shape[0].set_latex("n")))
     i = jm.Element("i", d.shape[0])
     problem = jm.Problem("simple_problem")
-    problem += jm.Sum(i d[i] * x[i])
-    problem += jm.Constraint("onehot", jm.Sum(i, d[i] * x[i] == 1)
-    instance_data = {"d": [1, 2]}
+    problem += jm.Sum(i, d[i] * x[i])
+    problem += jm.Constraint("onehot", jm.Sum(i, d[i] * x[i]) == 1)
     
-    from jijbench.evaluation.metrics import time_to_solution
-    becnh = jb.Benchmark(
+    instance_data = {"d": [1, 2, 3]}
+    
+    bench = jb.Benchmark(
         params={"multipliers":[{"onehot": 1}, {"onehot": 2}, {"onehot": 3}]},
         solver="SASampler",
         problem=problem,
         instance_data=instance_data
     )
     bench.run()
-    print(bench.table)
+    
+    evaluator = jb.Evaluator(bench)
+    evaluator.success_probability(opt_value=1)
