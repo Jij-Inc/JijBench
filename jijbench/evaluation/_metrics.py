@@ -1,7 +1,9 @@
 from __future__ import annotations
+from re import A
 
 from typing import Any, Union, Callable
 
+import functools
 import numpy as np
 
 
@@ -18,26 +20,41 @@ def make_scorer(score_func: Callable, **kwargs):
     return Scorer(score_func, kwargs)
 
 
-def time_to_solution(
+def optimal_time_to_solution(
     x,
     opt_value: Union[int, float],
     pr: float,
-    solution_type: str,
 ):
-    if solution_type == "optimal":
-        ps = success_probability(x, opt_value)
-    elif solution_type == "feasible":
-        ps = feasible_rate(x)
-    elif solution_type == "derived":
-        ps = success_probability(x, x.obj_min)
-    else:
-        ps = np.nan
+    ps = success_probability(x, opt_value)
 
-    if ps >= 1e-16:
-        ps -= 1e-16
+    if ps:
+        return np.log(1 - pr) / np.log(1 - ps) * x.execution_time
     else:
-        ps += 1e-16
-    return np.log(1 - pr) / np.log(1 - ps) * x.execution_time
+        return np.inf
+
+
+def feasible_time_to_solution(
+    x,
+    pr: float,
+):
+    ps = feasible_rate(x)
+
+    if ps:
+        return np.log(1 - pr) / np.log(1 - ps) * x.execution_time
+    else:
+        return np.inf
+
+
+def derived_time_to_solution(
+    x,
+    pr: float,
+):
+    ps = success_probability(x, x.obj_min)
+
+    if ps:
+        return np.log(1 - pr) / np.log(1 - ps) * x.execution_time
+    else:
+        return np.inf
 
 
 def success_probability(x, opt_value: Union[int, float]):
@@ -60,4 +77,4 @@ def feasible_rate(x):
 def residual_energy(x, opt_value: Union[int, float]):
     constraint_violations = np.array(x[x.index.str.contains("violations")][0])
     obj = x.objective[constraint_violations == 0]
-    return (obj.mean() - opt_value) / np.abs(opt_value)
+    return (obj.mean() - opt_value)

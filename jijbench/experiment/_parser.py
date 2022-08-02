@@ -11,42 +11,6 @@ if TYPE_CHECKING:
     from jijbench.experiment.experiment import Experiment
 
 
-def _parse_response(
-    experiment: "Experiment", response: "SampleSet"
-) -> Tuple[List[str], List]:
-    table = experiment._table
-    info = response.info
-
-    energies = info["energies"]
-    num_occurrences = response.record.num_occurrences
-    num_reads = info["num_reads"]
-    num_sweeps = info["num_sweeps"]
-    solving_time = info["solving_time"]
-    total_time = info["total_time"]
-
-    num_feasible = np.nan
-    num_samples = np.nan
-
-    columns = table.get_energy_columns()
-    columns += table.get_num_columns()
-    columns += table.get_time_columns()
-    values = [
-        energies,
-        energies.min(),
-        energies.mean(),
-        energies.std(),
-        num_occurrences,
-        num_reads,
-        num_sweeps,
-        num_feasible,
-        num_samples,
-        total_time,
-        solving_time,
-    ]
-
-    return columns, values
-
-
 def _parse_dimod_sampleset(
     experiment: "Experiment", response: "SampleSet"
 ) -> Tuple[List[str], List]:
@@ -64,7 +28,7 @@ def _parse_dimod_sampleset(
     table = experiment._table
     energies = response.record.energy
     num_occurrences = response.record.num_occurrences
-    num_reads = len(energies)
+    num_reads = num_occurrences.sum()
     if "schedule" in response.info:
         num_sweeps = response.info["schedule"]["num_sweeps"]
     else:
@@ -122,11 +86,10 @@ def _parse_jm_problem_decodedsamples(
     table = experiment._table
     energies = decoded.energies
     objectives: np.ndarray = decoded.objectives
-    num_occurances = np.nan
+    num_occurances = decoded.num_occurrences
     num_reads = np.nan
     num_sweeps = np.nan
-    num_feasible = len(decoded.feasibles())
-    num_samples = len(decoded.data)
+
     constraint_violations = {}
     for violation in decoded.constraint_violations:
         for const_name, v in violation.items():
@@ -134,6 +97,9 @@ def _parse_jm_problem_decodedsamples(
                 constraint_violations[const_name].append(v)
             else:
                 constraint_violations[const_name] = [v]
+
+    num_feasible = len(decoded.feasibles())
+    num_samples = len(decoded.data)
 
     columns = table.get_energy_columns()
     columns += table.get_objective_columns()

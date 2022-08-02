@@ -8,7 +8,9 @@ import pandas as pd
 from jijbench.experiment import Experiment
 from jijbench.evaluation._metrics import (
     make_scorer,
-    time_to_solution,
+    optimal_time_to_solution,
+    feasible_time_to_solution,
+    derived_time_to_solution,
     success_probability,
     feasible_rate,
     residual_energy,
@@ -50,15 +52,11 @@ class Evaluator:
         metrics["residual_energy"] = self.residual_energy(
             opt_value=opt_value, expand=expand
         )
-        metrics["TTS(optimal)"] = self.time_to_solution(
-            opt_value=opt_value, pr=pr, solution_type="optimal", expand=expand
+        metrics["TTS(optimal)"] = self.optimal_time_to_solution(
+            opt_value=opt_value, pr=pr, expand=expand
         )
-        metrics["TTS(feasible)"] = self.time_to_solution(
-            opt_value=opt_value, pr=pr, solution_type="feasible", expand=expand
-        )
-        metrics["TTS(derived)"] = self.time_to_solution(
-            opt_value=opt_value, pr=pr, solution_type="derived", expand=expand
-        )
+        metrics["TTS(feasible)"] = self.feasible_time_to_solution(pr=pr, expand=expand)
+        metrics["TTS(derived)"] = self.derived_time_to_solution(pr=pr, expand=expand)
         return metrics
 
     def apply(self, func, column, expand=True, axis=1, **kwargs):
@@ -77,22 +75,45 @@ class Evaluator:
         scorer = make_scorer(success_probability, opt_value=opt_value)
         return self.apply(func=scorer, column=column, expand=expand, axis=1)
 
-    def time_to_solution(
+    def optimal_time_to_solution(
         self,
-        opt_value: Union[int, float],
+        opt_value: Optional[Union[int, float]] = None,
         pr: float = 0.99,
-        solution_type: str = "optimal",
         column: str = "TTS",
         expand: bool = True,
     ):
         scorer = make_scorer(
-            time_to_solution,
+            optimal_time_to_solution,
             opt_value=opt_value,
             pr=pr,
-            solution_type=solution_type,
         )
         return self.apply(
-            func=scorer, column=f"{column}({solution_type})", expand=expand, axis=1
+            func=scorer, column=f"{column}(optimal)", expand=expand, axis=1
+        )
+
+    def feasible_time_to_solution(
+        self,
+        pr: float = 0.99,
+        column: str = "TTS",
+        expand: bool = True,
+    ):
+        scorer = make_scorer(feasible_time_to_solution, pr=pr)
+        return self.apply(
+            func=scorer, column=f"{column}(feasible)", expand=expand, axis=1
+        )
+
+    def derived_time_to_solution(
+        self,
+        pr: float = 0.99,
+        column: str = "TTS",
+        expand: bool = True,
+    ):
+        scorer = make_scorer(
+            derived_time_to_solution,
+            pr=pr,
+        )
+        return self.apply(
+            func=scorer, column=f"{column}(derived)", expand=expand, axis=1
         )
 
     def feasible_rate(self, column: str = "feasible_rate", expand: bool = True):

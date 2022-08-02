@@ -1,13 +1,15 @@
 from __future__ import annotations
+from jijbench import evaluation
 
+import pytest
 import os, shutil
 
-import jijmodeling as jm
+import dimod
 import numpy as np
 import openjij as oj
-import pytest
 
 import jijbench as jb
+import jijmodeling as jm
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -18,6 +20,100 @@ def pre_post_process():
     norm_path = os.path.normcase("./.jb_results")
     if os.path.exists(norm_path):
         shutil.rmtree(norm_path)
+
+
+@pytest.fixture
+def bench_ps_eq_1p0():
+    def solve(multipliers):
+        d = jm.Placeholder("d", dim=1)
+        x = jm.Binary("x", shape=(d.shape[0].set_latex("n")))
+        i = jm.Element("i", d.shape[0])
+        problem = jm.Problem("simple_problem")
+        problem += jm.Sum(i, d[i] * x[i])
+        problem += jm.Constraint("onehot", jm.Sum(i, d[i] * x[i]) == 1)
+        instance_data = {"d": [1, 2, 3]}
+
+        sampleset = dimod.SampleSet.from_samples(
+            samples_like=[
+                {"x[0]": 1, "x[1]": 0, "x[2]": 0},
+            ],
+            vartype="BINARY",
+            energy=[1],
+            num_occurrences=[4],
+        )
+        decoded_samples = problem.decode(sampleset, instance_data)
+        print("fafafaf")
+        print(decoded_samples.feasibles())
+        print("fffffff")
+        return sampleset, decoded_samples
+
+    bench = jb.Benchmark(
+        params={"multipliers": [{"onehot": 1}, {"onehot": 2}, {"onehot": 3}]},
+        solver=solve,
+    )
+    bench.run()
+    return bench
+
+
+@pytest.fixture
+def bench_ps_eq_0p5():
+    def solve(multipliers):
+        d = jm.Placeholder("d", dim=1)
+        x = jm.Binary("x", shape=(d.shape[0].set_latex("n")))
+        i = jm.Element("i", d.shape[0])
+        problem = jm.Problem("simple_problem")
+        problem += jm.Sum(i, d[i] * x[i])
+        problem += jm.Constraint("onehot", jm.Sum(i, d[i] * x[i]) == 1)
+        instance_data = {"d": [1, 2, 3]}
+
+        sampleset = dimod.SampleSet.from_samples(
+            samples_like=[
+                {"0": 1, "1": 0, "2": 0},
+                {"0": 0, "1": 0, "2": 0},
+            ],
+            vartype="BINARY",
+            energy=[1],
+            num_occurrences=[2, 2],
+        )
+        decoded_samples = problem.decode(sampleset, instance_data)
+        return sampleset, decoded_samples
+
+    bench = jb.Benchmark(
+        params={"multipliers": [{"onehot": 1}, {"onehot": 2}, {"onehot": 3}]},
+        solver=solve,
+    )
+    bench.run()
+    return bench
+
+
+@pytest.fixture
+def bench_ps_eq_0p0():
+    def solve(multipliers):
+        d = jm.Placeholder("d", dim=1)
+        x = jm.Binary("x", shape=(d.shape[0].set_latex("n")))
+        i = jm.Element("i", d.shape[0])
+        problem = jm.Problem("simple_problem")
+        problem += jm.Sum(i, d[i] * x[i])
+        problem += jm.Constraint("onehot", jm.Sum(i, d[i] * x[i]) == 1)
+        instance_data = {"d": [1, 2, 3]}
+
+        sampleset = dimod.SampleSet.from_samples(
+            samples_like=[
+                {"0": 0, "1": 0, "2": 0},
+            ],
+            vartype="BINARY",
+            energy=[1],
+            num_occurrences=[4],
+        )
+        decoded_samples = problem.decode(sampleset, instance_data)
+        return sampleset, decoded_samples
+
+    bench = jb.Benchmark(
+        params={"multipliers": [{"onehot": 1}, {"onehot": 2}, {"onehot": 3}]},
+        solver=solve,
+    )
+    bench.run()
+    return bench
 
 
 def test_matrics_by_openjij():
@@ -31,9 +127,9 @@ def test_matrics_by_openjij():
     evaluator = jb.Evaluator(experiment)
     opt_value = 1.0
     expand = True
-    evaluator.time_to_solution(opt_value=opt_value, solution_type="optimal", expand=expand)
-    evaluator.time_to_solution(solution_type="feasible", expand=expand)
-    evaluator.time_to_solution(solution_type="derived", expand=expand)
+    evaluator.optimal_time_to_solution(opt_value=opt_value, expand=expand)
+    evaluator.feasible_time_to_solution(expand=expand)
+    evaluator.derived_time_to_solution(expand=expand)
     evaluator.success_probability(opt_value=opt_value, expand=expand)
     evaluator.feasible_rate(expand=expand)
     evaluator.residual_energy(opt_value=opt_value, expand=expand)
@@ -69,9 +165,11 @@ def test_matrics_by_jijmodeling():
     evaluator = jb.Evaluator(experiment)
     opt_value = 1.0
     expand = True
-    evaluator.tts(opt_value=opt_value, solution_type="optimal", expand=expand)
-    evaluator.tts(solution_type="feasible", expand=expand)
-    evaluator.tts(solution_type="derived", expand=expand)
+    evaluator.time_to_solution(
+        opt_value=opt_value, solution_type="optimal", expand=expand
+    )
+    evaluator.time_to_solution(solution_type="feasible", expand=expand)
+    evaluator.time_to_solution(solution_type="derived", expand=expand)
     evaluator.success_probability(opt_value=opt_value, expand=expand)
     evaluator.feasible_rate(expand=expand)
     evaluator.residual_energy(opt_value=opt_value, expand=expand)
@@ -136,23 +234,18 @@ def test_metrics_for_nan_column():
         assert np.isnan(v)
 
 
-def test_success_probability():
-    d = jm.Placeholder("d", dim=1)
-    x = jm.Binary("x", shape=(d.shape[0].set_latex("n")))
-    i = jm.Element("i", d.shape[0])
-    problem = jm.Problem("simple_problem")
-    problem += jm.Sum(i, d[i] * x[i])
-    problem += jm.Constraint("onehot", jm.Sum(i, d[i] * x[i]) == 1)
-    
-    instance_data = {"d": [1, 2, 3]}
-    
-    bench = jb.Benchmark(
-        params={"multipliers":[{"onehot": 1}, {"onehot": 2}, {"onehot": 3}]},
-        solver="SASampler",
-        problem=problem,
-        instance_data=instance_data
-    )
-    bench.run()
-    
-    evaluator = jb.Evaluator(bench)
-    evaluator.success_probability(opt_value=1)
+def test_success_probability(
+    bench_ps_eq_1p0, bench_ps_eq_0p5, bench_ps_eq_0p0
+):
+    print()
+    print(bench_ps_eq_1p0.table[["objective", "num_occurances", "num_feasible", "num_samples", "onehot_violations"]])
+    # 成功確率1.0, 0.5, 0.0となるような解が得られた場合、evaluatorが本当にその値を返すかどうかのテスト。最適値は1.0
+    print(bench_ps_eq_1p0.evaluate(opt_value=1.0))
+    evaluator = jb.Evaluator(bench_ps_eq_1p0)
+    metrics = evaluator.success_probability(opt_value=1)
+    print(metrics)
+
+
+#
+# evaluator = jb.Evaluator(bench)
+# evaluator.success_probability(opt_value=1)

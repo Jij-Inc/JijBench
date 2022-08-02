@@ -51,10 +51,18 @@ def test_get_default_problem():
     problem = jb.get_problem("BinPacking")
     assert problem.name == "bin_packing"
 
+    problem = jb.get_problem("NurseScheduling")
+    assert problem.name == "nurse_scheduling"
+
 
 def test_get_default_instance_data():
     instance_data = jb.get_instance_data("TSP")
 
+    assert isinstance(instance_data[0], tuple)
+    assert isinstance(instance_data[0][0], str)
+    assert isinstance(instance_data[0][1], dict)
+
+    instance_data = jb.get_instance_data("NurseScheduling")
     assert isinstance(instance_data[0], tuple)
     assert isinstance(instance_data[0][0], str)
     assert isinstance(instance_data[0][1], dict)
