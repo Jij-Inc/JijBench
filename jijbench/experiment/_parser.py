@@ -86,7 +86,7 @@ def _parse_jm_problem_decodedsamples(
     table = experiment._table
     energies = decoded.energies
     objectives: np.ndarray = decoded.objectives
-    num_occurances = decoded.num_occurrences
+    num_occurrences = decoded.num_occurrences
     num_reads = np.nan
     num_sweeps = np.nan
 
@@ -98,8 +98,8 @@ def _parse_jm_problem_decodedsamples(
             else:
                 constraint_violations[const_name] = [v]
 
-    num_feasible = len(decoded.feasibles())
-    num_samples = len(decoded.data)
+    num_feasible = decoded.feasibles().num_occurrences.sum()
+    num_samples = num_occurrences.sum()
 
     columns = table.get_energy_columns()
     columns += table.get_objective_columns()
@@ -114,7 +114,7 @@ def _parse_jm_problem_decodedsamples(
         objectives.min(),
         objectives.mean(),
         objectives.std(),
-        num_occurances,
+        num_occurrences,
         num_reads,
         num_sweeps,
         num_feasible,

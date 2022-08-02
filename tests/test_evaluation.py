@@ -23,7 +23,7 @@ def pre_post_process():
 
 
 @pytest.fixture
-def bench_ps_eq_1p0():
+def bench_for_success_probability_eq_1p0():
     def solve(multipliers):
         d = jm.Placeholder("d", dim=1)
         x = jm.Binary("x", shape=(d.shape[0].set_latex("n")))
@@ -41,10 +41,8 @@ def bench_ps_eq_1p0():
             energy=[1],
             num_occurrences=[4],
         )
+        sampleset.info["execution_time"] = 1.0
         decoded_samples = problem.decode(sampleset, instance_data)
-        print("fafafaf")
-        print(decoded_samples.feasibles())
-        print("fffffff")
         return sampleset, decoded_samples
 
     bench = jb.Benchmark(
@@ -56,7 +54,7 @@ def bench_ps_eq_1p0():
 
 
 @pytest.fixture
-def bench_ps_eq_0p5():
+def bench_for_success_probability_eq_0p5():
     def solve(multipliers):
         d = jm.Placeholder("d", dim=1)
         x = jm.Binary("x", shape=(d.shape[0].set_latex("n")))
@@ -68,13 +66,14 @@ def bench_ps_eq_0p5():
 
         sampleset = dimod.SampleSet.from_samples(
             samples_like=[
-                {"0": 1, "1": 0, "2": 0},
-                {"0": 0, "1": 0, "2": 0},
+                {"x[0]": 1, "x[1]": 0, "x[2]": 0},
+                {"x[0]": 0, "x[1]": 0, "x[2]": 0},
             ],
             vartype="BINARY",
             energy=[1],
             num_occurrences=[2, 2],
         )
+        sampleset.info["execution_time"] = 1.0
         decoded_samples = problem.decode(sampleset, instance_data)
         return sampleset, decoded_samples
 
@@ -87,7 +86,7 @@ def bench_ps_eq_0p5():
 
 
 @pytest.fixture
-def bench_ps_eq_0p0():
+def bench_for_success_probability_eq_0p0():
     def solve(multipliers):
         d = jm.Placeholder("d", dim=1)
         x = jm.Binary("x", shape=(d.shape[0].set_latex("n")))
@@ -99,12 +98,66 @@ def bench_ps_eq_0p0():
 
         sampleset = dimod.SampleSet.from_samples(
             samples_like=[
-                {"0": 0, "1": 0, "2": 0},
+                {"x[0]": 0, "x[1]": 0, "x[2]": 0},
             ],
             vartype="BINARY",
             energy=[1],
             num_occurrences=[4],
         )
+        sampleset.info["execution_time"] = 1.0
+        decoded_samples = problem.decode(sampleset, instance_data)
+        return sampleset, decoded_samples
+
+    bench = jb.Benchmark(
+        params={"multipliers": [{"onehot": 1}, {"onehot": 2}, {"onehot": 3}]},
+        solver=solve,
+    )
+    bench.run()
+    return bench
+
+
+@pytest.fixture
+def bench_for_multi_const_problem():
+    def solve(multipliers):
+        d = jm.Placeholder("d", dim=2)
+        x = jm.Binary("x", shape=d.shape)
+        i = jm.Element("i", d.shape[0])
+        j = jm.Element("j", d.shape[1])
+
+        problem = jm.Problem("simple_problem")
+        problem += jm.Sum([i, j], d[i, j] * x[i, j])
+        problem += jm.Constraint("onehot1", x[i, :] == 1, forall=i)
+        problem += jm.Constraint("onehot2", x[:, j] == 1, forall=j)
+
+        instance_data = {"d": [[1, 8], [16, 2]]}
+
+        sampleset = dimod.SampleSet.from_samples(
+            samples_like=[
+                {"x[0][0]": 1, "x[0][1]": 0, "x[1][0]": 0, "x[1][1]": 1},  # 最適解
+                {
+                    "x[0][0]": 0,
+                    "x[0][1]": 1,
+                    "x[1][0]": 1,
+                    "x[1][1]": 0,
+                },  # 実行可能解だけど最適解ではない
+                {
+                    "x[0][0]": 0,
+                    "x[0][1]": 0,
+                    "x[1][0]": 0,
+                    "x[1][1]": 0,
+                },  # 実行不可能解、目的関数値 < 最適値
+                {
+                    "x[0][0]": 1,
+                    "x[0][1]": 0,
+                    "x[1][0]": 1,
+                    "x[1][1]": 0,
+                },  # 制約onehot1だけ満たす
+            ],
+            vartype="BINARY",
+            energy=[3, 30, 0, 33],
+            num_occurrences=[4, 3, 2, 1],
+        )
+        sampleset.info["execution_time"] = 1.0
         decoded_samples = problem.decode(sampleset, instance_data)
         return sampleset, decoded_samples
 
@@ -234,16 +287,59 @@ def test_metrics_for_nan_column():
         assert np.isnan(v)
 
 
-def test_success_probability(
-    bench_ps_eq_1p0, bench_ps_eq_0p5, bench_ps_eq_0p0
+def test_single_metrics(
+    bench_for_success_probability_eq_1p0,
+    bench_for_success_probability_eq_0p5,
+    bench_for_success_probability_eq_0p0,
 ):
-    print()
-    print(bench_ps_eq_1p0.table[["objective", "num_occurances", "num_feasible", "num_samples", "onehot_violations"]])
     # 成功確率1.0, 0.5, 0.0となるような解が得られた場合、evaluatorが本当にその値を返すかどうかのテスト。最適値は1.0
-    print(bench_ps_eq_1p0.evaluate(opt_value=1.0))
-    evaluator = jb.Evaluator(bench_ps_eq_1p0)
+    print(bench_for_success_probability_eq_1p0.table[["num_occurrences", "num_samples", "num_feasible"]])
+    evaluator = jb.Evaluator(bench_for_success_probability_eq_1p0)
+    print(evaluator.calc_typical_metrics(opt_value=1))
+    
+    opt_value = 1.0
+    ps = evaluator.success_probability(opt_value=opt_value)
+    fr = evaluator.feasible_rate()
+    re = evaluator.residual_energy(opt_value=opt_value)
+    tts_opt = evaluator.optimal_time_to_solution(opt_value=opt_value)
+    tts_feas = evaluator.feasible_time_to_solution()
+    tts_derived = evaluator.derived_time_to_solution()
+    print(ps[0])
+    print(fr[0])
+    print(re[0])
+    print(tts_opt[0])
+    print(tts_feas[0])
+    print(tts_derived[0])
+
+   
+    evaluator = jb.Evaluator(bench_for_success_probability_eq_0p5)
     metrics = evaluator.success_probability(opt_value=1)
-    print(metrics)
+    # print(metrics)
+
+
+def test_evaluate_for_multi_const_problem(bench_for_multi_const_problem):
+    # Benchmarkインスタンスのevaluateでテスト
+    opt_value = 3
+    pr = 0.7
+    metrics = bench_for_multi_const_problem.evaluate(opt_value=opt_value, pr=pr)
+
+    assert metrics["success_probability"][0] == 0.4
+    assert metrics["feasible_rate"][0] == 0.7
+    assert metrics["residual_energy"][0] == 9.0
+    assert metrics["TTS(optimal)"][0] == np.log(1 - 0.7) / np.log(1 - 0.4)
+    assert metrics["TTS(feasible)"][0] == 1.0
+    assert metrics["TTS(derived)"][0] == np.log(1 - 0.7) / np.log(1 - 0.4)
+
+    opt_value = 0
+    pr = 0.7
+    metrics = bench_for_multi_const_problem.evaluate(opt_value=opt_value, pr=pr)
+
+    assert metrics["success_probability"][0] == 0.0
+    assert metrics["feasible_rate"][0] == 0.7
+    assert metrics["residual_energy"][0] == 12.0
+    assert metrics["TTS(optimal)"][0] == np.inf
+    assert metrics["TTS(feasible)"][0] == 1.0
+    assert metrics["TTS(derived)"][0] == np.log(1 - 0.7) / np.log(1 - 0.4)
 
 
 #

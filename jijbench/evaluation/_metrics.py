@@ -3,8 +3,8 @@ from re import A
 
 from typing import Any, Union, Callable
 
-import functools
 import numpy as np
+import warnings
 
 
 class Scorer:
@@ -49,7 +49,13 @@ def derived_time_to_solution(
     x,
     pr: float,
 ):
-    ps = success_probability(x, x.obj_min)
+    feas = _to_bool_values_for_feasible(x)
+    opt_value = x.objective[feas].min()
+
+    ps = success_probability(x, opt_value)
+
+    if np.isnan(x.execution_time):
+        warnings.warn("TTS cannot be calculated because\"execution_time\" is not stored in table attribute of jijbench.Benchmark instance.")
 
     if ps:
         return np.log(1 - pr) / np.log(1 - ps) * x.execution_time
@@ -61,20 +67,28 @@ def success_probability(x, opt_value: Union[int, float]):
     if np.isnan(opt_value):
         return np.nan
     else:
-        constraint_violations = np.array(x[x.index.str.contains("violations")][0])
-        return (
-            np.nan
-            if np.isnan(x.objective).all()
-            else ((x.objective <= opt_value) & (constraint_violations == 0)).sum()
-            / x.num_occurances.sum()
-        )
+        success = _to_bool_values_for_success(x, opt_value)
+        num_success = (success * x.num_occurrences).sum()
+
+        return num_success / x.num_occurrences.sum()
 
 
 def feasible_rate(x):
-    return x.num_feasible / x.num_occurances.sum()
+    return x.num_feasible / x.num_occurrences.sum()
 
 
 def residual_energy(x, opt_value: Union[int, float]):
-    constraint_violations = np.array(x[x.index.str.contains("violations")][0])
-    obj = x.objective[constraint_violations == 0]
-    return (obj.mean() - opt_value)
+    feas = _to_bool_values_for_feasible(x)
+    obj = x.objective * feas * x.num_occurrences
+    mean = obj.sum() / (feas * x.num_occurrences).sum()
+    return mean - opt_value
+
+
+def _to_bool_values_for_feasible(x):
+    constraint_violations = np.array([v for v in x[x.index.str.contains("violations")]])
+    return constraint_violations.sum(axis=0) == 0
+
+
+def _to_bool_values_for_success(x, opt_value):
+    feas = _to_bool_values_for_feasible(x)
+    return (x.objective <= opt_value) & feas

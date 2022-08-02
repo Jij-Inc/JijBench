@@ -16,7 +16,6 @@ from jijbench.evaluation._metrics import (
     residual_energy,
 )
 
-
 class Evaluator:
     def __init__(self, experiment: Experiment):
         self.experiment = experiment
