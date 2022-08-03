@@ -88,7 +88,7 @@ class Knapsack(JijModelingTarget, DefaultInstanceMixin):
         problem += -1 * obj
 
         # Constraint: knapsack 制約
-        const = jm.Constraint("knapsack_constraint", jm.Sum(i, w[i] * x[i]) - c <= 0)
+        const = jm.Constraint("knapsack-constraint", jm.Sum(i, w[i] * x[i]) - c <= 0)
         problem += const
 
         return problem
@@ -124,13 +124,13 @@ class BinPacking(JijModelingTarget, DefaultInstanceMixin):
 
         # Constraint1: 各itemをちょうど1つのbinにぶち込む
         const1 = jm.Constraint(
-            "onehot_constraint", jm.Sum(j, x[i, j]) - 1 == 0, forall=i
+            "onehot-constraint", jm.Sum(j, x[i, j]) - 1 == 0, forall=i
         )
         problem += const1
 
         # Constraint2: knapsack制約
         const2 = jm.Constraint(
-            "knapsack_constraint", jm.Sum(i, w[i] * x[i, j]) - y[j] * c <= 0, forall=j
+            "knapsack-constraint", jm.Sum(i, w[i] * x[i, j]) - y[j] * c <= 0, forall=j
         )
         problem += const2
 
@@ -203,26 +203,26 @@ class NurseScheduling(JijModelingTarget, DefaultInstanceMixin):
 
         # Constraint2: 特定の仕事を行った次の日に, 特定の仕事を行うことはできない
         problem += jm.Constraint(
-            "shift_rotation",
+            "shift-rotation",
             x[i, d, t] + x[i, (d + 1), dt] - 1 <= 0,
             forall=[i, (d, jm.neq(d, D - 1)), t, (dt, jm.neq(R[t, dt], -1))],
         )
 
         # Constraint3: 従業員に割り当てられる各タイプのシフトの最大数
         const3 = jm.Sum(d, x[i, d, t]) - m_max[i, t]
-        problem += jm.Constraint("assign_max", const3 <= 0, forall=[i, t])
+        problem += jm.Constraint("assign-max", const3 <= 0, forall=[i, t])
 
         # Constraint4: 最低・最高労働時間
         const4 = jm.Sum([d, t], l[t] * x[i, d, t])
         problem += jm.Constraint(
-            "minimum_work_time",
+            "minimum-work-time",
             b_min[i] - const4 <= 0,
             forall=[
                 i,
             ],
         )
         problem += jm.Constraint(
-            "maximum_work_time",
+            "maximum-work-time",
             const4 - b_max[i] <= 0,
             forall=[
                 i,
@@ -232,14 +232,14 @@ class NurseScheduling(JijModelingTarget, DefaultInstanceMixin):
         # Constraint5: 最大連続勤務
         const5 = jm.Sum([{j: (d, d + c_max[i] + 1)}, t], x[i, j, t])
         problem += jm.Constraint(
-            "maximum_consecutive_shifts",
+            "maximum-consecutive-shifts",
             const5 - c_max[i] <= 0,
             forall=[i, (d, d <= D - (c_max[i] + 1))],
         )
 
         # Constraint6: 最小連続勤務
         problem += jm.Constraint(
-            "minimum_consecutive_shifts",
+            "minimum-consecutive-shifts",
             jm.Sum(t, x[i, d, t])
             + (s - jm.Sum([{j: (d + 1, d + s + 1)}, t], x[i, j, t]))
             + jm.Sum(t, x[i, d + s + 1, t])
@@ -250,7 +250,7 @@ class NurseScheduling(JijModelingTarget, DefaultInstanceMixin):
 
         # Constraint7: 最低連続休暇日数
         problem += jm.Constraint(
-            "minimum_consecutive_days_off",
+            "minimum-consecutive-days-off",
             (1 - jm.Sum(t, x[i, d, t]))
             + jm.Sum([{j: (d + 1, d + s + 1)}, t], x[i, j, t])
             + (1 - jm.Sum(t, x[i, d + s + 1, t]))
@@ -264,13 +264,13 @@ class NurseScheduling(JijModelingTarget, DefaultInstanceMixin):
             t, x[i, 7 * (w + 1) - 1, t]
         )
         problem += jm.Constraint(
-            "variable_k_lower", k[i, w] - const8 <= 0, forall=[i, w]
+            "variable-k-lower", k[i, w] - const8 <= 0, forall=[i, w]
         )
         problem += jm.Constraint(
-            "variable_k_upper", const8 - 2 * k[i, w] <= 0, forall=[i, w]
+            "variable-k-upper", const8 - 2 * k[i, w] <= 0, forall=[i, w]
         )
         problem += jm.Constraint(
-            "maximum_number_of_weekends",
+            "maximum-number-of-weekends",
             jm.Sum(w, k[i, w]) - a_max[i] <= 0,
             forall=[
                 i,
@@ -280,12 +280,12 @@ class NurseScheduling(JijModelingTarget, DefaultInstanceMixin):
         # Constraint9: 働けない日の制約
         do = jm.Element("do", (0, D))
         problem += jm.Constraint(
-            "days_off", x[i, do, t] == 0, forall=[i, ({do: N[i]}, jm.neq(do, -1)), t]
+            "days-off", x[i, do, t] == 0, forall=[i, ({do: N[i]}, jm.neq(do, -1)), t]
         )
 
         # Constraint10: 必要人数に関する制約
         const10 = jm.Sum(i, x[i, d, t]) - z[d, t] + y[d, t] - u[d, t]
-        problem += jm.Constraint("cover_requirements", const10 == 0, forall=[d, t])
+        problem += jm.Constraint("cover-requirements", const10 == 0, forall=[d, t])
 
         return problem
 
@@ -320,7 +320,7 @@ class TSPTW(JijModelingTarget, DefaultInstanceMixin):
         # Const1: 都市iから出る辺は1つ
         term1 = jm.Sum((j, j != i), x[i, j])
         problem += jm.Constraint(
-            "onehot_constraint1",
+            "onehot-constraint1",
             term1 == 1,
             forall=[
                 i,
@@ -330,7 +330,7 @@ class TSPTW(JijModelingTarget, DefaultInstanceMixin):
         # Const2: 都市iに入る辺は1つ
         term2 = jm.Sum((j, j != i), x[j, i])
         problem += jm.Constraint(
-            "onehot_constraint2",
+            "onehot-constraint2",
             term2 == 1,
             forall=[
                 i,
@@ -341,7 +341,7 @@ class TSPTW(JijModelingTarget, DefaultInstanceMixin):
         term3 = t[i] + dist[i, j] - t[j]
         forall_list = [(j, j != 0), (i, (i != 0) & (i != j))]
         problem += jm.Constraint(
-            "time_window_constraint", term3 <= 0, forall=forall_list
+            "time-window-constraint", term3 <= 0, forall=forall_list
         )
 
         return problem
@@ -374,7 +374,7 @@ class TSP(JijModelingTarget, DefaultInstanceMixin):
         # const1: onehot for time
         const1 = x[t, :]
         problem += jm.Constraint(
-            "onehot_time",
+            "onehot-time",
             const1 == 1,
             forall=[
                 t,
@@ -384,7 +384,7 @@ class TSP(JijModelingTarget, DefaultInstanceMixin):
         # const2: onehot for location
         const2 = x[:, i]
         problem += jm.Constraint(
-            "onehot_location",
+            "onehot-location",
             const2 == 1,
             forall=[
                 i,

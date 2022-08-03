@@ -51,7 +51,7 @@ def test_get_default_problem():
     problem = jb.get_problem("BinPacking")
     assert problem.name == "bin-packing"
 
-    problem = jb.get_problem("nurse-scheduling")
+    problem = jb.get_problem("NurseScheduling")
     assert problem.name == "nurse-scheduling"
 
 
