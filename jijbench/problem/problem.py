@@ -136,7 +136,7 @@ class BinPacking(JijModelingTarget, DefaultInstanceMixin):
 
         return problem
 
-    problem_name = "bin_packing"
+    problem_name = "bin-packing"
     problem = _problem(problem_name)
 
     def __init__(self):
@@ -289,7 +289,7 @@ class NurseScheduling(JijModelingTarget, DefaultInstanceMixin):
 
         return problem
 
-    problem_name = "nurse_scheduling"
+    problem_name = "nurse-scheduling"
     problem = _problem(problem_name)
 
     def __init__(self):
@@ -346,7 +346,7 @@ class TSPTW(JijModelingTarget, DefaultInstanceMixin):
 
         return problem
 
-    problem_name = "travelling_salesman_with_time_windows"
+    problem_name = "travelling-salesman-with-time-windows"
     problem = _problem(problem_name)
 
     def __init__(self):
@@ -393,7 +393,7 @@ class TSP(JijModelingTarget, DefaultInstanceMixin):
 
         return problem
 
-    problem_name = "travelling_salesman"
+    problem_name = "travelling-salesman"
     problem = _problem(problem_name)
 
     def __init__(self):
