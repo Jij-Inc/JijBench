@@ -72,10 +72,10 @@ class DefaultInstanceMixin:
 
 class Knapsack(JijModelingTarget, DefaultInstanceMixin):
     def _problem(problem_name):
-        w = jm.Placeholder("weights", dim=1)
-        v = jm.Placeholder("values", dim=1)
-        n = jm.Placeholder("num_items")
-        c = jm.Placeholder("capacity")
+        w = jm.Placeholder("w", dim=1)
+        v = jm.Placeholder("v", dim=1)
+        n = jm.Placeholder("n")
+        c = jm.Placeholder("c")
         x = jm.Binary("x", shape=(n,))
 
         # i: itemの添字
@@ -103,7 +103,7 @@ class Knapsack(JijModelingTarget, DefaultInstanceMixin):
 class BinPacking(JijModelingTarget, DefaultInstanceMixin):
     def _problem(problem_name):
         w = jm.Placeholder("w", dim=1)
-        num_items = jm.Placeholder("num_items")
+        num_items = jm.Placeholder("n")
         c = jm.Placeholder("c")
 
         # y[j]: bin j を使用するかしないか
