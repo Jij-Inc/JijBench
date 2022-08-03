@@ -72,10 +72,10 @@ class DefaultInstanceMixin:
 
 class Knapsack(JijModelingTarget, DefaultInstanceMixin):
     def _problem(problem_name):
-        w = jm.Placeholder("weights", dim=1)
-        v = jm.Placeholder("values", dim=1)
-        n = jm.Placeholder("num_items")
-        c = jm.Placeholder("capacity")
+        w = jm.Placeholder("w", dim=1)
+        v = jm.Placeholder("v", dim=1)
+        n = jm.Placeholder("n")
+        c = jm.Placeholder("c")
         x = jm.Binary("x", shape=(n,))
 
         # i: itemの添字
@@ -103,7 +103,7 @@ class Knapsack(JijModelingTarget, DefaultInstanceMixin):
 class BinPacking(JijModelingTarget, DefaultInstanceMixin):
     def _problem(problem_name):
         w = jm.Placeholder("w", dim=1)
-        num_items = jm.Placeholder("num_items")
+        num_items = jm.Placeholder("n")
         c = jm.Placeholder("c")
 
         # y[j]: bin j を使用するかしないか
@@ -136,7 +136,7 @@ class BinPacking(JijModelingTarget, DefaultInstanceMixin):
 
         return problem
 
-    problem_name = "bin_packing"
+    problem_name = "bin-packing"
     problem = _problem(problem_name)
 
     def __init__(self):
@@ -294,7 +294,7 @@ class NurseScheduling(JijModelingTarget, DefaultInstanceMixin):
 
         return problem
 
-    problem_name = "nurse_scheduling"
+    problem_name = "nurse-scheduling"
     problem = _problem(problem_name)
 
     def __init__(self):
@@ -307,7 +307,7 @@ class TSPTW(JijModelingTarget, DefaultInstanceMixin):
         problem = jm.Problem(problem_name)
 
         # 距離行列
-        dist = jm.Placeholder("dist", dim=2)  # 距離行列
+        dist = jm.Placeholder("d", dim=2)  # 距離行列
         N = jm.Placeholder("N")
         e = jm.Placeholder("e", shape=(N,))  # ready time
         l = jm.Placeholder("l", shape=(N,))  # due time
@@ -351,7 +351,7 @@ class TSPTW(JijModelingTarget, DefaultInstanceMixin):
 
         return problem
 
-    problem_name = "travelling_salesman_with_time_windows"
+    problem_name = "travelling-salesman-with-time-windows"
     problem = _problem(problem_name)
 
     def __init__(self):
@@ -362,7 +362,7 @@ class TSP(JijModelingTarget, DefaultInstanceMixin):
     def _problem(problem_name):
         # 問題
         problem = jm.Problem(problem_name)
-        dist = jm.Placeholder("dist", dim=2)
+        dist = jm.Placeholder("d", dim=2)
         N = jm.Placeholder("N")
 
         x = jm.Binary("x", shape=(N, N))
@@ -398,7 +398,7 @@ class TSP(JijModelingTarget, DefaultInstanceMixin):
 
         return problem
 
-    problem_name = "travelling_salesman"
+    problem_name = "travelling-salesman"
     problem = _problem(problem_name)
 
     def __init__(self):
