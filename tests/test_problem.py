@@ -51,6 +51,9 @@ def test_get_default_problem():
     problem = jb.get_problem("BinPacking")
     assert problem.name == "bin-packing"
 
+    problem = jb.get_problem("nurse-scheduling")
+    assert problem.name == "nurse-scheduling"
+
 
 def test_get_default_instance_data():
     instance_data = jb.get_instance_data("TSP")
