@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Union, Optional
+from typing import Callable, Optional
 
 import numpy as np
 import pandas as pd
@@ -15,6 +15,7 @@ from jijbench.evaluation._metrics import (
     feasible_rate,
     residual_energy,
 )
+
 
 class Evaluator:
     def __init__(self, experiment: Experiment):
@@ -31,15 +32,22 @@ class Evaluator:
     def calc_typical_metrics(
         self, opt_value: Optional[float] = None, pr: float = 0.99, expand: bool = True
     ):
-        """_summary_
+        """ Calculate typincal metrics for benchmark
 
         Args:
-            opt_value (_type_, optional): _description_. Defaults to None.
-            pr (float, optional): _description_. Defaults to 0.99.
-            expand (bool, optional): _description_. Defaults to True.
+            opt_value (float, optional): Optimal value for instance_data. Defaults to None.
+            pr (float, optional): Probability of obtaining optimal value. Defaults to 0.99.
+            expand (bool, optional): If True, expand table with evaluation results. Defaults to None.
 
         Returns:
-            _type_: _description_
+            pandas.Dataframe: pandas.Dataframe object for evalution results.
+            - columns: ["success_probability", "feasible_rate", "residual_energy", "TTS(optimal)", "TTS(feasible)", "TTS(derived)"]
+                - success_probability: Solution that is feasible and less than or equal to opt_value is counted as success, which is NaN if `opt_value` is not given.
+                - feasible_rate: Rate of feasible solutions out of all solutions.
+                - residual_energy: Difference between average objective of feasible solutions and `opt_value`, which is NaN if `opt_value` is not given.
+                - TTS(optimal): Time to obtain opt_value with probability `pr`, which is NaN if opt_value is not given.
+                - TTS(feasible): Time to obtain feasible solutions with probability `pr`.
+                - TTS(derived): Time to obtain minimum objective among feasible solutions with probability `pr`.
         """
         opt_value = np.nan if opt_value is None else opt_value
 
@@ -58,7 +66,20 @@ class Evaluator:
         metrics["TTS(derived)"] = self.derived_time_to_solution(pr=pr, expand=expand)
         return metrics
 
-    def apply(self, func, column, expand=True, axis=1, **kwargs):
+    def apply(self, func: Callable, column: str, expand=True, axis=1, **kwargs):
+        """Apply evaluation function to table
+
+        Args:
+            func (Callable): Callable object to calculate evaluation metrics.
+            column (str, optional): Column name for metircs table that is pandas.Dataframe.
+            expand (bool, optional): Whether to expand table with evaluation results. Defaults to True.
+            axis (int, optional): Axis along which the `func` is applied:
+                - 0: apply `func` to column direction.
+                - 1(default): apply `func` to row direction.
+
+        Returns:
+            pandas.Series: Evalution results.
+        """
         func = make_scorer(func, **kwargs)
         metrics = self.table.apply(func, axis=axis)
         if expand:
@@ -67,20 +88,41 @@ class Evaluator:
 
     def success_probability(
         self,
-        opt_value: Union[int, float],
+        opt_value: float,
         column: str = "success_probability",
         expand: bool = True,
     ):
+        """Success probability
+
+        Args:
+            opt_value (float): Optimal value for instance_data.
+            column (str, optional): Column name for metircs table that is pandas.Dataframe. Defaults to "success_probability".
+            expand (bool, optional): Whether to expand table with evaluation results. Defaults to True.
+
+        Returns:
+            pandas.Series: Success Probability.
+        """
         scorer = make_scorer(success_probability, opt_value=opt_value)
         return self.apply(func=scorer, column=column, expand=expand, axis=1)
 
     def optimal_time_to_solution(
         self,
-        opt_value: Optional[Union[int, float]] = None,
+        opt_value: float,
         pr: float = 0.99,
-        column: str = "TTS",
+        column: str = "TTS(optimal)",
         expand: bool = True,
     ):
+        """Time to solution for optimal value.
+
+        Args:
+            opt_value (float, optional): Optimal value for instance_data.
+            pr (float, optional): Probability of obtaining optimal value. Defaults to 0.99.
+            column (str, optional): Column name for metircs table that is pandas.Dataframe. Defaults to "TTS(optimal)".
+            expand (bool, optional): Whether to expand table with evaluation results. Defaults to True.
+
+        Returns:
+            pandas.Series: Time to Solution for optimal value.
+        """
         scorer = make_scorer(
             optimal_time_to_solution,
             opt_value=opt_value,
@@ -93,9 +135,19 @@ class Evaluator:
     def feasible_time_to_solution(
         self,
         pr: float = 0.99,
-        column: str = "TTS",
+        column: str = "TTS(feasible)",
         expand: bool = True,
     ):
+        """Time to solution for feasible.
+
+        Args:
+            pr (float, optional): Probability of obtaining optimal value. Defaults to 0.99.
+            column (str, optional): Column name for metircs table that is pandas.Dataframe. Default to "TTS(feasible)"
+            expand (bool, optional): Whether to expand table with evaluation results. Defaults to True.
+
+        Returns:
+            pandas.Series: Time to Solution for feasible.
+        """
         scorer = make_scorer(feasible_time_to_solution, pr=pr)
         return self.apply(
             func=scorer, column=f"{column}(feasible)", expand=expand, axis=1
@@ -104,9 +156,19 @@ class Evaluator:
     def derived_time_to_solution(
         self,
         pr: float = 0.99,
-        column: str = "TTS",
+        column: str = "TTS(derived)",
         expand: bool = True,
     ):
+        """Time to solution for min value among obtained objective.
+
+        Args:
+            pr (float, optional): Probability of obtaining optimal value. Defaults to 0.99.
+            column (str, optional): Column name for metircs table that is pandas.Dataframe. Default to "TTS(derived)"
+            expand (bool, optional): Whether to expand table with evaluation results. Defaults to True.
+
+        Returns:
+            pandas.Series: Time to Solution for min value among obtained objective.
+        """
         scorer = make_scorer(
             derived_time_to_solution,
             pr=pr,
@@ -116,14 +178,33 @@ class Evaluator:
         )
 
     def feasible_rate(self, column: str = "feasible_rate", expand: bool = True):
+        """Feasible rate
+
+        Args:
+            column (str, optional): Column name for metircs table that is pandas.Dataframe. Defaults to "feasible_rate".
+            expand (bool, optional): Whether to expand table with evaluation results. Defaults to True.
+
+        Returns:
+            pandas.Series: Feasible rate.
+        """
         scorer = make_scorer(feasible_rate)
         return self.apply(func=scorer, column=column, expand=expand, axis=1)
 
     def residual_energy(
         self,
-        opt_value: Union[int, float],
+        opt_value: float,
         column: str = "residual_energy",
         expand: bool = True,
     ):
+        """Residual energy
+
+        Args:
+            opt_value (float, optional): Optimal value for instance_data.
+            column (str, optional): Column name for metircs table that is pandas.Dataframe. Defaults to "residual_energy".
+            expand (bool, optional): Whether to expand table with evaluation results. Defaults to True.
+
+        Returns:
+            pandas.Series: Residual energy.
+        """
         scorer = make_scorer(residual_energy, opt_value=opt_value)
         return self.apply(func=scorer, column=column, expand=expand, axis=1)

@@ -23,6 +23,7 @@ __all__ = []
 
 class Benchmark:
     """Define benchmark.
+
     Args:
         params (Dict[str, List]): Parameters to be swept in the benchmark. key is parameter name. list is list of value of a parameter.
         solver (str | Callable | List[str | Callable]): solver name or callable solver method. You can set multiple solvers by using list. Accepted `str` type solver names are `{SASampler, SQASampler, JijSASampler, JijSQASampler, JijSwapMovingSampler}`.
