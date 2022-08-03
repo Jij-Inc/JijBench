@@ -52,7 +52,7 @@ def test_get_default_problem():
     assert problem.name == "bin-packing"
 
     problem = jb.get_problem("NurseScheduling")
-    assert problem.name == "nurse_scheduling"
+    assert problem.name == "nurse-scheduling"
 
 
 def test_get_default_instance_data():
