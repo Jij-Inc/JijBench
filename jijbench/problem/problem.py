@@ -302,7 +302,7 @@ class TSPTW(JijModelingTarget, DefaultInstanceMixin):
         problem = jm.Problem(problem_name)
 
         # 距離行列
-        dist = jm.Placeholder("dist", dim=2)  # 距離行列
+        dist = jm.Placeholder("d", dim=2)  # 距離行列
         N = jm.Placeholder("N")
         e = jm.Placeholder("e", shape=(N,))  # ready time
         l = jm.Placeholder("l", shape=(N,))  # due time
@@ -357,7 +357,7 @@ class TSP(JijModelingTarget, DefaultInstanceMixin):
     def _problem(problem_name):
         # 問題
         problem = jm.Problem(problem_name)
-        dist = jm.Placeholder("dist", dim=2)
+        dist = jm.Placeholder("d", dim=2)
         N = jm.Placeholder("N")
 
         x = jm.Binary("x", shape=(N, N))
