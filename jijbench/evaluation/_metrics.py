@@ -4,17 +4,7 @@ from re import A
 from typing import Any, Union, Callable
 
 import numpy as np
-import functools
 import warnings
-
-
-def _on_start_scoring(fn):
-    @functools.wraps(fn)
-    def inner(x, *args, **kwargs):
-
-        return fn(x, *args, **kwargs)
-
-    return inner
 
 
 class Scorer:
@@ -94,7 +84,7 @@ def derived_time_to_solution(
         opt_value = x.objective[feas].min()
         ps = success_probability(x, opt_value)
     else:
-        ps = 0.
+        ps = 0.0
 
     if ps:
         return np.log(1 - pr) / np.log(1 - ps) * x.execution_time
