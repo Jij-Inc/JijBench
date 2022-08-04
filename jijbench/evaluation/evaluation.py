@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-from typing import Callable, Optional
+from typing import Callable, Union, Optional, TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
 
-from jijbench.experiment import Experiment
 from jijbench.evaluation._metrics import (
     make_scorer,
     optimal_time_to_solution,
@@ -16,9 +15,22 @@ from jijbench.evaluation._metrics import (
     residual_energy,
 )
 
+if TYPE_CHECKING:
+    from jijbench.benchmark.benchmark import Benchmark
+    from jijbench.experiment.experiment import Experiment
+
 
 class Evaluator:
-    def __init__(self, experiment: Experiment):
+    """Evaluate becnhmark results.
+
+    Args:
+        experiment (Union[jijbench.Experiment, jijbench.Benchmark]): Experiment or Benchmark object.
+    Attibutes:
+        table (pandas.DataFrame): Table that store experiment and evaluation resutls.
+        artifact (dict): Dict that store experiment results.
+    """
+
+    def __init__(self, experiment: Union[Benchmark, Experiment]):
         self.experiment = experiment
 
     @property
@@ -32,7 +44,7 @@ class Evaluator:
     def calc_typical_metrics(
         self, opt_value: Optional[float] = None, pr: float = 0.99, expand: bool = True
     ):
-        """ Calculate typincal metrics for benchmark
+        """Calculate typincal metrics for benchmark
 
         Args:
             opt_value (float, optional): Optimal value for instance_data. Defaults to None.
@@ -41,13 +53,13 @@ class Evaluator:
 
         Returns:
             pandas.Dataframe: pandas.Dataframe object for evalution results.
-            - columns: ["success_probability", "feasible_rate", "residual_energy", "TTS(optimal)", "TTS(feasible)", "TTS(derived)"]
-                - success_probability: Solution that is feasible and less than or equal to opt_value is counted as success, which is NaN if `opt_value` is not given.
-                - feasible_rate: Rate of feasible solutions out of all solutions.
-                - residual_energy: Difference between average objective of feasible solutions and `opt_value`, which is NaN if `opt_value` is not given.
-                - TTS(optimal): Time to obtain opt_value with probability `pr`, which is NaN if opt_value is not given.
-                - TTS(feasible): Time to obtain feasible solutions with probability `pr`.
-                - TTS(derived): Time to obtain minimum objective among feasible solutions with probability `pr`.
+            columns: ["success_probability", "feasible_rate", "residual_energy", "TTS(optimal)", "TTS(feasible)", "TTS(derived)"]
+            - success_probability: Solution that is feasible and less than or equal to opt_value is counted as success, which is NaN if `opt_value` is not given.
+            - feasible_rate: Rate of feasible solutions out of all solutions.
+            - residual_energy: Difference between average objective of feasible solutions and `opt_value`, which is NaN if `opt_value` is not given.
+            - TTS(optimal): Time to obtain opt_value with probability `pr`, which is NaN if opt_value is not given.
+            - TTS(feasible): Time to obtain feasible solutions with probability `pr`.
+            - TTS(derived): Time to obtain minimum objective among feasible solutions with probability `pr`.
         """
         opt_value = np.nan if opt_value is None else opt_value
 
@@ -123,13 +135,14 @@ class Evaluator:
         Returns:
             pandas.Series: Time to Solution for optimal value.
         """
+
         scorer = make_scorer(
             optimal_time_to_solution,
             opt_value=opt_value,
             pr=pr,
         )
         return self.apply(
-            func=scorer, column=f"{column}(optimal)", expand=expand, axis=1
+            func=scorer, column=f"{column}", expand=expand, axis=1
         )
 
     def feasible_time_to_solution(
@@ -150,7 +163,7 @@ class Evaluator:
         """
         scorer = make_scorer(feasible_time_to_solution, pr=pr)
         return self.apply(
-            func=scorer, column=f"{column}(feasible)", expand=expand, axis=1
+            func=scorer, column=f"{column}", expand=expand, axis=1
         )
 
     def derived_time_to_solution(
@@ -174,7 +187,7 @@ class Evaluator:
             pr=pr,
         )
         return self.apply(
-            func=scorer, column=f"{column}(derived)", expand=expand, axis=1
+            func=scorer, column=f"{column}", expand=expand, axis=1
         )
 
     def feasible_rate(self, column: str = "feasible_rate", expand: bool = True):

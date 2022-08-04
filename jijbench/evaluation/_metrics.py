@@ -4,7 +4,17 @@ from re import A
 from typing import Any, Union, Callable
 
 import numpy as np
+import functools
 import warnings
+
+
+def _on_start_scoring(fn):
+    @functools.wraps(fn)
+    def inner(x, *args, **kwargs):
+
+        return fn(x, *args, **kwargs)
+
+    return inner
 
 
 class Scorer:
@@ -13,6 +23,36 @@ class Scorer:
         self._kwargs = kwargs
 
     def __call__(self, x: Any):
+        if np.isnan([x.objective]).any():
+            warnings.warn(
+                'TTS cannot be calculated because "objective" is not stored in table attribute of jijbench.Benchmark instance.'
+            )
+            return np.nan
+
+        if np.isnan([x.execution_time]).any():
+            warnings.warn(
+                'TTS cannot be calculated because "execution_time" is not stored in table attribute of jijbench.Benchmark instance.'
+            )
+            return np.nan
+
+        if np.isnan([x.num_occurrences]).any():
+            warnings.warn(
+                'TTS cannot be calculated because "num_occurrences" is not stored in table attribute of jijbench.Benchmark instance.'
+            )
+            return np.nan
+
+        if np.isnan([x.num_feasible]).any():
+            warnings.warn(
+                'TTS cannot be calculated because "num_feasible" is not stored in table attribute of jijbench.Benchmark instance.'
+            )
+            return np.nan
+
+        if np.isnan(list(self._kwargs.values())).any():
+            warnings.warn(
+                "TTS cannot be calculated because np.nan exists in scoring method."
+            )
+            return np.nan
+
         return self._score_func(x, **self._kwargs)
 
 
@@ -50,12 +90,11 @@ def derived_time_to_solution(
     pr: float,
 ):
     feas = _to_bool_values_for_feasible(x)
-    opt_value = x.objective[feas].min()
-
-    ps = success_probability(x, opt_value)
-
-    if np.isnan(x.execution_time):
-        warnings.warn("TTS cannot be calculated because\"execution_time\" is not stored in table attribute of jijbench.Benchmark instance.")
+    if feas.any():
+        opt_value = x.objective[feas].min()
+        ps = success_probability(x, opt_value)
+    else:
+        ps = 0.
 
     if ps:
         return np.log(1 - pr) / np.log(1 - ps) * x.execution_time
@@ -64,13 +103,10 @@ def derived_time_to_solution(
 
 
 def success_probability(x, opt_value: Union[int, float]):
-    if np.isnan(opt_value):
-        return np.nan
-    else:
-        success = _to_bool_values_for_success(x, opt_value)
-        num_success = (success * x.num_occurrences).sum()
+    success = _to_bool_values_for_success(x, opt_value)
+    num_success = (success * x.num_occurrences).sum()
 
-        return num_success / x.num_occurrences.sum()
+    return num_success / x.num_occurrences.sum()
 
 
 def feasible_rate(x):
@@ -79,9 +115,12 @@ def feasible_rate(x):
 
 def residual_energy(x, opt_value: Union[int, float]):
     feas = _to_bool_values_for_feasible(x)
-    obj = x.objective * feas * x.num_occurrences
-    mean = obj.sum() / (feas * x.num_occurrences).sum()
-    return mean - opt_value
+    if np.all(~feas):
+        return np.nan
+    else:
+        obj = x.objective * feas * x.num_occurrences
+        mean = obj.sum() / (feas * x.num_occurrences).sum()
+        return mean - opt_value
 
 
 def _to_bool_values_for_feasible(x):

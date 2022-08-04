@@ -12,10 +12,10 @@ import pandas as pd
 from jijmodeling.exceptions import DataError
 from jijmodeling.transpilers.type_annotations import PH_VALUES_INTERFACE
 
+from jijbench.experiment.experiment import Experiment
+from jijbench.evaluation.evaluation import Evaluator
 from jijbench.benchmark import validation
 from jijbench.components import ID, Artifact, ExperimentResultDefaultDir, Table
-from jijbench.evaluation import Evaluator
-from jijbench.experiment import Experiment
 from jijbench.solver import DefaultSolver
 
 __all__ = []
