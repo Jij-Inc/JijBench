@@ -12,10 +12,10 @@ import pandas as pd
 from jijmodeling.exceptions import DataError
 from jijmodeling.transpilers.type_annotations import PH_VALUES_INTERFACE
 
+from jijbench.experiment.experiment import Experiment
+from jijbench.evaluation.evaluation import Evaluator
 from jijbench.benchmark import validation
 from jijbench.components import ID, Artifact, ExperimentResultDefaultDir, Table
-from jijbench.evaluation import Evaluator
-from jijbench.experiment import Experiment
 from jijbench.solver import DefaultSolver
 
 __all__ = []
@@ -23,6 +23,7 @@ __all__ = []
 
 class Benchmark:
     """Define benchmark.
+
     Args:
         params (Dict[str, List]): Parameters to be swept in the benchmark. key is parameter name. list is list of value of a parameter.
         solver (str | Callable | List[str | Callable]): solver name or callable solver method. You can set multiple solvers by using list. Accepted `str` type solver names are `{SASampler, SQASampler, JijSASampler, JijSQASampler, JijSwapMovingSampler}`.
@@ -80,18 +81,20 @@ class Benchmark:
         solver_return_name: Optional[Dict[str, List[str]]] = None,
         benchmark_id: Optional[Union[int, str]] = None,
         id_rule: Union[str, Dict[str, str]] = "uuid",
+        save_dir: str = ExperimentResultDefaultDir,
         jijzept_config: Optional[str] = None,
         dwave_config: Optional[str] = None,
     ):
         self.params = params
         self.solver_return_name = solver_return_name
         self.id_rules = id_rule
+        self.save_dir = save_dir
 
         self._set_solver(solver)
         self._set_problem(problem)
         self._set_instance_data(instance_data)
         self._id = ID(benchmark_id=benchmark_id)
-        self._experiments = []
+        self._experiments: List[Experiment] = []
         self._table = Table()
         self._artifact = Artifact()
 
@@ -121,6 +124,10 @@ class Benchmark:
     @validation.on_instance_data
     def _set_instance_data(self, instance_data):
         self._instance_data = instance_data
+
+    @property
+    def id(self):
+        self._id.benchmark_id
 
     @property
     def experiments(self):
@@ -184,7 +191,7 @@ class Benchmark:
                         ).solution_id
                         args_map[(i, solution_id)] = args
 
-                    experiment = Experiment(benchmark_id=self._id.benchmark_id)
+                    experiment = Experiment(benchmark_id=self._id.benchmark_id, save_dir=self.save_dir)
                     for (i, solution_id), args in args_map.items():
                         solver_args, record = self._setup_experiment(
                             solver, problem, instance_data, False
@@ -213,7 +220,7 @@ class Benchmark:
             self._experiments.append(experiment)
 
     def _run_by_sync(self, solver, problem, instance_data):
-        experiment = Experiment(benchmark_id=self._id.benchmark_id)
+        experiment = Experiment(benchmark_id=self._id.benchmark_id, save_dir=self.save_dir)
         solver_args, record = self._setup_experiment(
             solver, problem, instance_data, True
         )
@@ -283,7 +290,7 @@ class Benchmark:
         metrics = pd.DataFrame()
         for experiment in self._experiments:
             evaluator = Evaluator(experiment)
-            opt_value = experiment.table["opt_value"][0]
+            opt_value = experiment.table["opt_value"][0] if opt_value is None else opt_value
             metrics = pd.concat(
                 [
                     metrics,
