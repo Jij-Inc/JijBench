@@ -1,0 +1,14 @@
+[run]
+branch = True
+debug = callers
+source = 
+   openjijsolver
+   
+[report]
+show_missing = True
+
+[html]
+show_contexts = True
+
+[json]
+show_contexts = True
