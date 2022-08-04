@@ -1,8 +1,8 @@
 [run]
 branch = True
 debug = callers
-source = 
-   openjijsolver
+source_pkgs = 
+   jijbench
    
 [report]
 show_missing = True
