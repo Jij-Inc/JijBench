@@ -142,7 +142,7 @@ class _Metrics:
         else:
             ps += 1e-16
         return np.log(1 - pr) / np.log(1 - ps) * x.execution_time
-    
+
     def success_probability(x: Any, opt_value: Union[int, float]):
         if np.isnan(opt_value):
             return np.nan

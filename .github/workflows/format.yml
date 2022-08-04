@@ -85,6 +85,8 @@ jobs:
           python -m black ./jijbench
           python -m black ./tests
           python -m black setup.py
+      - name: MarkDown 
+        run: python -m mdformat .    
       - name: Git ADD 
         run: |
           set -eux 
