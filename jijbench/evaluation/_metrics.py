@@ -13,33 +13,28 @@ class Scorer:
         self._kwargs = kwargs
 
     def __call__(self, x: Any):
+        def _generate_warning_msg(metrics):
+            return f'{self._score_func.__name__} cannot be calculated because "{metrics}" is not stored in table attribute of jijbench.Benchmark instance.'
+
         if np.isnan([x.objective]).any():
-            warnings.warn(
-                'TTS cannot be calculated because "objective" is not stored in table attribute of jijbench.Benchmark instance.'
-            )
+            warnings.warn(_generate_warning_msg("objective"))
             return np.nan
 
         if np.isnan([x.execution_time]).any():
-            warnings.warn(
-                'TTS cannot be calculated because "execution_time" is not stored in table attribute of jijbench.Benchmark instance.'
-            )
+            warnings.warn(_generate_warning_msg("execution_time"))
             return np.nan
 
         if np.isnan([x.num_occurrences]).any():
-            warnings.warn(
-                'TTS cannot be calculated because "num_occurrences" is not stored in table attribute of jijbench.Benchmark instance.'
-            )
+            warnings.warn(_generate_warning_msg("num_occurrences"))
             return np.nan
 
         if np.isnan([x.num_feasible]).any():
-            warnings.warn(
-                'TTS cannot be calculated because "num_feasible" is not stored in table attribute of jijbench.Benchmark instance.'
-            )
+            warnings.warn(_generate_warning_msg("num_feasible"))
             return np.nan
 
         if np.isnan(list(self._kwargs.values())).any():
             warnings.warn(
-                "TTS cannot be calculated because np.nan exists in scoring method."
+                f"{self._score_func.__name__} cannot be calculated because NaN exists in args for scoring method."
             )
             return np.nan
 
