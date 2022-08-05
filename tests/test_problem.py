@@ -61,3 +61,8 @@ def test_get_default_instance_data():
     assert isinstance(instance_data[0], tuple)
     assert isinstance(instance_data[0][0], str)
     assert isinstance(instance_data[0][1], dict)
+
+    instance_data = jb.get_instance_data("NurseScheduling")
+    assert isinstance(instance_data[0], tuple)
+    assert isinstance(instance_data[0][0], str)
+    assert isinstance(instance_data[0][1], dict)
