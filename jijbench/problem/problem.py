@@ -278,9 +278,9 @@ class NurseScheduling(JijModelingTarget, DefaultInstanceMixin):
         )
 
         # Constraint9: 働けない日の制約
-        do = jm.Element("do", N[i])
+        d_o = jm.Element("do", N[i]).set_latex("{\mathrm d\_o}")
         problem += jm.Constraint(
-            "days-off", x[i, do, t] == 0, forall=[i, ({do: N[i]}, jm.neq(do, -1)), t]
+            "days-off", x[i, d_o, t] == 0, forall=[i, ({d_o: N[i]}, jm.neq(d_o, -1)), t]
         )
 
         # Constraint10: 必要人数に関する制約
