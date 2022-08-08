@@ -50,6 +50,7 @@ class Benchmark:
             These are used columns of `table`(pd.DataFrame) attribute.
         benchmark_id (int | str | None, optional): ID to distinguish different benchmarks. Defaults to None.
         id_rule (str | Dict[str, str], optional): Rule to automatically assign IDs. Defaults to "uuid".
+        save_dir (str, optional): Directory to save benchmark results. Defalt to ./jb_results.
         jijzept_config (str | None, optional): If it is used JijZept by `solver`, this needs. Defaults to None.
         dwave_config (str | None, optional): If it is used Dwave by `solver`, this needs. Defaults to None.
 
