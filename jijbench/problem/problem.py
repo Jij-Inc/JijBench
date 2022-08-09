@@ -280,7 +280,7 @@ class NurseScheduling(JijModelingTarget, DefaultInstanceMixin):
         # Constraint9: 働けない日の制約
         d_o = jm.Element("do", N[i]).set_latex("{\mathrm d\_o}")
         problem += jm.Constraint(
-            "days_off", x[i, d_o, t] == 0, forall=[i, d_o, t]
+            "days-off", x[i, d_o, t] == 0, forall=[i, d_o, t]
         )
 
         # Constraint10: 必要人数に関する制約
