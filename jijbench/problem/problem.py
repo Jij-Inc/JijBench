@@ -170,8 +170,8 @@ class NurseScheduling(JijModelingTarget, DefaultInstanceMixin):
         # p[i, d, t] = 1, 人iは日にちdにtype tの仕事をしたくない
         p = jm.Placeholder("p", shape=(I, D, T))
         u = jm.Placeholder("u", shape=(D, T))  # 日にちd, type tの必要人数
-        v_min = jm.Placeholder("v_min", shape=(D, T))  # 人員不足のペナルティーの重み
-        v_max = jm.Placeholder("v_max", shape=(D, T))  # 人員過剰のペナルティーの重み
+        v_min = jm.Placeholder("v_min", shape=(D, T)).set_latex("\mathrm{v\_min}")  # 人員不足のペナルティーの重み
+        v_max = jm.Placeholder("v_max", shape=(D, T)).set_latex("\mathrm{v\_max}")  # 人員過剰のペナルティーの重み
 
         len_R = R.shape[0]
 
@@ -280,7 +280,7 @@ class NurseScheduling(JijModelingTarget, DefaultInstanceMixin):
         # Constraint9: 働けない日の制約
         d_o = jm.Element("do", N[i]).set_latex("{\mathrm d\_o}")
         problem += jm.Constraint(
-            "days-off", x[i, d_o, t] == 0, forall=[i, ({d_o: N[i]}, jm.neq(d_o, -1)), t]
+            "days_off", x[i, d_o, t] == 0, forall=[i, d_o, t]
         )
 
         # Constraint10: 必要人数に関する制約
