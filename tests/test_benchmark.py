@@ -344,3 +344,19 @@ def test_load():
     bench = jb.load(benchmark_id="test")
 
     assert "func1" in bench.table["solver"].values
+
+
+def test_save():
+    def func1(x):
+        return 2 * x
+
+    import pathlib
+
+    save_dir = str(pathlib.PurePath(__file__).parent / ".my_result")
+
+    bench = jb.Benchmark(
+        params={"x": [1, 2, 3]}, solver=func1, benchmark_id="test", save_dir=save_dir
+    )
+    bench.run()
+    
+    shutil.rmtree(save_dir)

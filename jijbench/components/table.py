@@ -34,7 +34,7 @@ class Table:
     }
 
     num_dtypes = {
-        "num_occurances": object,
+        "num_occurrences": object,
         "num_reads": int,
         "num_sweeps": int,
         "num_feasible": int,

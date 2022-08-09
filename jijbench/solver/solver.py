@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import inspect
 
-from typing import Callable
+from typing import Callable, Optional
 
 import jijzept as jz
 import openjij as oj
@@ -66,8 +66,8 @@ class CallableSolver:
 
 
 class DefaultSolver:
-    jijzept_config = None
-    dwave_config = None
+    jijzept_config: Optional[str] = None
+    dwave_config: Optional[str] = None
     openjij_sampler_names = ["SASampler", "SQASampler"]
     jijzept_sampler_names = ["JijSASampler", "JijSQASampler", "JijSwapMovingSampler"]
 
