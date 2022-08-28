@@ -163,6 +163,7 @@ def test_set_instance_data_in_benchmark(
     assert isinstance(bench.instance_data[0][0], tuple)
 
 
+@pytest.mark.skip("no problem.to_pyqubo function")
 def test_simple_benchmark(problem, instance_data):
     bench = jb.Benchmark(
         {"num_reads": [1, 2], "num_sweeps": [10]},
@@ -191,6 +192,7 @@ def test_benchmark_with_custom_solver():
     assert bench.table["solver_return_values[1]"][0] == 1.0
 
 
+@pytest.mark.skip("no problem.to_pyqubo function")
 def test_benchmark_with_custom_sample_model(
     problem,
     ph_value,
@@ -217,6 +219,7 @@ def test_benchmark_with_custom_sample_model(
         assert bench.table["problem_name"].iloc[0] == "knapsack"
 
 
+@pytest.mark.skip("no problem.to_pyqubo function")
 def test_benchmark_with_custom_sample_model_for_multi_problem(
     problem_list, multi_ph_value_list, multi_instance_data_list
 ):
@@ -238,6 +241,7 @@ def test_benchmark_with_custom_sample_model_for_multi_problem(
         assert bench.table["problem_name"].iloc[0] == "knapsack"
 
 
+@pytest.mark.skip("no problem.to_pyqubo function")
 def test_benchmark_with_custom_decode(
     problem,
     ph_value,
@@ -266,7 +270,7 @@ def test_benchmark_with_custom_decode(
         assert bench.table["problem_name"].iloc[0] == "knapsack"
         assert isinstance(bench.table["objective"].iloc[0], np.ndarray)
 
-
+@pytest.mark.skip("no problem.to_pyqubo function")
 def test_benchmark_with_any_problem_and_instance_data():
     problem = generate_problem()
     instance_data = {"d": [1 for _ in range(10)]}
@@ -284,6 +288,7 @@ def test_benchmark_with_any_problem_and_instance_data():
     assert bench.table["instance_data_name"][0] == "Unnamed[0]"
 
 
+@pytest.mark.skip("currently pyqubo is not supported")
 def test_benchmark_with_callable_args():
     import time
 

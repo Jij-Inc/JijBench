@@ -89,7 +89,7 @@ def test_openjij_iteration():
     "energy" in cols
     "energy_min" in cols
 
-
+@pytest.mark.skip("current pyqubo is not supported")
 def test_jijmodeling():
     d = jm.Placeholder("d")
     x = jm.Binary("x", shape=(2,))
@@ -118,6 +118,7 @@ def test_jijmodeling():
     "num_feasible" in cols
 
 
+@pytest.mark.skip("current pyqubo is not supported")
 def test_jijmodeling_iteration():
     d = jm.Placeholder("d")
     x = jm.Binary("x", shape=(2,))
@@ -148,6 +149,7 @@ def test_jijmodeling_iteration():
     "num_feasible" in cols
 
 
+@pytest.mark.skip("current pyqubo is not supported")
 def test_file_save_load():
     d = jm.Placeholder("d")
     x = jm.Binary("x", shape=(2,))
@@ -230,6 +232,7 @@ def test_custome_dir_save():
     shutil.rmtree(custome_dir)
 
 
+@pytest.mark.skip("current pyqubo is not supported")
 def test_store_same_timestamp():
     d = jm.Placeholder("d")
     x = jm.Binary("x", shape=(2,))
@@ -317,6 +320,7 @@ def test_load_iterobj():
     assert isinstance(experiment.table.loc[0, "dict"], dict)
 
 
+@pytest.mark.skip("current pyqubo is not supported")
 def test_sampling_and_execution_time():
     import numpy as np
 

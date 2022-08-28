@@ -3,10 +3,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, List, Tuple
 
 import numpy as np
+import math
 
 if TYPE_CHECKING:
     from dimod import SampleSet
-    from jijmodeling import DecodedSamples
+    from jijmodeling.sampleset import SampleSet as jm_SampleSet
 
     from jijbench.experiment.experiment import Experiment
 
@@ -68,37 +69,43 @@ def _parse_dimod_sampleset(
     return columns, values
 
 
-def _parse_jm_problem_decodedsamples(
-    experiment: "Experiment", decoded: "DecodedSamples"
+def _parse_jm_problem_sampleset(
+    experiment: "Experiment", decoded: "jm_SampleSet"
 ) -> Tuple[List[str], List]:
-    """extract table data from jijmodeling.DecodedSamples
+    """extract table data from jijmodeling.SampleSet
 
-    This method is called in `Experiment._prase_record`.
+    This method is called in `Experiment._parse_record`.
 
     Args:
         experiment (Experiment): experiment object
-        decoded (jijmodeling.DecodedSamples): dimod sampleset
+        decoded (jijmodeling.SampleSet): jijmodeling sampleset
 
     Returns:
         Tuple[List[str], List]: (columns, values)
     """
 
     table = experiment._table
-    energies = decoded.energies
-    objectives: np.ndarray = decoded.objectives
-    num_occurrences = decoded.num_occurrences
+    energies = np.array(decoded.evaluation.energy)
+    objectives = np.array(decoded.evaluation.objective)
+    num_occurrences = np.array(decoded.record.num_occurrences)
     num_reads = np.nan
     num_sweeps = np.nan
 
-    constraint_violations = {}
-    for violation in decoded.constraint_violations:
-        for const_name, v in violation.items():
-            if const_name in constraint_violations.keys():
-                constraint_violations[const_name].append(v)
-            else:
-                constraint_violations[const_name] = [v]
+    constraint_violations = decoded.evaluation.constraint_violations
 
-    num_feasible = decoded.feasibles().num_occurrences.sum()
+    # TODO: add .feasibles() to jm.SampleSet (https://github.com/Jij-Inc/JijModelingExpression/issues/70) to rewrite
+    # TODO: num_feasible = decoded.feasibles().num_occurrences.sum()
+    # calculate num_occurrences with feasible solutions
+    feasible_num_occurrences = []
+    for i, num_occur_value in enumerate(num_occurrences):
+        violation = 0
+        for _, v in constraint_violations.items():
+            violation += v[i]
+        if math.isclose(violation, 0):
+            feasible_num_occurrences.append(num_occur_value)
+
+    num_feasible = sum(feasible_num_occurrences)
+
     num_samples = num_occurrences.sum()
 
     columns = table.get_energy_columns()

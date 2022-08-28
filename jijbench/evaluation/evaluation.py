@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 
 
 class Evaluator:
-    """Evaluate becnhmark results.
+    """Evaluate benchmark results.
 
     Args:
         experiment (Union[jijbench.Experiment, jijbench.Benchmark]): Experiment or Benchmark object.
