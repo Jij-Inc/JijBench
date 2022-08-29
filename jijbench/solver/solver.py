@@ -2,10 +2,11 @@ from __future__ import annotations
 
 import inspect
 
+from dataclasses import asdict
 from typing import Callable, Optional
 
+import jijmodeling as jm
 import jijzept as jz
-import openjij as oj
 
 __all__ = []
 
@@ -68,16 +69,7 @@ class CallableSolver:
 class DefaultSolver:
     jijzept_config: Optional[str] = None
     dwave_config: Optional[str] = None
-    openjij_sampler_names = ["SASampler", "SQASampler"]
     jijzept_sampler_names = ["JijSASampler", "JijSQASampler", "JijSwapMovingSampler"]
-
-    @property
-    def SASampler(self):
-        return self.openjij_sa_sampler_sample
-
-    @property
-    def SQASampler(self):
-        return self.openjij_sqa_sampler_sample
 
     @property
     def JijSASampler(self):
@@ -90,22 +82,6 @@ class DefaultSolver:
     @property
     def JijSwapMovingSampler(self):
         return self.jijzept_swapmoving_sampler_sample_model
-
-    @classmethod
-    def openjij_sa_sampler_sample(
-        cls, problem, instance_data, feed_dict=None, **kwargs
-    ):
-        return cls._sample_by_openjij(
-            oj.SASampler, problem, instance_data, feed_dict, **kwargs
-        )
-
-    @classmethod
-    def openjij_sqa_sampler_sample(
-        cls, problem, instance_data, feed_dict=None, **kwargs
-    ):
-        return cls._sample_by_openjij(
-            oj.SQASampler, problem, instance_data, feed_dict, **kwargs
-        )
 
     @classmethod
     def jijzept_sa_sampler_sample_model(cls, problem, instance_data, **kwargs):
@@ -129,24 +105,25 @@ class DefaultSolver:
         )
 
     @staticmethod
-    def _sample_by_openjij(sampler, problem, instance_data, feed_dict, **kwargs):
-        if feed_dict is None:
-            feed_dict = {const_name: 5.0 for const_name in problem.constraints}
-        parameters = inspect.signature(sampler).parameters
-        kwargs = {k: w for k, w in kwargs.items() if k in parameters}
-        bqm = problem.to_pyqubo(instance_data).compile().to_bqm(feed_dict=feed_dict)
-        response = sampler(**kwargs).sample(bqm)
-        decoded = problem.decode(response, ph_value=instance_data)
-        return response, decoded
-
-    @staticmethod
     def _sample_by_jijzept(sampler, problem, instance_data, sync=True, **kwargs):
         sampler = sampler(config=DefaultSolver.jijzept_config)
         if sync:
             parameters = inspect.signature(sampler.sample_model).parameters
             kwargs = {k: w for k, w in kwargs.items() if k in parameters}
-            response = sampler.sample_model(problem, instance_data, sync=sync, **kwargs)
+            response: jm.SampleSet = sampler.sample_model(
+                problem, instance_data, sync=sync, **kwargs
+            )
         else:
-            response = sampler.get_result(solution_id=kwargs["solution_id"])
-        decoded = problem.decode(response, ph_value=instance_data)
-        return response, decoded
+            response: jm.SampleSet = jz.response.JijModelingResponse.empty_response(
+                jz.response.APIStatus.PENDING, sampler.client, kwargs["solution_id"]
+            )
+            response.get_result()
+
+        # TODO jijmodelingのSampleSet.from_serializableを修正する必要あり
+        response.measuring_time.solve = (
+            jm.SolvingTime(**response.measuring_time.solve)
+            if response.measuring_time.solve
+            else None
+        )
+
+        return response

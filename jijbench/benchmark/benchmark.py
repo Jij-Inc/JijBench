@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 
 from jijmodeling.exceptions import DataError
-from jijmodeling.transpilers.type_annotations import PH_VALUES_INTERFACE
+from jijmodeling.type_annotations import PH_VALUES_INTERFACE
 
 from jijbench.experiment.experiment import Experiment
 from jijbench.evaluation.evaluation import Evaluator
