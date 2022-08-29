@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import inspect
 
+from dataclasses import asdict
 from typing import Callable, Optional
 
+import jijmodeling as jm
 import jijzept as jz
 
 __all__ = []
@@ -108,7 +110,20 @@ class DefaultSolver:
         if sync:
             parameters = inspect.signature(sampler.sample_model).parameters
             kwargs = {k: w for k, w in kwargs.items() if k in parameters}
-            response = sampler.sample_model(problem, instance_data, sync=sync, **kwargs)
+            response: jm.SampleSet = sampler.sample_model(
+                problem, instance_data, sync=sync, **kwargs
+            )
         else:
-            response = sampler.get_result(solution_id=kwargs["solution_id"])
+            response: jm.SampleSet = jz.response.JijModelingResponse.empty_response(
+                jz.response.APIStatus.PENDING, sampler.client, kwargs["solution_id"]
+            )
+            response.get_result()
+
+        # TODO jijmodelingのSampleSet.from_serializableを修正する必要あり
+        response.measuring_time.solve = (
+            jm.SolvingTime(**response.measuring_time.solve)
+            if response.measuring_time.solve
+            else None
+        )
+
         return response
