@@ -111,7 +111,7 @@ def _parse_jm_sampleset(
 
     sampling_time = np.nan
     # TODO: https://github.com/Jij-Inc/JijModelingExpression/issues/77
-    # TODO: シリアライズが上手くいってない場合のパッチ
+    # TODO: シリアライズが上手くいってないのでパッチをあてる
     solving_time = (
         jm.SolvingTime(**jm_sampleset.measuring_time.solve)
         if isinstance(jm_sampleset.measuring_time.solve, dict)
