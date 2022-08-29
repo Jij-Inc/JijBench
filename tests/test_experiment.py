@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-import os, shutil
+import os, pickle, shutil
+
+from json import load
 
 import dimod
 import jijmodeling as jm
@@ -348,3 +350,21 @@ def test_sampling_and_execution_time():
 
     assert np.isnan(experiment.table.sampling_time[0])
     assert isinstance(experiment.table.execution_time[0], np.float64)
+
+
+def test_store_as_artifact_for_obj_cannot_pickle():
+    sampler = oj.SASampler()
+
+    experiment = jb.Experiment()
+    with experiment:
+        experiment.store_as_artifact(
+            {"sampler": sampler, "sample_qubo": sampler.sample_qubo, "value": 1.0}
+        )
+
+    loaded_experiment = jb.Experiment.load(
+        experiment_id=experiment.experiment_id, benchmark_id=experiment.benchmark_id
+    )
+    run_id = experiment.run_id
+    assert isinstance(loaded_experiment.artifact[run_id]["sampler"], str)
+    assert isinstance(loaded_experiment.artifact[run_id]["sample_qubo"], str)
+    assert loaded_experiment.artifact[run_id]["value"] == 1.0

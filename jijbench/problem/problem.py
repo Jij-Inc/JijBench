@@ -187,8 +187,8 @@ class NurseScheduling(JijModelingTarget, DefaultInstanceMixin):
         # 決定変数
         x = jm.Binary("x", shape=(I, D, T))  # 人iを日にちdにシフトtを割当てるかどうか
         k = jm.Binary("k", shape=(I, W))  # week wに働いたかどうか
-        y = jm.LogEncInteger("y", lower=0, upper=u, shape=(D, T))  # 日dのシフトtの不足人数
-        z = jm.LogEncInteger("z", lower=0, upper=u, shape=(D, T))  # 日dのシフトtの過剰人数
+        y = jm.Integer("y", lower=0, upper=u, shape=(D, T))  # 日dのシフトtの不足人数
+        z = jm.Integer("z", lower=0, upper=u, shape=(D, T))  # 日dのシフトtの過剰人数
 
         # Objective Function
         term1 = jm.Sum([i, d, t], q[i, d, t] * (1 - x[i, d, t]))  # シフト入りの希望を叶える
