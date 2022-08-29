@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import os, shutil
 
+import dimod
 import jijmodeling as jm
+import numpy as np
 import openjij as oj
 import pytest
 
@@ -17,6 +19,69 @@ def pre_post_process():
     norm_path = os.path.normcase("./.jb_results")
     if os.path.exists(norm_path):
         shutil.rmtree(norm_path)
+
+
+def sample_qubo():
+    dimod_sampleset = dimod.SampleSet.from_samples(
+        samples_like=[
+            {"x[0][0]": 1, "x[0][1]": 0, "x[1][0]": 0, "x[1][1]": 1},  # 最適解
+            {
+                "x[0][0]": 0,
+                "x[0][1]": 1,
+                "x[1][0]": 1,
+                "x[1][1]": 0,
+            },  # 実行可能解だけど最適解ではない
+            {
+                "x[0][0]": 0,
+                "x[0][1]": 0,
+                "x[1][0]": 0,
+                "x[1][1]": 0,
+            },  # 実行不可能解、目的関数値 < 最適値
+            {
+                "x[0][0]": 1,
+                "x[0][1]": 0,
+                "x[1][0]": 1,
+                "x[1][1]": 0,
+            },  # 制約onehot1だけ満たす
+        ],
+        vartype="BINARY",
+        energy=[3, 24, 0, 20],
+        num_occurrences=[4, 3, 2, 1],
+    )
+    dimod_sampleset.info["execution_time"] = 1.0
+    return dimod_sampleset
+
+
+def decode():
+    jm_sampleset_dict = {
+        "record": {
+            "solution": {
+                "x": [
+                    (([0, 1], [0, 1]), [1, 1], (2, 2)),
+                    (([0, 1], [1, 0]), [1, 1], (2, 2)),
+                    (([], []), [], (2, 2)),
+                    (([0, 1], [0, 0]), [1, 1], (2, 2)),
+                ]
+            },
+            "num_occurrences": [4, 3, 2, 1],
+        },
+        "evaluation": {
+            "energy": [3.0, 24.0, 0.0, 20.0],
+            "objective": [3.0, 24.0, 0.0, 17.0],
+            "constraint_violations": {
+                "onehot1": [0.0, 0.0, 2.0, 0.0],
+                "onehot2": [0.0, 0.0, 2.0, 2.0],
+            },
+            "penalty": {},
+        },
+        "measuring_time": {"solve": None, "system": None, "total": None},
+    }
+    jm_sampleset = jm.SampleSet.from_serializable(jm_sampleset_dict)
+    solving_time = jm.SolvingTime(
+        **{"preprocess": 1.0, "solve": 1.0, "postprocess": 1.0}
+    )
+    jm_sampleset.measuring_time.solve = solving_time
+    return jm_sampleset
 
 
 def test_run_id():
@@ -89,26 +154,13 @@ def test_openjij_iteration():
     "energy" in cols
     "energy_min" in cols
 
-@pytest.mark.skip("current pyqubo is not supported")
+
 def test_jijmodeling():
-    d = jm.Placeholder("d")
-    x = jm.Binary("x", shape=(2,))
-    problem = jm.Problem("sample")
-    problem += x[0] + d * x[1]
-    problem += jm.Constraint("onehot", x[:] == 1)
-
-    ph_value = {"d": 2}
-    pyq_obj = problem.to_pyqubo(ph_value=ph_value)
-    pyq_model = pyq_obj.compile()
-
-    sampler = oj.SASampler()
     experiment = jb.Experiment(autosave=False)
 
     with experiment:
-        bqm = pyq_model.to_bqm(feed_dict={"onehot": 1})
-        response = sampler.sample(bqm)
-        decoded = problem.decode(response, ph_value=ph_value)
-        experiment.store({"result": decoded})
+        jm_sampleset = decode()
+        experiment.store({"result": jm_sampleset})
 
     droped_table = experiment.table.dropna(axis="columns")
 
@@ -118,28 +170,13 @@ def test_jijmodeling():
     "num_feasible" in cols
 
 
-@pytest.mark.skip("current pyqubo is not supported")
 def test_jijmodeling_iteration():
-    d = jm.Placeholder("d")
-    x = jm.Binary("x", shape=(2,))
-    problem = jm.Problem("sample")
-    problem += x[0] + d * x[1]
-    problem += jm.Constraint("onehot", x[:] == 1)
-    problem += jm.Constraint("onehot2", x[:] == 1)
-
-    ph_value = {"d": 2}
-    pyq_obj = problem.to_pyqubo(ph_value=ph_value)
-    pyq_model = pyq_obj.compile()
-
-    sampler = oj.SASampler()
     experiment = jb.Experiment(autosave=False)
 
     for _ in range(3):
         with experiment:
-            bqm = pyq_model.to_bqm(feed_dict={"onehot": 1, "onehot2": 2})
-            response = sampler.sample(bqm)
-            decoded = problem.decode(response, ph_value=ph_value)
-            experiment.store({"result": decoded})
+            jm_sampleset = decode()
+            experiment.store({"result": jm_sampleset})
 
     droped_table = experiment.table.dropna(axis="columns")
 
@@ -149,26 +186,13 @@ def test_jijmodeling_iteration():
     "num_feasible" in cols
 
 
-@pytest.mark.skip("current pyqubo is not supported")
 def test_file_save_load():
-    d = jm.Placeholder("d")
-    x = jm.Binary("x", shape=(2,))
-    problem = jm.Problem("sample")
-    problem += x[0] + d * x[1]
-
-    ph_value = {"d": 2}
-    pyq_obj = problem.to_pyqubo(ph_value=ph_value)
-    pyq_model = pyq_obj.compile()
-
-    sampler = oj.SASampler()
     experiment = jb.Experiment(autosave=False)
 
     for _ in range(3):
         with experiment:
-            bqm = pyq_model.to_bqm()
-            response = sampler.sample(bqm)
-            decoded = problem.decode(response, ph_value=ph_value)
-            experiment.store({"result": decoded})
+            jm_sampleset = decode()
+            experiment.store({"result": jm_sampleset})
 
     experiment.save()
 
@@ -184,18 +208,17 @@ def test_file_save_load():
     assert len(experiment.table.index) == len(load_experiment.table.index)
     assert len(experiment.artifact) == len(load_experiment.artifact)
     for artifact in load_experiment.artifact.values():
-        assert isinstance(artifact["result"], jm.DecodedSamples)
+        assert isinstance(artifact["result"], jm.SampleSet)
 
     assert experiment._artifact.timestamp == load_experiment._artifact.timestamp
 
 
 def test_auto_save():
     experiment = jb.Experiment(autosave=True)
-    sampler = oj.SASampler()
     num_rows = 3
     for row in range(num_rows):
         with experiment:
-            response = sampler.sample_qubo({(0, 1): 1})
+            response = sample_qubo()
             experiment.store({"result": response})
         assert os.path.exists(
             experiment._dir.artifact_dir
@@ -232,26 +255,13 @@ def test_custome_dir_save():
     shutil.rmtree(custome_dir)
 
 
-@pytest.mark.skip("current pyqubo is not supported")
 def test_store_same_timestamp():
-    d = jm.Placeholder("d")
-    x = jm.Binary("x", shape=(2,))
-    problem = jm.Problem("sample")
-    problem += x[0] + d * x[1]
-
-    ph_value = {"d": 2}
-    pyq_obj = problem.to_pyqubo(ph_value=ph_value)
-    pyq_model = pyq_obj.compile()
-
-    sampler = oj.SASampler()
     experiment = jb.Experiment(autosave=False)
 
     for _ in range(3):
         with experiment:
-            bqm = pyq_model.to_bqm()
-            response = sampler.sample(bqm)
-            decoded = problem.decode(response, ph_value=ph_value)
-            experiment.store({"result": decoded})
+            jm_sampleset = decode()
+            experiment.store({"result": jm_sampleset})
 
     run_id = list(experiment.artifact.keys())[0]
 
@@ -320,40 +330,21 @@ def test_load_iterobj():
     assert isinstance(experiment.table.loc[0, "dict"], dict)
 
 
-@pytest.mark.skip("current pyqubo is not supported")
 def test_sampling_and_execution_time():
-    import numpy as np
-
-    sampler = oj.SASampler()
     experiment = jb.Experiment(autosave=False)
 
     with experiment:
-        response = sampler.sample_qubo({(0, 1): 1})
+        response = sample_qubo()
         experiment.store({"result": response})
 
-    experiment.table.dropna(axis="columns", inplace=True)
-
-    assert isinstance(experiment.table.sampling_time[0], np.float64)
+    assert np.isnan(experiment.table.sampling_time[0])
     assert isinstance(experiment.table.execution_time[0], np.float64)
 
-    d = jm.Placeholder("d")
-    x = jm.Binary("x", shape=(2,))
-    problem = jm.Problem("sample")
-    problem += x[0] + d * x[1]
-    problem += jm.Constraint("onehot", x[:] == 1)
-
-    ph_value = {"d": 2}
-    pyq_obj = problem.to_pyqubo(ph_value=ph_value)
-    pyq_model = pyq_obj.compile()
-
-    sampler = oj.SASampler()
     experiment = jb.Experiment(autosave=False)
 
     with experiment.start():
-        bqm = pyq_model.to_bqm(feed_dict={"onehot": 1})
-        response = sampler.sample(bqm)
-        decoded = problem.decode(response, ph_value=ph_value)
-        experiment.store({"result": decoded})
+        jm_sampleset = decode()
+        experiment.store({"result": jm_sampleset})
 
     assert np.isnan(experiment.table.sampling_time[0])
-    assert np.isnan(experiment.table.execution_time[0])
+    assert isinstance(experiment.table.execution_time[0], np.float64)

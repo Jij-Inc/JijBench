@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+import math
+
 from typing import TYPE_CHECKING, List, Tuple
 
 import numpy as np
-import math
 
 if TYPE_CHECKING:
     from dimod import SampleSet
@@ -69,8 +70,8 @@ def _parse_dimod_sampleset(
     return columns, values
 
 
-def _parse_jm_problem_sampleset(
-    experiment: "Experiment", decoded: "jm_SampleSet"
+def _parse_jm_sampleset(
+    experiment: "Experiment", jm_sampleset: "jm_SampleSet"
 ) -> Tuple[List[str], List]:
     """extract table data from jijmodeling.SampleSet
 
@@ -85,13 +86,13 @@ def _parse_jm_problem_sampleset(
     """
 
     table = experiment._table
-    energies = np.array(decoded.evaluation.energy)
-    objectives = np.array(decoded.evaluation.objective)
-    num_occurrences = np.array(decoded.record.num_occurrences)
+    energies = np.array(jm_sampleset.evaluation.energy)
+    objectives = np.array(jm_sampleset.evaluation.objective)
+    num_occurrences = np.array(jm_sampleset.record.num_occurrences)
     num_reads = np.nan
     num_sweeps = np.nan
 
-    constraint_violations = decoded.evaluation.constraint_violations
+    constraint_violations = jm_sampleset.evaluation.constraint_violations
 
     # TODO: add .feasibles() to jm.SampleSet (https://github.com/Jij-Inc/JijModelingExpression/issues/70) to rewrite
     # TODO: num_feasible = decoded.feasibles().num_occurrences.sum()
@@ -105,12 +106,19 @@ def _parse_jm_problem_sampleset(
             feasible_num_occurrences.append(num_occur_value)
 
     num_feasible = sum(feasible_num_occurrences)
-
     num_samples = num_occurrences.sum()
+
+    sampling_time = np.nan
+    execution_time = (
+        jm_sampleset.measuring_time.solve.solve
+        if jm_sampleset.measuring_time.solve
+        else np.nan
+    )
 
     columns = table.get_energy_columns()
     columns += table.get_objective_columns()
     columns += table.get_num_columns()
+    columns += table.get_time_columns()
 
     values = [
         energies,
@@ -126,6 +134,8 @@ def _parse_jm_problem_sampleset(
         num_sweeps,
         num_feasible,
         num_samples,
+        sampling_time,
+        execution_time,
     ]
 
     for const_name, v in constraint_violations.items():
