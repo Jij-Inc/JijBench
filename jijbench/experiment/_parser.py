@@ -110,14 +110,8 @@ def _parse_jm_sampleset(
     num_samples = num_occurrences.sum()
 
     sampling_time = np.nan
-    # TODO: https://github.com/Jij-Inc/JijModelingExpression/issues/77
-    # TODO: シリアライズが上手くいってないのでパッチをあてる
-    solving_time = (
-        jm.SolvingTime(**jm_sampleset.measuring_time.solve)
-        if isinstance(jm_sampleset.measuring_time.solve, dict)
-        else jm_sampleset.measuring_time.solve
-    )
-    execution_time = solving_time.solve if jm_sampleset.measuring_time.solve else np.nan
+    solving_time = jm_sampleset.measuring_time.solve
+    execution_time = solving_time.solve if solving_time else np.nan
 
     columns = table.get_energy_columns()
     columns += table.get_objective_columns()

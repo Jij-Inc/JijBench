@@ -119,11 +119,4 @@ class DefaultSolver:
             )
             response.get_result()
 
-        # TODO jijmodelingのSampleSet.from_serializableを修正する必要あり
-        response.measuring_time.solve = (
-            jm.SolvingTime(**response.measuring_time.solve)
-            if response.measuring_time.solve
-            else None
-        )
-
         return response
