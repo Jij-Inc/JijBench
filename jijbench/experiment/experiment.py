@@ -85,6 +85,7 @@ class Experiment:
     def start(self):
         self._id.reset(kind="run")
         self._dir.make_dirs(self.run_id)
+        # TODO fix deprecate
         self._table.data.loc[self._table.current_index] = np.nan
         return self
 
