@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import os, shutil, time
 
 import dimod
@@ -397,3 +395,35 @@ def test_save():
     bench.run()
 
     shutil.rmtree(save_dir)
+
+
+def test_benchmark_for_custom_solver_return_jm_sampleset():
+    def func():
+        jm_sampleset = jm.SampleSet.from_serializable(
+            {
+                "record": {
+                    "solution": {
+                        "x": [
+                            (([0, 1], [0, 1]), [1, 1], (2, 2)),
+                            (([], []), [], (2, 2)),
+                        ]
+                    },
+                    "num_occurrences": [1, 1],
+                },
+                "evaluation": {
+                    "energy": [
+                        -3.8499999046325684,
+                        0.0,
+                    ],
+                    "objective": [3.0, 0.0],
+                    "constraint_violations": {},
+                    "penalty": None,
+                },
+                "measuring_time": {
+                    "solve": None,
+                    "system": None,
+                    "total": None,
+                },
+            }
+        )
+        print(jm_sampleset)
