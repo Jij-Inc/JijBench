@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-import math
+import math, warnings
 
 from typing import TYPE_CHECKING, List, Tuple
 
-import jijmodeling as jm
 import numpy as np
 
 if TYPE_CHECKING:
@@ -111,7 +110,13 @@ def _parse_jm_sampleset(
 
     sampling_time = np.nan
     solving_time = jm_sampleset.measuring_time.solve
-    execution_time = solving_time.solve if solving_time else np.nan
+    if solving_time.solve is None:
+        execution_time = np.nan
+        warnings.warn(
+            "'solve' of jijmodeling.SampleSet is None. Give it if you want to evaluate automatically."
+        )
+    else:
+        execution_time = solving_time.solve
 
     columns = table.get_energy_columns()
     columns += table.get_objective_columns()

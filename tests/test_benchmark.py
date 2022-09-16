@@ -426,4 +426,10 @@ def test_benchmark_for_custom_solver_return_jm_sampleset():
                 },
             }
         )
-        print(jm_sampleset)
+        jm_sampleset.measuring_time.solve.solve = None
+        jm_sampleset.measuring_time.system.system = None
+        jm_sampleset.measuring_time.total = None
+        return jm_sampleset
+
+    bench = jb.Benchmark(params={"dummy": [1]}, solver=func)
+    bench.run()
