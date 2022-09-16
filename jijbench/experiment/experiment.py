@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import datetime, os, pickle, re
 
+from cProfile import run
 from typing import Any, Callable, Dict, List, Optional, Union
 
 import dimod
@@ -172,7 +173,7 @@ class Experiment:
 
     def store_as_artifact(
         self,
-        artifact,
+        record: dict,
         timestamp: Optional[Union[pd.Timestamp, datetime.datetime]] = None,
     ):
         """store as artifact
@@ -188,7 +189,7 @@ class Experiment:
             timestamp = pd.Timestamp(timestamp)
 
         self._artifact.timestamp.update({self.run_id: timestamp})
-        self._artifact.data.update({self.run_id: artifact})
+        self._artifact.data.update({self.run_id: record})
 
     def _parse_record(self, record):
         """if record includes `dimod.SampleSet` or `jijmodeling.SampleSet`, reconstruct record to a new one.
@@ -263,11 +264,30 @@ class Experiment:
         df.to_csv(file_name, mode="a", header=not os.path.exists(file_name))
 
     def log_artifact(self):
+        def _is_picklable(obj):
+            try:
+                pickle.dumps(obj)
+                return True
+            except TypeError:
+                return False
+
         run_id = self.run_id
         if run_id in self._artifact.data.keys():
             save_dir = os.path.normcase(f"{self._dir.artifact_dir}/{run_id}")
+
+            record = {}
+            for key, value in self._artifact.data[run_id].items():
+                if _is_picklable(value):
+                    if isinstance(value, Callable):
+                        value = re.split(
+                            r" at| of", re.split(r"function |method ", str(value))[-1]
+                        )[0]
+                else:
+                    value = str(value)
+                record[key] = value
+
             with open(os.path.normcase(f"{save_dir}/artifact.pkl"), "wb") as f:
-                pickle.dump(self._artifact.data[run_id], f)
+                pickle.dump(record, f)
 
             timestamp = self._artifact.timestamp[run_id]
             with open(os.path.normcase(f"{save_dir}/timestamp.txt"), "w") as f:
