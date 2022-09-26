@@ -94,21 +94,11 @@ def _parse_jm_sampleset(
 
     constraint_violations = jm_sampleset.evaluation.constraint_violations
 
-    # TODO: add .feasibles() to jm.SampleSet (https://github.com/Jij-Inc/JijModelingExpression/issues/70) to rewrite
-    # TODO: num_feasible = decoded.feasibles().num_occurrences.sum()
-    # calculate num_occurrences with feasible solutions
-    feasible_num_occurrences = []
-    for i, num_occur_value in enumerate(num_occurrences):
-        violation = 0
-        for _, v in constraint_violations.items():
-            violation += v[i]
-        if math.isclose(violation, 0):
-            feasible_num_occurrences.append(num_occur_value)
-
-    num_feasible = sum(feasible_num_occurrences)
+    num_feasible = sum(jm_sampleset.feasible().record.num_occurrences)
     num_samples = num_occurrences.sum()
 
     sampling_time = np.nan
+    # TODO スキーマが変わったら変更する
     solving_time = jm_sampleset.measuring_time.solve
     if solving_time.solve is None:
         execution_time = np.nan
