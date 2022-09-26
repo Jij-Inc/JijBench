@@ -433,3 +433,15 @@ def test_benchmark_for_custom_solver_return_jm_sampleset():
 
     bench = jb.Benchmark(params={"dummy": [1]}, solver=func)
     bench.run()
+
+
+def test_benchmark_for_num_feasible():
+    bench = jb.Benchmark(
+        {
+            "N": [10, 200],
+            "sample_model": [sample_model],
+        },
+        solver=sample_model,
+    )
+    bench.run()
+    assert (bench.table["num_feasible"].values == 7).all()
