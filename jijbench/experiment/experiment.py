@@ -189,7 +189,7 @@ class Experiment:
             timestamp = pd.Timestamp(timestamp)
 
         self._artifact.timestamp.update({self.run_id: timestamp})
-        self._artifact.data.update({self.run_id: record})
+        self._artifact.data.update({self.run_id: record.copy()})
 
     def _parse_record(self, record):
         """if record includes `dimod.SampleSet` or `jijmodeling.SampleSet`, reconstruct record to a new one.

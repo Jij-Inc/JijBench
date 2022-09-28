@@ -361,7 +361,7 @@ class Benchmark:
         bench = cls([], lambda: (), benchmark_id=benchmark_id)
         bench._experiments = experiments
         bench._table = table
-        bench._artifacat = artifact
+        bench._artifact = artifact
         return bench
 
 
