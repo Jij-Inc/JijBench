@@ -416,7 +416,7 @@ def test_benchmark_for_custom_solver_return_jm_sampleset():
                         0.0,
                     ],
                     "objective": [3.0, 0.0],
-                    "constraint_violations": {"onehot": [0.0, 1.0]},
+                    "constraint_violations": {},
                     "penalty": None,
                 },
                 "measuring_time": {
