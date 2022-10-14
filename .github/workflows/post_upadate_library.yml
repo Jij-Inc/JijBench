@@ -1,0 +1,25 @@
+name: Post Update Library 
+
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+  
+jobs:
+  post_update_library:
+    runs-on: ubuntu-latest
+    name: Notification 
+    steps:
+     - name: Checkout Action
+       uses: actions/checkout@v3
+       with:
+          repository: Jij-Inc/JijCloud-package-update-action
+          token: ${{ secrets.JIJ_ZEPT_PACKAGE_UPDATE }}
+
+     - name: Notification to depend on repository
+       uses: ./
+       with:
+          topic: jijbench
+          github_token: ${{ secrets.GITACTION_PRIVATE_KEY }}
+          type: issue
+          package_name: jijbench
