@@ -98,6 +98,9 @@ class Benchmark:
         self._experiments: List[Experiment] = []
         self._table = Table()
         self._artifact = Artifact()
+        
+        if solver_return_name is not None:
+            self.name_solver_ret(solver_return_name)
 
         DefaultSolver.jijzept_config = jijzept_config
         DefaultSolver.dwave_config = dwave_config
