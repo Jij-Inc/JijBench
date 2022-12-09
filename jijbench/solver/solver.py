@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import inspect
 
-from dataclasses import asdict
 from typing import Callable, Optional
 
 import jijmodeling as jm
@@ -21,9 +20,10 @@ class CallableSolver:
 
     def __call__(self, **kwargs):
         parameters = inspect.signature(self.function).parameters
+        is_kwargs = any([p.kind == 4 for p in parameters.values()])
         kwargs = (
             kwargs
-            if "kwargs" in parameters
+            if is_kwargs
             else {k: v for k, v in kwargs.items() if k in parameters}
         )
         return self.function(**kwargs)
