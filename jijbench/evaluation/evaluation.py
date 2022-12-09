@@ -92,7 +92,8 @@ class Evaluator:
         Returns:
             pandas.Series: Evalution results.
         """
-        func = make_scorer(func, is_warning=False, **kwargs)
+        is_warning = kwargs.pop("is_warning", False)
+        func = make_scorer(func, is_warning, **kwargs)
         metrics = self.table.apply(func, axis=axis)
         if expand:
             self.table[column] = metrics
@@ -121,6 +122,7 @@ class Evaluator:
             column=column,
             expand=expand,
             axis=1,
+            is_warning=True,
         )
 
     def optimal_time_to_solution(
@@ -149,6 +151,7 @@ class Evaluator:
             column=f"{column}",
             expand=expand,
             axis=1,
+            is_warning=True,
         )
 
     def feasible_time_to_solution(
@@ -174,6 +177,7 @@ class Evaluator:
             column=f"{column}",
             expand=expand,
             axis=1,
+            is_warning=True,
         )
 
     def derived_time_to_solution(
@@ -199,6 +203,7 @@ class Evaluator:
             column=f"{column}",
             expand=expand,
             axis=1,
+            is_warning=True,
         )
 
     def feasible_rate(self, column: str = "feasible_rate", expand: bool = True):
@@ -212,7 +217,13 @@ class Evaluator:
             pandas.Series: Feasible rate.
         """
 
-        return self.apply(func=feasible_rate, column=column, expand=expand, axis=1)
+        return self.apply(
+            func=feasible_rate,
+            column=column,
+            expand=expand,
+            axis=1,
+            is_warning=True,
+        )
 
     def residual_energy(
         self,
@@ -237,4 +248,5 @@ class Evaluator:
             column=column,
             expand=expand,
             axis=1,
+            is_warning=True,
         )

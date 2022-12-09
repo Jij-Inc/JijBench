@@ -43,8 +43,7 @@ class Scorer:
         return self._score_func(x, **self._kwargs)
 
 
-def make_scorer(score_func: Callable, **kwargs):
-    is_warning = kwargs.pop("is_warning", True)
+def make_scorer(score_func: Callable, is_warning=False, **kwargs):
     return Scorer(score_func, kwargs, is_warning)
 
 
