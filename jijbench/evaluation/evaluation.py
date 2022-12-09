@@ -92,7 +92,7 @@ class Evaluator:
         Returns:
             pandas.Series: Evalution results.
         """
-        func = make_scorer(func, **kwargs)
+        func = make_scorer(func, is_warning=False, **kwargs)
         metrics = self.table.apply(func, axis=axis)
         if expand:
             self.table[column] = metrics

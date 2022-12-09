@@ -1,5 +1,4 @@
 from __future__ import annotations
-from re import A
 
 from typing import Any, Union, Callable
 
@@ -8,41 +7,45 @@ import warnings
 
 
 class Scorer:
-    def __init__(self, score_func: Callable, kwargs):
+    def __init__(self, score_func: Callable, kwargs, is_warning=True):
         self._score_func = score_func
         self._kwargs = kwargs
+        self._is_warning = is_warning
 
     def __call__(self, x: Any):
-        def _generate_warning_msg(metrics):
-            return f'{self._score_func.__name__} cannot be calculated because "{metrics}" is not stored in table attribute of jijbench.Benchmark instance.'
+        if self._is_warning:
 
-        if np.isnan([x.objective]).any():
-            warnings.warn(_generate_warning_msg("objective"))
-            return np.nan
+            def _generate_warning_msg(metrics):
+                return f'{self._score_func.__name__} cannot be calculated because "{metrics}" is not stored in table attribute of jijbench.Benchmark instance.'
 
-        if np.isnan([x.execution_time]).any():
-            warnings.warn(_generate_warning_msg("execution_time"))
-            return np.nan
+            if np.isnan([x.objective]).any():
+                warnings.warn(_generate_warning_msg("objective"))
+                return np.nan
 
-        if np.isnan([x.num_occurrences]).any():
-            warnings.warn(_generate_warning_msg("num_occurrences"))
-            return np.nan
+            if np.isnan([x.execution_time]).any():
+                warnings.warn(_generate_warning_msg("execution_time"))
+                return np.nan
 
-        if np.isnan([x.num_feasible]).any():
-            warnings.warn(_generate_warning_msg("num_feasible"))
-            return np.nan
+            if np.isnan([x.num_occurrences]).any():
+                warnings.warn(_generate_warning_msg("num_occurrences"))
+                return np.nan
 
-        if np.isnan(list(self._kwargs.values())).any():
-            warnings.warn(
-                f"{self._score_func.__name__} cannot be calculated because NaN exists in args for scoring method."
-            )
-            return np.nan
+            if np.isnan([x.num_feasible]).any():
+                warnings.warn(_generate_warning_msg("num_feasible"))
+                return np.nan
+
+            if np.isnan(list(self._kwargs.values())).any():
+                warnings.warn(
+                    f"{self._score_func.__name__} cannot be calculated because NaN exists in args for scoring method."
+                )
+                return np.nan
 
         return self._score_func(x, **self._kwargs)
 
 
 def make_scorer(score_func: Callable, **kwargs):
-    return Scorer(score_func, kwargs)
+    is_warning = kwargs.pop("is_warning", True)
+    return Scorer(score_func, kwargs, is_warning)
 
 
 def optimal_time_to_solution(
