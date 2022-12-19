@@ -445,3 +445,19 @@ def test_benchmark_for_num_feasible():
     )
     bench.run()
     assert (bench.table["num_feasible"].values == 7).all()
+
+
+def test_benchmark_for_change_solver_return_name():
+    def solver():
+        return 1
+
+    bench = jb.Benchmark(
+        {
+            "N": [10, 200],
+            "sample_model": [sample_model],
+        },
+        solver=solver,
+        solver_return_name={"solver": ["return_1"]},
+    )
+    bench.run()
+    assert "return_1" in bench.table.columns
