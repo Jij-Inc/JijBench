@@ -7,8 +7,8 @@ import jijmodeling as jm
 from jijbench.solver import CallableSolver
 
 from jijbench.exceptions import (
-    JijBenchmarkUnsupportedProblemError,
-    JijBenchmarkUnsupportedInstanceDataError,
+    UnsupportedProblemError,
+    UnsupportedInstanceDataError,
 )
 
 __all__ = []
@@ -43,9 +43,7 @@ def on_problem(fn):
             if problem is None:
                 fn(obj, problem)
             else:
-                raise JijBenchmarkUnsupportedProblemError(
-                    "problem of this type is not supported."
-                )
+                raise UnsupportedProblemError("problem of this type is not supported.")
 
     return wrapper
 
@@ -64,7 +62,7 @@ def on_instance_data(fn):
             if instance_data is None:
                 fn(obj, instance_data)
             else:
-                raise JijBenchmarkUnsupportedInstanceDataError(
+                raise UnsupportedInstanceDataError(
                     "problem of this type is not supported."
                 )
 
@@ -85,7 +83,7 @@ def _tuple_to_instance_data(d):
     if _is_tuple_to_instance_data(d):
         return [d]
     else:
-        raise JijBenchmarkUnsupportedInstanceDataError(
+        raise UnsupportedInstanceDataError(
             "instance_data of this type is not supported."
         )
 
@@ -96,7 +94,7 @@ def _list_to_instance_data(d):
             if _is_tuple_to_instance_data(d[0][0]):
                 return d
             else:
-                raise JijBenchmarkUnsupportedInstanceDataError(
+                raise UnsupportedInstanceDataError(
                     "instance_data of this type is not supported."
                 )
         elif isinstance(d[0][0], dict):
@@ -105,19 +103,19 @@ def _list_to_instance_data(d):
                 for i, di in enumerate(d)
             ]
         else:
-            raise JijBenchmarkUnsupportedInstanceDataError(
+            raise UnsupportedInstanceDataError(
                 "instance_data of this type is not supported."
             )
     elif isinstance(d[0], tuple):
         if _is_tuple_to_instance_data(d[0]):
             return [d]
         else:
-            raise JijBenchmarkUnsupportedInstanceDataError(
+            raise UnsupportedInstanceDataError(
                 "instance_data of this type is not supported."
             )
     elif isinstance(d[0], dict):
         return [[(f"Unnamed[{i}]", di) for i, di in enumerate(d)]]
     else:
-        raise JijBenchmarkUnsupportedInstanceDataError(
+        raise UnsupportedInstanceDataError(
             "instance_data of this type is not supported."
         )
