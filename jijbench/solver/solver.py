@@ -7,6 +7,8 @@ from typing import Callable, Optional
 import jijmodeling as jm
 import jijzept as jz
 
+from jijbench.exceptions import SolverFailedError
+
 __all__ = []
 
 
@@ -26,7 +28,11 @@ class CallableSolver:
             if is_kwargs
             else {k: v for k, v in kwargs.items() if k in parameters}
         )
-        return self.function(**kwargs)
+        try:
+            ret = self.function(**kwargs)
+        except Exception as e:
+            raise SolverFailedError(e)
+        return ret
 
     @property
     def name(self):
