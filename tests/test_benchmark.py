@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 
 import jijbench as jb
+from jijbench.exceptions import SolverFailedError
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -433,6 +434,15 @@ def test_benchmark_for_custom_solver_return_jm_sampleset():
 
     bench = jb.Benchmark(params={"dummy": [1]}, solver=func)
     bench.run()
+
+
+def test_benchmark_for_custom_solver_failed():
+    def custom_solver_failed():
+        raise Exception("solver is failed.")
+
+    bench = jb.Benchmark(params={"dummy": [1]}, solver=custom_solver_failed)
+    with pytest.raises(SolverFailedError):
+        bench.run()
 
 
 def test_benchmark_for_num_feasible():
