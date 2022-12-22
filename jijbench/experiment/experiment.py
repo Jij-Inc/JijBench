@@ -26,8 +26,7 @@ class Experiment:
     def __init__(
         self,
         *,
-        benchmark_id: Optional[Union[int, str]] = None,
-        experiment_id: Optional[Union[int, str]] = None,
+        experiment_id: str | None = None,
         autosave: bool = True,
         save_dir: str = ExperimentResultDefaultDir,
     ):
@@ -42,33 +41,20 @@ class Experiment:
         self.autosave = autosave
         self.save_dir = os.path.normcase(save_dir)
 
-        self._id = ID(
-            benchmark_id=benchmark_id,
-            experiment_id=experiment_id,
+        self.id = ID(
+            experiment=experiment_id,
         )
         self._table = Table()
         self._artifact = Artifact()
         self._dir = Path(
-            benchmark_id=self._id.benchmark_id,
-            experiment_id=self._id.experiment_id,
+            benchmark_id=self.id.benchmark,
+            experiment_id=self.id.experiment,
             autosave=autosave,
             save_dir=os.path.normcase(save_dir),
         )
 
         # initialize table index
         self._table.current_index = 0
-
-    @property
-    def run_id(self):
-        return self._id.run_id
-
-    @property
-    def experiment_id(self):
-        return self._id.experiment_id
-
-    @property
-    def benchmark_id(self):
-        return self._id.benchmark_id
 
     @property
     def table(self):
@@ -86,8 +72,8 @@ class Experiment:
         self.stop()
 
     def start(self):
-        self._id.update(kind="run")
-        self._dir.make_dirs(self.run_id)
+        self.id.update(kind="run")
+        self._dir.make_dirs(self.id.run)
         # TODO fix deprecate
         self._table.data.loc[self._table.current_index] = np.nan
         return self
@@ -155,7 +141,7 @@ class Experiment:
         else:
             _timestamp = pd.Timestamp(timestamp)
 
-        ids_data = [self.benchmark_id, self.experiment_id, self.run_id, _timestamp]
+        ids_data = [self.id.benchmark, self.experiment_id, self.run_id, _timestamp]
         self._table.data.loc[index, ids] = ids_data
         record = self._parse_record(record)
         for key, value in record.items():

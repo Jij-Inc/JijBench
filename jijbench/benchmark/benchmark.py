@@ -8,6 +8,7 @@ import jijmodeling as jm
 import jijzept as jz
 import numpy as np
 import pandas as pd
+import uuid
 
 from jijmodeling.exceptions import DataError
 from jijmodeling.type_annotations import PH_VALUES_INTERFACE
@@ -84,7 +85,7 @@ class Benchmark:
             ]
         ] = None,
         solver_return_name: Optional[Dict[str, List[str]]] = None,
-        benchmark_id: Optional[Union[int, str]] = None,
+        benchmark_id: str | None = None,
         id_rule: Union[str, Dict[str, str]] = "uuid",
         save_dir: str = ExperimentResultDefaultDir,
         jijzept_config: Optional[str] = None,
@@ -98,7 +99,9 @@ class Benchmark:
         self._set_solver(solver)
         self._set_problem(problem)
         self._set_instance_data(instance_data)
-        self._id = ID(benchmark_id=benchmark_id)
+        self._id = ID(
+            benchmark=str(uuid.uuid4()) if benchmark_id is None else benchmark_id
+        )
         self._experiments: List[Experiment] = []
         self._table = Table()
         self._artifact = Artifact()
@@ -135,7 +138,7 @@ class Benchmark:
 
     @property
     def id(self):
-        self._id.benchmark_id
+        return self._id
 
     @property
     def experiments(self):
@@ -149,13 +152,13 @@ class Benchmark:
     def artifact(self):
         return self._artifact.data
 
-    def run(self, sync=True):
+    def run(self, concurrent=False):
         """run benchmark
 
         Args:
             sync (bool, optional): True -> sync mode, False -> async mode. Defaults to True. Note that sync=False is not supported using your custom solver.
         """
-        if sync is False:
+        if concurrent is True:
             for solver in self.solver:
                 if solver.is_jijzept_sampler is False:
                     raise ConcurrentFailedError(
@@ -174,13 +177,13 @@ class Benchmark:
         for solver in self.solver:
             for problem_i, instance_data_i in zip(problem, instance_data):
                 for instance_data_ij in instance_data_i:
-                    if sync:
-                        self._run_by_sync(solver, problem_i, instance_data_ij)
-                    else:
+                    if concurrent:
                         if "openjij" in solver.name:
                             self._run_by_sync(solver, problem_i, instance_data_ij)
                         else:
                             self._run_by_async(solver, problem_i, instance_data_ij)
+                    else:
+                        self._run_by_sync(solver, problem_i, instance_data_ij)
 
     def _run_by_async(self, solver, problem, instance_data, **kwargs):
         _, ph_value = instance_data
@@ -206,7 +209,7 @@ class Benchmark:
                         args_map[(i, solution_id)] = args
 
                     experiment = Experiment(
-                        benchmark_id=self._id.benchmark_id, save_dir=self.save_dir
+                        benchmark_id=self._id.benchmark, save_dir=self.save_dir
                     )
                     for (i, solution_id), args in args_map.items():
                         solver_args, record = self._setup_experiment(
@@ -236,9 +239,7 @@ class Benchmark:
             self._experiments.append(experiment)
 
     def _run_by_sync(self, solver, problem, instance_data):
-        experiment = Experiment(
-            benchmark_id=self._id.benchmark_id, save_dir=self.save_dir
-        )
+        experiment = Experiment(benchmark_id=self.id.benchmark, save_dir=self.save_dir)
         solver_args, record = self._setup_experiment(
             solver, problem, instance_data, True
         )
@@ -342,8 +343,8 @@ class Benchmark:
     def load(
         cls,
         *,
-        benchmark_id: Union[int, str],
-        experiment_id: Union[int, str, List[Union[int, str]]] = None,
+        benchmark_id: str,
+        experiment_id: str | list[str] | None = None,
         autosave: bool = True,
         save_dir: str = ExperimentResultDefaultDir,
     ):
@@ -377,7 +378,7 @@ class Benchmark:
             table.data = pd.concat([table.data, experiment.table])
             artifact.data.update(experiment.artifact)
 
-        bench = cls([], lambda: (), benchmark_id=benchmark_id)
+        bench = cls({}, lambda: (), benchmark_id=benchmark_id)
         bench._experiments = experiments
         bench._table = table
         bench._artifact = artifact
@@ -385,8 +386,8 @@ class Benchmark:
 
 
 def load(
-    benchmark_id: Union[int, str],
-    experiment_id: Union[int, str, List[Union[int, str]]] = None,
+    benchmark_id: str,
+    experiment_id: str | list[str] | None = None,
     autosave: bool = True,
     save_dir: str = ExperimentResultDefaultDir,
 ):
