@@ -381,6 +381,20 @@ def test_load():
     assert "func1" in bench.table["solver"].values
 
 
+def test_load_invalid_benchmark_id():
+    INVALID_BENCHMARK_ID = "invalid_benchmark_id"
+
+    def func1(x):
+        return 2 * x
+
+    bench = jb.Benchmark(params={"x": [1, 2, 3]}, solver=func1, benchmark_id="test")
+    bench.run()
+
+    del bench
+
+    bench = jb.load(benchmark_id=INVALID_BENCHMARK_ID)
+
+
 def test_save():
     def func1(x):
         return 2 * x
