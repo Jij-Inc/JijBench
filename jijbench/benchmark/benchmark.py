@@ -15,7 +15,10 @@ from jijmodeling.type_annotations import PH_VALUES_INTERFACE
 from jijbench.experiment.experiment import Experiment
 from jijbench.evaluation.evaluation import Evaluator
 from jijbench.benchmark import validation
-from jijbench.components import ID, Artifact, ExperimentResultDefaultDir, Table
+from jijbench.artifact import Artifact
+from jijbench.const import ExperimentResultDefaultDir
+from jijbench.id import ID
+from jijbench.table import Table
 from jijbench.solver import DefaultSolver
 
 __all__ = []

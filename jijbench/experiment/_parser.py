@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import math, warnings
+import warnings
 
 from typing import TYPE_CHECKING, List, Tuple
 

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import jijbench as jb
 
-from jijbench.problem import TSP, TSPTW, Knapsack
+from jijbench.dataset import TSP, TSPTW, Knapsack
 
 
 def test_tsptw():

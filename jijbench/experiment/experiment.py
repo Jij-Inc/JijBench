@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import datetime, os, pickle, re
 
-from cProfile import run
 from typing import Any, Callable, Dict, List, Optional, Union
 
 import dimod
@@ -10,7 +9,10 @@ import jijmodeling as jm
 import numpy as np
 import pandas as pd
 
-from jijbench.components import ID, Artifact, Dir, ExperimentResultDefaultDir, Table
+from jijbench.artifact import Artifact
+from jijbench.const import ExperimentResultDefaultDir, Path
+from jijbench.id import ID
+from jijbench.table import Table
 from jijbench.experiment._parser import _parse_dimod_sampleset, _parse_jm_sampleset
 
 np.set_printoptions(threshold=np.inf)
@@ -46,7 +48,7 @@ class Experiment:
         )
         self._table = Table()
         self._artifact = Artifact()
-        self._dir = Dir(
+        self._dir = Path(
             benchmark_id=self._id.benchmark_id,
             experiment_id=self._id.experiment_id,
             autosave=autosave,
@@ -84,7 +86,7 @@ class Experiment:
         self.stop()
 
     def start(self):
-        self._id.reset(kind="run")
+        self._id.update(kind="run")
         self._dir.make_dirs(self.run_id)
         # TODO fix deprecate
         self._table.data.loc[self._table.current_index] = np.nan

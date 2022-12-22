@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 import os
+from dataclasses import dataclass
 
 __all__ = []
 
 ExperimentResultDefaultDir = os.path.join(".", ".jb_results")
 
 
-class Dir:
+class Path:
     """Directory template"""
 
     _dir_template = os.path.normcase(

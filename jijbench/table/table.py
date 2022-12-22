@@ -5,7 +5,7 @@ import json, os, pickle, re
 import numpy as np
 import pandas as pd
 
-from jijbench.components.dir import Dir
+from jijbench.const import Path
 
 __all__ = []
 
@@ -173,7 +173,7 @@ class Table:
 
     @classmethod
     def load(cls, *, benchmark_id, experiment_id, autosave, save_dir):
-        d = Dir(
+        d = Path(
             benchmark_id=benchmark_id,
             experiment_id=experiment_id,
             autosave=autosave,
