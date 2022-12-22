@@ -8,9 +8,13 @@ class JijBenchmarkError(Exception):
     """
 
 
-class UnsupportedProblemError(JijBenchmarkError):
+class ConcurrentFailedError(JijBenchmarkError):
     pass
 
 
-class UnsupportedInstanceDataError(JijBenchmarkError):
+class SolverFailedError(JijBenchmarkError):
+    pass
+
+
+class LoadFailedError(JijBenchmarkError):
     pass
