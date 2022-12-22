@@ -16,7 +16,7 @@ class UnsupportedInstanceDataError(JijBenchmarkError):
     pass
 
 
-class UnsupportedSettingError(JijBenchmarkError):
+class ConcurrentFailedError(JijBenchmarkError):
     pass
 
 

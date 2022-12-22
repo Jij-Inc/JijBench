@@ -8,7 +8,7 @@ import pytest
 import jijbench as jb
 from jijbench.exceptions import SolverFailedError
 
-from jijbench.exceptions import UnsupportedSettingError
+from jijbench.exceptions import ConcurrentFailedError
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -243,7 +243,7 @@ def test_benchmark_with_custom_solver_by_sync_False():
         return "a", 1
 
     bench = jb.Benchmark({"num_reads": [1, 2], "num_sweeps": [10]}, solver=func)
-    with pytest.raises(UnsupportedSettingError):
+    with pytest.raises(ConcurrentFailedError):
         bench.run(sync=False)
 
 
