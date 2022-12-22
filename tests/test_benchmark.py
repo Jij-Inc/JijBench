@@ -6,9 +6,11 @@ import numpy as np
 import pytest
 
 import jijbench as jb
-from jijbench.exceptions import SolverFailedError
-
-from jijbench.exceptions import ConcurrentFailedError
+from jijbench.exceptions import (
+    SolverFailedError,
+    ConcurrentFailedError,
+    LoadFailedError,
+)
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -404,7 +406,8 @@ def test_load_invalid_benchmark_id():
 
     del bench
 
-    bench = jb.load(benchmark_id=INVALID_BENCHMARK_ID)
+    with pytest.raises(LoadFailedError):
+        bench = jb.load(benchmark_id=INVALID_BENCHMARK_ID)
 
 
 def test_load_invalid_experiment_id():
@@ -418,7 +421,8 @@ def test_load_invalid_experiment_id():
 
     del bench
 
-    bench = jb.load(benchmark_id="test", experiment_id=INVALID_EXPERIMENT_ID)
+    with pytest.raises(LoadFailedError):
+        bench = jb.load(benchmark_id="test", experiment_id=INVALID_EXPERIMENT_ID)
 
 
 def test_save():

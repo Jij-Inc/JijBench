@@ -12,7 +12,7 @@ import pandas as pd
 from jijmodeling.exceptions import DataError
 from jijmodeling.type_annotations import PH_VALUES_INTERFACE
 
-from jijbench.exceptions import ConcurrentFailedError
+from jijbench.exceptions import ConcurrentFailedError, LoadFailedError
 from jijbench.experiment.experiment import Experiment
 from jijbench.evaluation.evaluation import Evaluator
 from jijbench.benchmark import validation
@@ -355,6 +355,10 @@ class Benchmark:
         Returns:
             _type_: _description_
         """
+        if not f"benchmark_{benchmark_id}" in os.listdir(save_dir):
+            msg = f"benchmark_id={benchmark_id} file does not exist in {save_dir}. Please check you benchmark_id."
+            raise LoadFailedError(msg)
+
         experiments = []
         table = Table()
         artifact = Artifact()

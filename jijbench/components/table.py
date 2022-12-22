@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 
 from jijbench.components.dir import Dir
+from jijbench.exceptions import LoadFailedError
 
 __all__ = []
 
@@ -180,9 +181,13 @@ class Table:
             save_dir=save_dir,
         )
         table = cls()
-        table.data = pd.read_csv(
-            os.path.normcase(f"{d.table_dir}/table.csv"), index_col=0
-        )
+        try:
+            table.data = pd.read_csv(
+                os.path.normcase(f"{d.table_dir}/table.csv"), index_col=0
+            )
+        except Exception as e:
+            msg = f"An error occurred in loading saved data. Please check your benchmark_id and experiment_id first. -> {e}"
+            raise LoadFailedError(msg)
         dtypes = cls.load_dtypes(
             benchmark_id=benchmark_id,
             experiment_id=experiment_id,
@@ -200,8 +205,12 @@ class Table:
             autosave=autosave,
             save_dir=save_dir,
         )
-        with open(os.path.normcase(f"{d.experiment_dir}/dtypes.pkl"), "rb") as f:
-            return pickle.load(f)
+        try:
+            with open(os.path.normcase(f"{d.experiment_dir}/dtypes.pkl"), "rb") as f:
+                return pickle.load(f)
+        except Exception as e:
+            msg = f"An error occurred in loading saved data. Please check your benchmark_id and experiment_id first. -> {e}"
+            raise LoadFailedError(msg)
 
     @staticmethod
     def _to_list(x):

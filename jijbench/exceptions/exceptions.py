@@ -22,3 +22,7 @@ class ConcurrentFailedError(JijBenchmarkError):
 
 class SolverFailedError(JijBenchmarkError):
     pass
+
+
+class LoadFailedError(JijBenchmarkError):
+    pass
