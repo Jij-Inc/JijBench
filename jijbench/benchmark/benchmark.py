@@ -12,6 +12,7 @@ import pandas as pd
 from jijmodeling.exceptions import DataError
 from jijmodeling.type_annotations import PH_VALUES_INTERFACE
 
+from jijbench.exceptions import ConcurrentFailedError
 from jijbench.experiment.experiment import Experiment
 from jijbench.evaluation.evaluation import Evaluator
 from jijbench.benchmark import validation
@@ -149,8 +150,14 @@ class Benchmark:
         """run benchmark
 
         Args:
-            sync (bool, optional): True -> sync mode, False -> async mode. Defaults to True.
+            sync (bool, optional): True -> sync mode, False -> async mode. Defaults to True. Note that sync=False is not supported using your custom solver.
         """
+        if sync is False:
+            for solver in self.solver:
+                if solver.is_jijzept_sampler is False:
+                    raise ConcurrentFailedError(
+                        "sync=False is not supported using your custom solver."
+                    )
         if self._problem is None:
             problem = [None]
         else:
