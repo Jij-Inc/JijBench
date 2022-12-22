@@ -429,14 +429,16 @@ def test_get_experiment_id_list():
     from jijbench.benchmark.benchmark import get_experiment_id_list
     from jijbench.components import ExperimentResultDefaultDir
 
+    save_dir = ExperimentResultDefaultDir
+
     def func1(x):
         return 2 * x
 
     bench = jb.Benchmark(params={"x": [1, 2, 3]}, solver=func1, benchmark_id="test")
     bench.run()
-    experiment_id_list = list(bench.table["experiment_id"].unique())
+    experiment_id_list = list(set(bench.table["experiment_id"].values))
 
-    experiment_id_list_load = get_experiment_id_list("test", ExperimentResultDefaultDir)
+    experiment_id_list_load = get_experiment_id_list("test", save_dir)
 
     assert sorted(experiment_id_list) == sorted(experiment_id_list_load)
 
