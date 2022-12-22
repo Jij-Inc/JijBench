@@ -7,6 +7,8 @@ import pytest
 
 import jijbench as jb
 
+from jijbench.exceptions import UnsupportedSettingError
+
 
 @pytest.fixture(scope="function", autouse=True)
 def pre_post_process():
@@ -233,6 +235,15 @@ def test_benchmark_with_custom_solver():
     assert bench.table["solver"][0] == func.__name__
     assert bench.table["solver_return_values[0]"][0] == "a"
     assert bench.table["solver_return_values[1]"][0] == 1.0
+
+
+def test_benchmark_with_custom_solver_by_sync_False():
+    def func():
+        return "a", 1
+
+    bench = jb.Benchmark({"num_reads": [1, 2], "num_sweeps": [10]}, solver=func)
+    with pytest.raises(UnsupportedSettingError):
+        bench.run(sync=False)
 
 
 def test_benchmark_with_custom_sample_model(

@@ -40,6 +40,10 @@ class CallableSolver:
     def ret_names(self):
         return self._ret_names
 
+    @property
+    def custom_solver_flg(self):
+        return self._custom_solver_flg
+
     @ret_names.setter
     def ret_names(self, names):
         self._ret_names = names
@@ -59,8 +63,10 @@ class CallableSolver:
 
     def _parse_solver(self, solver):
         if isinstance(solver, str):
+            self._custom_solver_flg = False
             return getattr(DefaultSolver(), solver)
         elif isinstance(solver, Callable):
+            self._custom_solver_flg = True
             return solver
         else:
             return
