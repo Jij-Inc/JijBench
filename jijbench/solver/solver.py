@@ -7,11 +7,14 @@ from typing import Callable, Optional
 import jijmodeling as jm
 import jijzept as jz
 
+from jijbench.exceptions import SolverFailedError
+
 __all__ = []
 
 
 class CallableSolver:
     def __init__(self, solver):
+        self._is_jijzept_sampler = False
         self.function = self._parse_solver(solver)
         self._name = self.function.__name__
         self._ret_names = (
@@ -26,7 +29,12 @@ class CallableSolver:
             if is_kwargs
             else {k: v for k, v in kwargs.items() if k in parameters}
         )
-        return self.function(**kwargs)
+        try:
+            ret = self.function(**kwargs)
+        except Exception as e:
+            msg = f'An error occurred inside your solver. Please check implementation of "{self.name}". -> {e}'
+            raise SolverFailedError(msg)
+        return ret
 
     @property
     def name(self):
@@ -39,6 +47,10 @@ class CallableSolver:
     @property
     def ret_names(self):
         return self._ret_names
+
+    @property
+    def is_jijzept_sampler(self):
+        return self._is_jijzept_sampler
 
     @ret_names.setter
     def ret_names(self, names):
@@ -59,6 +71,7 @@ class CallableSolver:
 
     def _parse_solver(self, solver):
         if isinstance(solver, str):
+            self._is_jijzept_sampler = True
             return getattr(DefaultSolver(), solver)
         elif isinstance(solver, Callable):
             return solver

@@ -12,6 +12,7 @@ import pandas as pd
 from jijmodeling.exceptions import DataError
 from jijmodeling.type_annotations import PH_VALUES_INTERFACE
 
+from jijbench.exceptions import ConcurrentFailedError
 from jijbench.experiment.experiment import Experiment
 from jijbench.evaluation.evaluation import Evaluator
 from jijbench.benchmark import validation
@@ -98,7 +99,7 @@ class Benchmark:
         self._experiments: List[Experiment] = []
         self._table = Table()
         self._artifact = Artifact()
-        
+
         if solver_return_name is not None:
             self.name_solver_ret(solver_return_name)
 
@@ -149,8 +150,14 @@ class Benchmark:
         """run benchmark
 
         Args:
-            sync (bool, optional): True -> sync mode, False -> async mode. Defaults to True.
+            sync (bool, optional): True -> sync mode, False -> async mode. Defaults to True. Note that sync=False is not supported using your custom solver.
         """
+        if sync is False:
+            for solver in self.solver:
+                if solver.is_jijzept_sampler is False:
+                    raise ConcurrentFailedError(
+                        "sync=False is not supported using your custom solver."
+                    )
         if self._problem is None:
             problem = [None]
         else:
@@ -195,7 +202,9 @@ class Benchmark:
                         ).solution_id
                         args_map[(i, solution_id)] = args
 
-                    experiment = Experiment(benchmark_id=self._id.benchmark_id, save_dir=self.save_dir)
+                    experiment = Experiment(
+                        benchmark_id=self._id.benchmark_id, save_dir=self.save_dir
+                    )
                     for (i, solution_id), args in args_map.items():
                         solver_args, record = self._setup_experiment(
                             solver, problem, instance_data, False
@@ -224,7 +233,9 @@ class Benchmark:
             self._experiments.append(experiment)
 
     def _run_by_sync(self, solver, problem, instance_data):
-        experiment = Experiment(benchmark_id=self._id.benchmark_id, save_dir=self.save_dir)
+        experiment = Experiment(
+            benchmark_id=self._id.benchmark_id, save_dir=self.save_dir
+        )
         solver_args, record = self._setup_experiment(
             solver, problem, instance_data, True
         )
@@ -294,7 +305,9 @@ class Benchmark:
         metrics = pd.DataFrame()
         for experiment in self._experiments:
             evaluator = Evaluator(experiment)
-            opt_value = experiment.table["opt_value"][0] if opt_value is None else opt_value
+            opt_value = (
+                experiment.table["opt_value"][0] if opt_value is None else opt_value
+            )
             metrics = pd.concat(
                 [
                     metrics,

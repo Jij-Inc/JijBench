@@ -14,3 +14,11 @@ class UnsupportedProblemError(JijBenchmarkError):
 
 class UnsupportedInstanceDataError(JijBenchmarkError):
     pass
+
+
+class ConcurrentFailedError(JijBenchmarkError):
+    pass
+
+
+class SolverFailedError(JijBenchmarkError):
+    pass
