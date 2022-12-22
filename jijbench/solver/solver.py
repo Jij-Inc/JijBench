@@ -31,7 +31,8 @@ class CallableSolver:
         try:
             ret = self.function(**kwargs)
         except Exception as e:
-            raise SolverFailedError(e)
+            msg = f'An error occurred inside your solver. Please check implementation of "{self.name}". -> {e}'
+            raise SolverFailedError(msg)
         return ret
 
     @property

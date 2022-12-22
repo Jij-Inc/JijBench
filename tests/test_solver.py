@@ -1,5 +1,4 @@
 import pytest
-import jijmodeling as jm
 
 from jijbench.exceptions import SolverFailedError
 from jijbench.solver import CallableSolver
