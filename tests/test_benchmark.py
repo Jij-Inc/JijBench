@@ -6,6 +6,9 @@ import numpy as np
 import pytest
 
 import jijbench as jb
+from jijbench.exceptions import SolverFailedError
+
+from jijbench.exceptions import ConcurrentFailedError
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -235,6 +238,15 @@ def test_benchmark_with_custom_solver():
     assert bench.table["solver_return_values[1]"][0] == 1.0
 
 
+def test_benchmark_with_custom_solver_by_sync_False():
+    def func():
+        return "a", 1
+
+    bench = jb.Benchmark({"num_reads": [1, 2], "num_sweeps": [10]}, solver=func)
+    with pytest.raises(ConcurrentFailedError):
+        bench.run(sync=False)
+
+
 def test_benchmark_with_custom_sample_model(
     problem,
     ph_value,
@@ -433,6 +445,15 @@ def test_benchmark_for_custom_solver_return_jm_sampleset():
 
     bench = jb.Benchmark(params={"dummy": [1]}, solver=func)
     bench.run()
+
+
+def test_benchmark_for_custom_solver_failed():
+    def custom_solver_failed():
+        raise Exception("solver is failed.")
+
+    bench = jb.Benchmark(params={"dummy": [1]}, solver=custom_solver_failed)
+    with pytest.raises(SolverFailedError):
+        bench.run()
 
 
 def test_benchmark_for_num_feasible():
