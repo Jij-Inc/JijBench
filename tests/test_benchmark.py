@@ -395,6 +395,20 @@ def test_load_invalid_benchmark_id():
     bench = jb.load(benchmark_id=INVALID_BENCHMARK_ID)
 
 
+def test_load_invalid_experiment_id():
+    INVALID_EXPERIMENT_ID = ["invalid_experiment_id"]
+
+    def func1(x):
+        return 2 * x
+
+    bench = jb.Benchmark(params={"x": [1, 2, 3]}, solver=func1, benchmark_id="test")
+    bench.run()
+
+    del bench
+
+    bench = jb.load(benchmark_id="test", experiment_id=INVALID_EXPERIMENT_ID)
+
+
 def test_save():
     def func1(x):
         return 2 * x
