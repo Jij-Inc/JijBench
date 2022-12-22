@@ -18,3 +18,7 @@ class UnsupportedInstanceDataError(JijBenchmarkError):
 
 class UnsupportedSettingError(JijBenchmarkError):
     pass
+
+
+class SolverFailedError(JijBenchmarkError):
+    pass
