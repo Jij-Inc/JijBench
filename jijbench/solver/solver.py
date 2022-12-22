@@ -12,6 +12,7 @@ __all__ = []
 
 class CallableSolver:
     def __init__(self, solver):
+        self._is_jijzept_sampler = False
         self.function = self._parse_solver(solver)
         self._name = self.function.__name__
         self._ret_names = (
@@ -41,8 +42,8 @@ class CallableSolver:
         return self._ret_names
 
     @property
-    def custom_solver_flg(self):
-        return self._custom_solver_flg
+    def is_jijzept_sampler(self):
+        return self._is_jijzept_sampler
 
     @ret_names.setter
     def ret_names(self, names):
@@ -63,10 +64,9 @@ class CallableSolver:
 
     def _parse_solver(self, solver):
         if isinstance(solver, str):
-            self._custom_solver_flg = False
+            self._is_jijzept_sampler = True
             return getattr(DefaultSolver(), solver)
         elif isinstance(solver, Callable):
-            self._custom_solver_flg = True
             return solver
         else:
             return

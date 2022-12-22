@@ -154,7 +154,7 @@ class Benchmark:
         """
         if sync is False:
             for solver in self.solver:
-                if solver.custom_solver_flg:
+                if solver.is_jijzept_sampler is False:
                     raise UnsupportedSettingError(
                         "sync=False is not supported using your custom solver."
                     )
