@@ -379,7 +379,6 @@ def test_store_failed():
             "measuring_time": {"solve": None, "system": None, "total": None},
         }
     )
-    print(s)
 
     experiment = jb.Experiment(autosave=False)
 
