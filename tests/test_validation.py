@@ -1,9 +1,12 @@
 import pytest
 from jijbench.benchmark import validation
 
-
 OBJECT = "OBJECT"
+
+UNSUPPORTED_SOLVER = 0
+
 UNSUPPORTED_PROBLEM = "unsupported_problem"
+
 UNSUPPORTED_INSTANCE_DATA = "unsupported_instance_data"
 UNSUPPORTED_INSTANCE_DATA_TUPLE = ()
 UNSUPPORTED_INSTANCE_DATA_LIST_0 = [[()]]
@@ -12,24 +15,34 @@ UNSUPPORTED_INSTANCE_DATA_LIST_2 = [()]
 UNSUPPORTED_INSTANCE_DATA_LIST_3 = [""]
 
 
+@validation.on_solver
+def receive_solver_function(obj, solver):
+    pass
+
+
+def test_on_solver_for_unsupported_solver():
+    with pytest.raises(TypeError):
+        receive_solver_function(OBJECT, UNSUPPORTED_SOLVER)
+
+
 @validation.on_problem
-def get_problem_function(obj, problem):
+def receive_problem_function(obj, problem):
     pass
 
 
 def test_on_problem_for_unsupported_problem():
     with pytest.raises(TypeError):
-        get_problem_function(OBJECT, UNSUPPORTED_PROBLEM)
+        receive_problem_function(OBJECT, UNSUPPORTED_PROBLEM)
 
 
 @validation.on_instance_data
-def get_instance_data_function(obj, instance_data):
+def receive_instance_data_function(obj, instance_data):
     pass
 
 
 def test_on_instance_data_for_unsupported_instance_data():
     with pytest.raises(TypeError):
-        get_instance_data_function(OBJECT, UNSUPPORTED_INSTANCE_DATA)
+        receive_instance_data_function(OBJECT, UNSUPPORTED_INSTANCE_DATA)
 
 
 def test_tuple_to_instance_data_for_unsupported_instance_data_tuple():
