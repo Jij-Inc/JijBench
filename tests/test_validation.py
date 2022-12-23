@@ -1,9 +1,5 @@
 import pytest
 from jijbench.benchmark import validation
-from jijbench.exceptions import (
-    UnsupportedProblemError,
-    UnsupportedInstanceDataError,
-)
 
 
 OBJECT = "OBJECT"
@@ -22,7 +18,7 @@ def get_problem_function(obj, problem):
 
 
 def test_on_problem_for_unsupported_problem():
-    with pytest.raises(UnsupportedProblemError):
+    with pytest.raises(TypeError):
         get_problem_function(OBJECT, UNSUPPORTED_PROBLEM)
 
 
@@ -32,12 +28,12 @@ def get_instance_data_function(obj, instance_data):
 
 
 def test_on_instance_data_for_unsupported_instance_data():
-    with pytest.raises(UnsupportedInstanceDataError):
+    with pytest.raises(TypeError):
         get_instance_data_function(OBJECT, UNSUPPORTED_INSTANCE_DATA)
 
 
 def test_tuple_to_instance_data_for_unsupported_instance_data_tuple():
-    with pytest.raises(UnsupportedInstanceDataError):
+    with pytest.raises(TypeError):
         validation._tuple_to_instance_data(UNSUPPORTED_INSTANCE_DATA_TUPLE)
 
 
@@ -55,5 +51,5 @@ params = {
     ids=list(params.keys()),
 )
 def test_list_to_instance_data_for_unsupported_instance_data_list(instance_data):
-    with pytest.raises(UnsupportedInstanceDataError):
+    with pytest.raises(TypeError):
         validation._list_to_instance_data(instance_data)
