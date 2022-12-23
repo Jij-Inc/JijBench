@@ -3,8 +3,6 @@ from jijbench.benchmark import validation
 
 OBJECT = "OBJECT"
 
-UNSUPPORTED_SOLVER = 0
-
 UNSUPPORTED_PROBLEM = "unsupported_problem"
 
 UNSUPPORTED_INSTANCE_DATA = "unsupported_instance_data"
@@ -13,16 +11,6 @@ UNSUPPORTED_INSTANCE_DATA_LIST_0 = [[()]]
 UNSUPPORTED_INSTANCE_DATA_LIST_1 = [[""]]
 UNSUPPORTED_INSTANCE_DATA_LIST_2 = [()]
 UNSUPPORTED_INSTANCE_DATA_LIST_3 = [""]
-
-
-@validation.on_solver
-def receive_solver_function(obj, solver):
-    pass
-
-
-def test_on_solver_for_unsupported_solver():
-    with pytest.raises(TypeError):
-        receive_solver_function(OBJECT, UNSUPPORTED_SOLVER)
 
 
 @validation.on_problem
