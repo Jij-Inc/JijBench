@@ -57,7 +57,7 @@ def on_instance_data(fn):
             if instance_data is None:
                 fn(obj, instance_data)
             else:
-                raise TypeError("problem of this type is not supported.")
+                raise TypeError("instance data of this type is not supported.")
 
     return wrapper
 

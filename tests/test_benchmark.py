@@ -482,3 +482,35 @@ def test_benchmark_for_change_solver_return_name():
     )
     bench.run()
     assert "return_1" in bench.table.columns
+
+
+def test_bench_for_unsupported_solver():
+
+    UNSUPPORTED_SOLVER = 0
+
+    with pytest.raises(TypeError):
+        jb.Benchmark(params={"x": [1, 2, 3]}, solver=UNSUPPORTED_SOLVER)
+
+
+def test_bench_for_unsupported_problem():
+    UNSUPPORTED_PROBLEM = "unsupported_problem"
+
+    def func1(x):
+        return x
+
+    with pytest.raises(TypeError):
+        jb.Benchmark(params={"x": [1, 2, 3]}, solver=func1, problem=UNSUPPORTED_PROBLEM)
+
+
+def test_bench_for_unsupported_instance_data():
+    UNSUPPORTED_INSTANCE_DATA = "unsupported_instance_data"
+
+    def func1(x):
+        return x
+
+    with pytest.raises(TypeError):
+        jb.Benchmark(
+            params={"x": [1, 2, 3]},
+            solver=func1,
+            instance_data=UNSUPPORTED_INSTANCE_DATA,
+        )
