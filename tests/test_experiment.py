@@ -11,6 +11,7 @@ import openjij as oj
 import pytest
 
 import jijbench as jb
+from jijbench.exceptions import StoreResultFailedError
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -368,3 +369,13 @@ def test_store_as_artifact_for_obj_cannot_pickle():
     assert isinstance(loaded_experiment.artifact[run_id]["sampler"], str)
     assert isinstance(loaded_experiment.artifact[run_id]["sample_qubo"], str)
     assert loaded_experiment.artifact[run_id]["value"] == 1.0
+
+
+def test_store_raise_StoreResultFailedError():
+    # TODO: experimentクラスのstoreがエラーをレイズするようなケースを、このテストの入力として作成する
+    # このテストは現状失敗します。上記TODOの通り、storeがエラーをレイズするような入力を与えればテストが通ります
+    experiment = jb.Experiment(autosave=False)
+
+    with pytest.raises(StoreResultFailedError):
+        with experiment:
+            experiment.store({"num_reads": 10})

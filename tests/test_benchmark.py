@@ -6,9 +6,11 @@ import numpy as np
 import pytest
 
 import jijbench as jb
-from jijbench.exceptions import SolverFailedError
-
-from jijbench.exceptions import ConcurrentFailedError
+from jijbench.exceptions import (
+    SolverFailedError,
+    ConcurrentFailedError,
+    StoreResultFailedError,
+)
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -482,3 +484,14 @@ def test_benchmark_for_change_solver_return_name():
     )
     bench.run()
     assert "return_1" in bench.table.columns
+
+
+def test_benchmark_for_store_failed_case():
+    # TODO: experimentクラスのstoreがエラーをレイズするようなケースを、このテストの入力として作成する
+    # このテストは現状失敗します。上記TODOの通り、storeがエラーをレイズするような入力をrunに与えればテストが通ります
+    def func(x):
+        return x
+
+    bench = jb.Benchmark(params={"x": [1, 2, 3]}, solver=func)
+    with pytest.raises(StoreResultFailedError):
+        bench.run()

@@ -9,6 +9,7 @@ from jijbench.exceptions.exceptions import (
     UnsupportedInstanceDataError,
     ConcurrentFailedError,
     SolverFailedError,
+    StoreResultFailedError,
 )
 
 __all__ = [
@@ -17,4 +18,5 @@ __all__ = [
     "UnsupportedInstanceDataError",
     "ConcurrentFailedError",
     "SolverFailedError",
+    "StoreResultFailedError",
 ]
