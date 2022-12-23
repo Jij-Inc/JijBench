@@ -487,11 +487,16 @@ def test_benchmark_for_change_solver_return_name():
 
 
 def test_benchmark_for_store_failed_case():
-    # TODO: experimentクラスのstoreがエラーをレイズするようなケースを、このテストの入力として作成する
-    # このテストは現状失敗します。上記TODOの通り、storeがエラーをレイズするような入力をrunに与えればテストが通ります
-    def func(x):
-        return x
+    s = jm.SampleSet.from_serializable(
+        {
+            "record": {"solution": {"x": [(([],), [], (1,))]}, "num_occurrences": [1]},
+            "evaluation": {"energy": [1.0]},
+            "measuring_time": {"solve": None, "system": None, "total": None},
+        }
+    )
 
-    bench = jb.Benchmark(params={"x": [1, 2, 3]}, solver=func)
+    bench = jb.Benchmark(
+        params={"sampleset": [s]}, solver=lambda: (), benchmark_id="test"
+    )
     with pytest.raises(StoreResultFailedError):
         bench.run()

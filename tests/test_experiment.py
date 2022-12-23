@@ -371,11 +371,18 @@ def test_store_as_artifact_for_obj_cannot_pickle():
     assert loaded_experiment.artifact[run_id]["value"] == 1.0
 
 
-def test_store_raise_StoreResultFailedError():
-    # TODO: experimentクラスのstoreがエラーをレイズするようなケースを、このテストの入力として作成する
-    # このテストは現状失敗します。上記TODOの通り、storeがエラーをレイズするような入力を与えればテストが通ります
+def test_store_failed():
+    s = jm.SampleSet.from_serializable(
+        {
+            "record": {"solution": {"x": [(([],), [], (1,))]}, "num_occurrences": [1]},
+            "evaluation": {"constraint_violations": None},
+            "measuring_time": {"solve": None, "system": None, "total": None},
+        }
+    )
+    print(s)
+
     experiment = jb.Experiment(autosave=False)
 
     with pytest.raises(StoreResultFailedError):
         with experiment:
-            experiment.store({"num_reads": 10})
+            experiment.store({"sampleset": s})
