@@ -84,7 +84,6 @@ def _parse_jm_sampleset(
     Returns:
         Tuple[List[str], List]: (columns, values)
     """
-
     table = experiment._table
     energies = np.array(jm_sampleset.evaluation.energy)
     objectives = np.array(jm_sampleset.evaluation.objective)
@@ -93,10 +92,8 @@ def _parse_jm_sampleset(
     num_sweeps = np.nan
 
     constraint_violations = jm_sampleset.evaluation.constraint_violations
-
     num_feasible = sum(jm_sampleset.feasible().record.num_occurrences)
     num_samples = num_occurrences.sum()
-
     sampling_time = np.nan
     # TODO スキーマが変わったら変更する
     solving_time = jm_sampleset.measuring_time.solve

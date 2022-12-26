@@ -40,19 +40,19 @@ def test_knapsack():
 
 def test_get_default_problem():
     problem = jb.get_problem("TSP")
-    assert problem.name == "travelling_salesman"
+    assert problem.name == "travelling-salesman"
 
     problem = jb.get_problem("TSPTW")
-    assert problem.name == "travelling_salesman_with_time_windows"
+    assert problem.name == "travelling-salesman-with-time-windows"
 
     problem = jb.get_problem("Knapsack")
     assert problem.name == "knapsack"
 
     problem = jb.get_problem("BinPacking")
-    assert problem.name == "bin_packing"
+    assert problem.name == "bin-packing"
 
     problem = jb.get_problem("NurseScheduling")
-    assert problem.name == "nurse_scheduling"
+    assert problem.name == "nurse-scheduling"
 
 
 def test_get_default_instance_data():
