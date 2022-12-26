@@ -10,6 +10,7 @@ from jijbench.exceptions import (
     SolverFailedError,
     ConcurrentFailedError,
     StoreResultFailedError,
+    LoadFailedError,
 )
 
 
@@ -395,6 +396,54 @@ def test_load():
     assert "func1" in bench.table["solver"].values
 
 
+def test_load_invalid_benchmark_id():
+    INVALID_BENCHMARK_ID = "invalid_benchmark_id"
+
+    def func1(x):
+        return 2 * x
+
+    bench = jb.Benchmark(params={"x": [1, 2, 3]}, solver=func1, benchmark_id="test")
+    bench.run()
+
+    del bench
+
+    with pytest.raises(LoadFailedError):
+        bench = jb.load(benchmark_id=INVALID_BENCHMARK_ID)
+
+
+def test_load_invalid_experiment_id():
+    INVALID_EXPERIMENT_ID = ["invalid_experiment_id"]
+
+    def func1(x):
+        return 2 * x
+
+    bench = jb.Benchmark(params={"x": [1, 2, 3]}, solver=func1, benchmark_id="test")
+    bench.run()
+
+    del bench
+
+    with pytest.raises(LoadFailedError):
+        bench = jb.load(benchmark_id="test", experiment_id=INVALID_EXPERIMENT_ID)
+
+
+def test_get_experiment_id_list():
+    from jijbench.benchmark.benchmark import get_experiment_id_list
+    from jijbench.components import ExperimentResultDefaultDir
+
+    save_dir = ExperimentResultDefaultDir
+
+    def func1(x):
+        return 2 * x
+
+    bench = jb.Benchmark(params={"x": [1, 2, 3]}, solver=func1, benchmark_id="test")
+    bench.run()
+    experiment_id_list = list(set(bench.table["experiment_id"].values))
+
+    experiment_id_list_load = get_experiment_id_list("test", save_dir)
+
+    assert sorted(experiment_id_list) == sorted(experiment_id_list_load)
+
+
 def test_save():
     def func1(x):
         return 2 * x
@@ -500,3 +549,35 @@ def test_benchmark_for_store_failed_case():
     )
     with pytest.raises(StoreResultFailedError):
         bench.run()
+
+
+def test_bench_for_unsupported_solver():
+
+    UNSUPPORTED_SOLVER = 0
+
+    with pytest.raises(TypeError):
+        jb.Benchmark(params={"x": [1, 2, 3]}, solver=UNSUPPORTED_SOLVER)
+
+
+def test_bench_for_unsupported_problem():
+    UNSUPPORTED_PROBLEM = "unsupported_problem"
+
+    def func1(x):
+        return x
+
+    with pytest.raises(TypeError):
+        jb.Benchmark(params={"x": [1, 2, 3]}, solver=func1, problem=UNSUPPORTED_PROBLEM)
+
+
+def test_bench_for_unsupported_instance_data():
+    UNSUPPORTED_INSTANCE_DATA = "unsupported_instance_data"
+
+    def func1(x):
+        return x
+
+    with pytest.raises(TypeError):
+        jb.Benchmark(
+            params={"x": [1, 2, 3]},
+            solver=func1,
+            instance_data=UNSUPPORTED_INSTANCE_DATA,
+        )

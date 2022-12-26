@@ -76,7 +76,7 @@ class CallableSolver:
         elif isinstance(solver, Callable):
             return solver
         else:
-            return
+            raise TypeError("solver of this type is not supported.")
 
 
 class DefaultSolver:
