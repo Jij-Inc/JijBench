@@ -262,7 +262,7 @@ def test_benchmark_with_custom_sample_model(
             {
                 "num_reads": [1, 2],
                 "num_sweeps": [10],
-                "multipliers": [{"knapsack_constraint": 1}],
+                "multipliers": [{"knapsack-constraint": 1}],
             },
             solver=sample_model,
             problem=problem,
@@ -309,7 +309,7 @@ def test_benchmark_with_custom_decode(
             {
                 "num_reads": [1, 2],
                 "num_sweeps": [10],
-                "multipliers": [{"knapsack_constraint": 1}],
+                "multipliers": [{"knapsack-constraint": 1}],
             },
             solver=sample_model,
             problem=problem,
