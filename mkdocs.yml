@@ -12,6 +12,8 @@ theme:
     primary: indigo
 
 plugins:
+  - git-revision-date-localized:
+     locale: ja
   - search
   - gen-files:
       scripts:
@@ -32,4 +34,4 @@ plugins:
 
 markdown_extensions:
   - pymdownx.superfences
-
+  - markdown_katex

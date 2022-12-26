@@ -1,12 +1,14 @@
 from __future__ import annotations
 
+import math, warnings
+
 from typing import TYPE_CHECKING, List, Tuple
 
 import numpy as np
 
 if TYPE_CHECKING:
     from dimod import SampleSet
-    from jijmodeling import DecodedSamples
+    from jijmodeling.sampleset import SampleSet as jm_SampleSet
 
     from jijbench.experiment.experiment import Experiment
 
@@ -68,42 +70,48 @@ def _parse_dimod_sampleset(
     return columns, values
 
 
-def _parse_jm_problem_decodedsamples(
-    experiment: "Experiment", decoded: "DecodedSamples"
+def _parse_jm_sampleset(
+    experiment: "Experiment", jm_sampleset: "jm_SampleSet"
 ) -> Tuple[List[str], List]:
-    """extract table data from jijmodeling.DecodedSamples
+    """extract table data from jijmodeling.SampleSet
 
-    This method is called in `Experiment._prase_record`.
+    This method is called in `Experiment._parse_record`.
 
     Args:
         experiment (Experiment): experiment object
-        decoded (jijmodeling.DecodedSamples): dimod sampleset
+        decoded (jijmodeling.SampleSet): jijmodeling sampleset
 
     Returns:
         Tuple[List[str], List]: (columns, values)
     """
 
     table = experiment._table
-    energies = decoded.energies
-    objectives: np.ndarray = decoded.objectives
-    num_occurrences = decoded.num_occurrences
+    energies = np.array(jm_sampleset.evaluation.energy)
+    objectives = np.array(jm_sampleset.evaluation.objective)
+    num_occurrences = np.array(jm_sampleset.record.num_occurrences)
     num_reads = np.nan
     num_sweeps = np.nan
 
-    constraint_violations = {}
-    for violation in decoded.constraint_violations:
-        for const_name, v in violation.items():
-            if const_name in constraint_violations.keys():
-                constraint_violations[const_name].append(v)
-            else:
-                constraint_violations[const_name] = [v]
+    constraint_violations = jm_sampleset.evaluation.constraint_violations
 
-    num_feasible = decoded.feasibles().num_occurrences.sum()
+    num_feasible = sum(jm_sampleset.feasible().record.num_occurrences)
     num_samples = num_occurrences.sum()
+
+    sampling_time = np.nan
+    # TODO スキーマが変わったら変更する
+    solving_time = jm_sampleset.measuring_time.solve
+    if solving_time.solve is None:
+        execution_time = np.nan
+        warnings.warn(
+            "'solve' of jijmodeling.SampleSet is None. Give it if you want to evaluate automatically."
+        )
+    else:
+        execution_time = solving_time.solve
 
     columns = table.get_energy_columns()
     columns += table.get_objective_columns()
     columns += table.get_num_columns()
+    columns += table.get_time_columns()
 
     values = [
         energies,
@@ -119,6 +127,8 @@ def _parse_jm_problem_decodedsamples(
         num_sweeps,
         num_feasible,
         num_samples,
+        sampling_time,
+        execution_time,
     ]
 
     for const_name, v in constraint_violations.items():

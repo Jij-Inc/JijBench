@@ -1,5 +1,4 @@
 from __future__ import annotations
-from re import A
 
 from typing import Any, Union, Callable
 
@@ -8,46 +7,44 @@ import warnings
 
 
 class Scorer:
-    def __init__(self, score_func: Callable, kwargs):
+    def __init__(self, score_func: Callable, kwargs, is_warning=True):
         self._score_func = score_func
         self._kwargs = kwargs
+        self._is_warning = is_warning
 
     def __call__(self, x: Any):
-        if np.isnan([x.objective]).any():
-            warnings.warn(
-                'TTS cannot be calculated because "objective" is not stored in table attribute of jijbench.Benchmark instance.'
-            )
-            return np.nan
+        if self._is_warning:
 
-        if np.isnan([x.execution_time]).any():
-            warnings.warn(
-                'TTS cannot be calculated because "execution_time" is not stored in table attribute of jijbench.Benchmark instance.'
-            )
-            return np.nan
+            def _generate_warning_msg(metrics):
+                return f'{self._score_func.__name__} cannot be calculated because "{metrics}" is not stored in table attribute of jijbench.Benchmark instance.'
 
-        if np.isnan([x.num_occurrences]).any():
-            warnings.warn(
-                'TTS cannot be calculated because "num_occurrences" is not stored in table attribute of jijbench.Benchmark instance.'
-            )
-            return np.nan
+            if np.isnan([x.objective]).any():
+                warnings.warn(_generate_warning_msg("objective"))
+                return np.nan
 
-        if np.isnan([x.num_feasible]).any():
-            warnings.warn(
-                'TTS cannot be calculated because "num_feasible" is not stored in table attribute of jijbench.Benchmark instance.'
-            )
-            return np.nan
+            if np.isnan([x.execution_time]).any():
+                warnings.warn(_generate_warning_msg("execution_time"))
+                return np.nan
 
-        if np.isnan(list(self._kwargs.values())).any():
-            warnings.warn(
-                "TTS cannot be calculated because np.nan exists in scoring method."
-            )
-            return np.nan
+            if np.isnan([x.num_occurrences]).any():
+                warnings.warn(_generate_warning_msg("num_occurrences"))
+                return np.nan
+
+            if np.isnan([x.num_feasible]).any():
+                warnings.warn(_generate_warning_msg("num_feasible"))
+                return np.nan
+
+            if np.isnan(list(self._kwargs.values())).any():
+                warnings.warn(
+                    f"{self._score_func.__name__} cannot be calculated because NaN exists in args for scoring method."
+                )
+                return np.nan
 
         return self._score_func(x, **self._kwargs)
 
 
-def make_scorer(score_func: Callable, **kwargs):
-    return Scorer(score_func, kwargs)
+def make_scorer(score_func: Callable, is_warning=False, **kwargs):
+    return Scorer(score_func, kwargs, is_warning)
 
 
 def optimal_time_to_solution(
@@ -84,7 +81,7 @@ def derived_time_to_solution(
         opt_value = x.objective[feas].min()
         ps = success_probability(x, opt_value)
     else:
-        ps = 0.
+        ps = 0.0
 
     if ps:
         return np.log(1 - pr) / np.log(1 - ps) * x.execution_time

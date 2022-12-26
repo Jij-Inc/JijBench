@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import datetime, os, pickle, re
 
+from cProfile import run
 from typing import Any, Callable, Dict, List, Optional, Union
 
 import dimod
@@ -10,10 +11,7 @@ import numpy as np
 import pandas as pd
 
 from jijbench.components import ID, Artifact, Dir, ExperimentResultDefaultDir, Table
-from jijbench.experiment._parser import (
-    _parse_dimod_sampleset,
-    _parse_jm_problem_decodedsamples,
-)
+from jijbench.experiment._parser import _parse_dimod_sampleset, _parse_jm_sampleset
 
 np.set_printoptions(threshold=np.inf)
 
@@ -31,6 +29,14 @@ class Experiment:
         autosave: bool = True,
         save_dir: str = ExperimentResultDefaultDir,
     ):
+        """constructor of Experiment class
+
+        Args:
+            benchmark_id (Optional[Union[int, str]]): benchmark id for experiment. if None, this id is generated automatically. Defaults to None.
+            experiment_id (Optional[Union[int, str]]): experiment id for experiment. if None, this id is generated automatically. Defaults to None.
+            autosave (bool, optional): autosave option. if True, the experiment result is stored to `save_dir` directory. Defaults to True.
+            save_dir (str, optional): directory for saving experiment results. Defaults to ExperimentResultDefaultDir.
+        """
         self.autosave = autosave
         self.save_dir = os.path.normcase(save_dir)
 
@@ -80,6 +86,7 @@ class Experiment:
     def start(self):
         self._id.reset(kind="run")
         self._dir.make_dirs(self.run_id)
+        # TODO fix deprecate
         self._table.data.loc[self._table.current_index] = np.nan
         return self
 
@@ -102,10 +109,10 @@ class Experiment:
         artifact_keys: Optional[List[str]] = None,
         timestamp: Optional[Union[pd.Timestamp, datetime.datetime]] = None,
     ):
-        """store results
+        """store experiment results
 
         Args:
-            results (Dict[str, Any]): ex. {"num_reads": 10, "results": sampleset}
+            results (Dict[str, Any]): ex. `{"num_reads": 10, "results": sampleset}`
             table_keys (list[str], optional): _description_. Defaults to None.
             artifact_keys (list[str], optional): _description_. Defaults to None.
             timestamp: Optional[Union[pd.Timestamp, datetime.datetime]]: timestamp. Defaults to None (current time is recorded).
@@ -166,9 +173,15 @@ class Experiment:
 
     def store_as_artifact(
         self,
-        artifact,
+        record: dict,
         timestamp: Optional[Union[pd.Timestamp, datetime.datetime]] = None,
     ):
+        """store as artifact
+
+        Args:
+            artifact (_type_): _description_
+            timestamp (Optional[Union[pd.Timestamp, datetime.datetime]], optional): _description_. Defaults to None.
+        """
 
         if timestamp is None:
             timestamp = pd.Timestamp.now()
@@ -176,10 +189,10 @@ class Experiment:
             timestamp = pd.Timestamp(timestamp)
 
         self._artifact.timestamp.update({self.run_id: timestamp})
-        self._artifact.data.update({self.run_id: artifact})
+        self._artifact.data.update({self.run_id: record.copy()})
 
     def _parse_record(self, record):
-        """if record includes `dimod.SampleSet` or `DecodedSamples`, reconstruct record to a new one.
+        """if record includes `dimod.SampleSet` or `jijmodeling.SampleSet`, reconstruct record to a new one.
 
         Args:
             record (dict): record
@@ -202,8 +215,8 @@ class Experiment:
                 columns, values = _parse_dimod_sampleset(self, v)
                 for new_k, new_v in zip(columns, values):
                     _update_record()
-            elif isinstance(v, jm.DecodedSamples):
-                columns, values = _parse_jm_problem_decodedsamples(self, v)
+            elif isinstance(v, jm.SampleSet):
+                columns, values = _parse_jm_sampleset(self, v)
                 for new_k, new_v in zip(columns, values):
                     _update_record()
             else:
@@ -251,11 +264,30 @@ class Experiment:
         df.to_csv(file_name, mode="a", header=not os.path.exists(file_name))
 
     def log_artifact(self):
+        def _is_picklable(obj):
+            try:
+                pickle.dumps(obj)
+                return True
+            except TypeError:
+                return False
+
         run_id = self.run_id
         if run_id in self._artifact.data.keys():
             save_dir = os.path.normcase(f"{self._dir.artifact_dir}/{run_id}")
+
+            record = {}
+            for key, value in self._artifact.data[run_id].items():
+                if _is_picklable(value):
+                    if isinstance(value, Callable):
+                        value = re.split(
+                            r" at| of", re.split(r"function |method ", str(value))[-1]
+                        )[0]
+                else:
+                    value = str(value)
+                record[key] = value
+
             with open(os.path.normcase(f"{save_dir}/artifact.pkl"), "wb") as f:
-                pickle.dump(self._artifact.data[run_id], f)
+                pickle.dump(record, f)
 
             timestamp = self._artifact.timestamp[run_id]
             with open(os.path.normcase(f"{save_dir}/timestamp.txt"), "w") as f:

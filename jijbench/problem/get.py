@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import List, Tuple
 
-from jijmodeling.transpilers.type_annotations import PH_VALUES_INTERFACE
+from jijmodeling.type_annotations import PH_VALUES_INTERFACE
 
 from jijbench import problem
 

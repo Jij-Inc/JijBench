@@ -1,15 +1,14 @@
 from __future__ import annotations
-from ftplib import ftpcp
 
-import pytest
 import os, shutil
 
 import dimod
+import jijmodeling as jm
 import numpy as np
 import openjij as oj
+import pytest
 
 import jijbench as jb
-import jijmodeling as jm
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -31,19 +30,30 @@ def bench_for_success_probability_eq_1p0():
         problem = jm.Problem("simple_problem")
         problem += jm.Sum(i, d[i] * x[i])
         problem += jm.Constraint("onehot", jm.Sum(i, d[i] * x[i]) == 1)
-        instance_data = {"d": [1, 2, 3]}
 
-        sampleset = dimod.SampleSet.from_samples(
-            samples_like=[
-                {"x[0]": 1, "x[1]": 0, "x[2]": 0},
-            ],
-            vartype="BINARY",
-            energy=[1],
-            num_occurrences=[4],
+        jm_sampleset_dict = {
+            "record": {
+                "solution": {"x": [(([0],), [1], (3,))]},
+                "num_occurrences": [4],
+            },
+            "evaluation": {
+                "energy": [1.0],
+                "objective": [1.0],
+                "constraint_violations": {"onehot": [0.0]},
+                "penalty": {},
+            },
+            "measuring_time": {
+                "solve": None,
+                "system": None,
+                "total": None,
+            },
+        }
+        jm_sampleset = jm.SampleSet.from_serializable(jm_sampleset_dict)
+        solving_time = jm.SolvingTime(
+            **{"preprocess": 1.0, "solve": 1.0, "postprocess": 1.0}
         )
-        sampleset.info["execution_time"] = 1.0
-        decoded_samples = problem.decode(sampleset, instance_data)
-        return sampleset, decoded_samples
+        jm_sampleset.measuring_time.solve = solving_time
+        return jm_sampleset
 
     bench = jb.Benchmark(
         params={"multipliers": [{"onehot": 1}, {"onehot": 2}, {"onehot": 3}]},
@@ -62,20 +72,30 @@ def bench_for_success_probability_eq_0p5():
         problem = jm.Problem("simple_problem")
         problem += jm.Sum(i, d[i] * x[i])
         problem += jm.Constraint("onehot", jm.Sum(i, d[i] * x[i]) == 1)
-        instance_data = {"d": [1, 2, 3]}
 
-        sampleset = dimod.SampleSet.from_samples(
-            samples_like=[
-                {"x[0]": 1, "x[1]": 0, "x[2]": 0},
-                {"x[0]": 0, "x[1]": 0, "x[2]": 0},
-            ],
-            vartype="BINARY",
-            energy=[1],
-            num_occurrences=[2, 2],
+        jm_sampleset_dict = {
+            "record": {
+                "solution": {"x": [(([0],), [1], (3,)), (([],), [], (3,))]},
+                "num_occurrences": [2, 2],
+            },
+            "evaluation": {
+                "energy": [1.0, 1.0],
+                "objective": [1.0, 0.0],
+                "constraint_violations": {"onehot": [0.0, 1.0]},
+                "penalty": {},
+            },
+            "measuring_time": {
+                "solve": None,
+                "system": None,
+                "total": None,
+            },
+        }
+        jm_sampleset = jm.SampleSet.from_serializable(jm_sampleset_dict)
+        solving_time = jm.SolvingTime(
+            **{"preprocess": 1.0, "solve": 1.0, "postprocess": 1.0}
         )
-        sampleset.info["execution_time"] = 1.0
-        decoded_samples = problem.decode(sampleset, instance_data)
-        return sampleset, decoded_samples
+        jm_sampleset.measuring_time.solve = solving_time
+        return jm_sampleset
 
     bench = jb.Benchmark(
         params={"multipliers": [{"onehot": 1}, {"onehot": 2}, {"onehot": 3}]},
@@ -94,19 +114,27 @@ def bench_for_success_probability_eq_0p0():
         problem = jm.Problem("simple_problem")
         problem += jm.Sum(i, d[i] * x[i])
         problem += jm.Constraint("onehot", jm.Sum(i, d[i] * x[i]) == 1)
-        instance_data = {"d": [1, 2, 3]}
 
-        sampleset = dimod.SampleSet.from_samples(
-            samples_like=[
-                {"x[0]": 0, "x[1]": 0, "x[2]": 0},
-            ],
-            vartype="BINARY",
-            energy=[1],
-            num_occurrences=[4],
+        jm_sampleset_dict = {
+            "record": {"solution": {"x": [(([],), [], (3,))]}, "num_occurrences": [4]},
+            "evaluation": {
+                "energy": [1.0],
+                "objective": [0.0],
+                "constraint_violations": {"onehot": [1.0]},
+                "penalty": {},
+            },
+            "measuring_time": {
+                "solve": None,
+                "system": None,
+                "total": None,
+            },
+        }
+        jm_sampleset = jm.SampleSet.from_serializable(jm_sampleset_dict)
+        solving_time = jm.SolvingTime(
+            **{"preprocess": 1.0, "solve": 1.0, "postprocess": 1.0}
         )
-        sampleset.info["execution_time"] = 1.0
-        decoded_samples = problem.decode(sampleset, instance_data)
-        return sampleset, decoded_samples
+        jm_sampleset.measuring_time.solve = solving_time
+        return jm_sampleset
 
     bench = jb.Benchmark(
         params={"multipliers": [{"onehot": 1}, {"onehot": 2}, {"onehot": 3}]},
@@ -129,37 +157,35 @@ def bench_for_multi_const_problem():
         problem += jm.Constraint("onehot1", x[i, :] == 1, forall=i)
         problem += jm.Constraint("onehot2", x[:, j] == 1, forall=j)
 
-        instance_data = {"d": [[1, 8], [16, 2]]}
-
-        sampleset = dimod.SampleSet.from_samples(
-            samples_like=[
-                {"x[0][0]": 1, "x[0][1]": 0, "x[1][0]": 0, "x[1][1]": 1},  # 最適解
-                {
-                    "x[0][0]": 0,
-                    "x[0][1]": 1,
-                    "x[1][0]": 1,
-                    "x[1][1]": 0,
-                },  # 実行可能解だけど最適解ではない
-                {
-                    "x[0][0]": 0,
-                    "x[0][1]": 0,
-                    "x[1][0]": 0,
-                    "x[1][1]": 0,
-                },  # 実行不可能解、目的関数値 < 最適値
-                {
-                    "x[0][0]": 1,
-                    "x[0][1]": 0,
-                    "x[1][0]": 1,
-                    "x[1][1]": 0,
-                },  # 制約onehot1だけ満たす
-            ],
-            vartype="BINARY",
-            energy=[3, 24, 0, 20],
-            num_occurrences=[4, 3, 2, 1],
+        jm_sampleset_dict = {
+            "record": {
+                "solution": {
+                    "x": [
+                        (([0, 1], [0, 1]), [1, 1], (2, 2)),
+                        (([0, 1], [1, 0]), [1, 1], (2, 2)),
+                        (([], []), [], (2, 2)),
+                        (([0, 1], [0, 0]), [1, 1], (2, 2)),
+                    ]
+                },
+                "num_occurrences": [4, 3, 2, 1],
+            },
+            "evaluation": {
+                "energy": [3.0, 24.0, 0.0, 20.0],
+                "objective": [3.0, 24.0, 0.0, 17.0],
+                "constraint_violations": {
+                    "onehot1": [0.0, 0.0, 2.0, 0.0],
+                    "onehot2": [0.0, 0.0, 2.0, 2.0],
+                },
+                "penalty": {},
+            },
+            "measuring_time": {"solve": None, "system": None, "total": None},
+        }
+        jm_sampleset = jm.SampleSet.from_serializable(jm_sampleset_dict)
+        solving_time = jm.SolvingTime(
+            **{"preprocess": 1.0, "solve": 1.0, "postprocess": 1.0}
         )
-        sampleset.info["execution_time"] = 1.0
-        decoded_samples = problem.decode(sampleset, instance_data)
-        return sampleset, decoded_samples
+        jm_sampleset.measuring_time.solve = solving_time
+        return jm_sampleset
 
     bench = jb.Benchmark(
         params={"multipliers": [{"onehot": 1}, {"onehot": 2}, {"onehot": 3}]},
@@ -210,7 +236,6 @@ def test_single_metrics(
     # 成功確率1.0, 0.5, 0.0となるような解が得られた場合、evaluatorが本当にその値を返すかどうかのテスト。最適値は1.0
     evaluator = jb.Evaluator(bench_for_success_probability_eq_1p0)
     metrics = evaluator.calc_typical_metrics(opt_value=opt_value)
-
     assert (
         metrics["success_probability"][0]
         == evaluator.success_probability(opt_value=opt_value)[0]
@@ -281,7 +306,7 @@ def test_metrics_given_dimod_sampleset():
     assert np.isnan(re[0])
 
 
-def test_metrics_given_jm_decoded_samples():
+def test_metrics_given_jm_sampleset():
     def solve():
         d = jm.Placeholder("d", dim=2)
         x = jm.Binary("x", shape=d.shape)
@@ -293,45 +318,41 @@ def test_metrics_given_jm_decoded_samples():
         problem += jm.Constraint("onehot1", x[i, :] == 1, forall=i)
         problem += jm.Constraint("onehot2", x[:, j] == 1, forall=j)
 
-        instance_data = {"d": [[1, 8], [16, 2]]}
-
-        sampleset = dimod.SampleSet.from_samples(
-            samples_like=[
-                {"x[0][0]": 1, "x[0][1]": 0, "x[1][0]": 0, "x[1][1]": 1},  # 最適解
-                {
-                    "x[0][0]": 0,
-                    "x[0][1]": 1,
-                    "x[1][0]": 1,
-                    "x[1][1]": 0,
-                },  # 実行可能解だけど最適解ではない
-                {
-                    "x[0][0]": 0,
-                    "x[0][1]": 0,
-                    "x[1][0]": 0,
-                    "x[1][1]": 0,
-                },  # 実行不可能解、目的関数値 < 最適値
-                {
-                    "x[0][0]": 1,
-                    "x[0][1]": 0,
-                    "x[1][0]": 1,
-                    "x[1][1]": 0,
-                },  # 制約onehot1だけ満たす
-            ],
-            vartype="BINARY",
-            energy=[3, 24, 0, 20],
-            num_occurrences=[4, 3, 2, 1],
+        jm_sampleset_dict = {
+            "record": {
+                "solution": {
+                    "x": [
+                        (([0, 1], [0, 1]), [1, 1], (2, 2)),
+                        (([0, 1], [1, 0]), [1, 1], (2, 2)),
+                        (([], []), [], (2, 2)),
+                        (([0, 1], [0, 0]), [1, 1], (2, 2)),
+                    ]
+                },
+                "num_occurrences": [4, 3, 2, 1],
+            },
+            "evaluation": {
+                "energy": [3.0, 24.0, 0.0, 20.0],
+                "objective": [3.0, 24.0, 0.0, 17.0],
+                "constraint_violations": {
+                    "onehot1": [0.0, 0.0, 2.0, 0.0],
+                    "onehot2": [0.0, 0.0, 2.0, 2.0],
+                },
+                "penalty": {},
+            },
+            "measuring_time": {"solve": None, "system": None, "total": None},
+        }
+        jm_sampleset = jm.SampleSet.from_serializable(jm_sampleset_dict)
+        solving_time = jm.SolvingTime(
+            **{"preprocess": 1.0, "solve": 1.0, "postprocess": 1.0}
         )
-        sampleset.info["execution_time"] = 1.0
-        decoded_samples = problem.decode(sampleset, instance_data)
-        return sampleset, decoded_samples
+        jm_sampleset.measuring_time.solve = solving_time
+        return jm_sampleset
 
     experiment = jb.Experiment(autosave=False)
     for _ in range(3):
         with experiment.start():
-            sampleset, decoded_samples = solve()
-            experiment.store(
-                {"sampleset": sampleset, "decoded_samples": decoded_samples}
-            )
+            sampleset = solve()
+            experiment.store({"sampleset": sampleset})
 
     evaluator = jb.Evaluator(experiment)
     opt_value = 3.0
@@ -385,3 +406,27 @@ def test_evaluate_for_multi_const_problem(bench_for_multi_const_problem):
     assert metrics["TTS(optimal)"][0] == np.inf
     assert metrics["TTS(feasible)"][0] == 1.0
     assert metrics["TTS(derived)"][0] == np.log(1 - 0.7) / np.log(1 - 0.4)
+
+
+def test_warning():
+    def solve():
+        pass
+
+    opt_value = 0.0
+    bench = jb.Benchmark(params={"dummy": [0]}, solver=solve)
+    bench.run()
+
+    evaluator = jb.Evaluator(bench)
+    evaluator.calc_typical_metrics(opt_value=opt_value)
+
+    evaluator.table.at[0, "objective"] = np.array([0])
+    evaluator.calc_typical_metrics(opt_value=opt_value)
+
+    evaluator.table.execution_time = 0
+    evaluator.calc_typical_metrics(opt_value=opt_value)
+
+    evaluator.table.at[0, "num_occurrences"] = np.array([0])
+    evaluator.calc_typical_metrics(opt_value=opt_value)
+
+    evaluator.table.num_feasible = 0
+    evaluator.calc_typical_metrics(opt_value=opt_value, pr=np.nan)

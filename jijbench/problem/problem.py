@@ -187,8 +187,8 @@ class NurseScheduling(JijModelingTarget, DefaultInstanceMixin):
         # 決定変数
         x = jm.Binary("x", shape=(I, D, T))  # 人iを日にちdにシフトtを割当てるかどうか
         k = jm.Binary("k", shape=(I, W))  # week wに働いたかどうか
-        y = jm.LogEncInteger("y", lower=0, upper=u, shape=(D, T))  # 日dのシフトtの不足人数
-        z = jm.LogEncInteger("z", lower=0, upper=u, shape=(D, T))  # 日dのシフトtの過剰人数
+        y = jm.Integer("y", lower=0, upper=u, shape=(D, T))  # 日dのシフトtの不足人数
+        z = jm.Integer("z", lower=0, upper=u, shape=(D, T))  # 日dのシフトtの過剰人数
 
         # Objective Function
         term1 = jm.Sum([i, d, t], q[i, d, t] * (1 - x[i, d, t]))  # シフト入りの希望を叶える
@@ -205,7 +205,7 @@ class NurseScheduling(JijModelingTarget, DefaultInstanceMixin):
         problem += jm.Constraint(
             "shift-rotation",
             x[i, d, t] + x[i, (d + 1), dt] - 1 <= 0,
-            forall=[i, (d, jm.neq(d, D - 1)), t, (dt, jm.neq(R[t, dt], -1))],
+            forall=[i, (d, (d != D - 1)), t, (dt, (R[t, dt] != -1))],
         )
 
         # Constraint3: 従業員に割り当てられる各タイプのシフトの最大数
@@ -230,7 +230,8 @@ class NurseScheduling(JijModelingTarget, DefaultInstanceMixin):
         )
 
         # Constraint5: 最大連続勤務
-        const5 = jm.Sum([{j: (d, d + c_max[i] + 1)}, t], x[i, j, t])
+        j5 = jm.Element("j5", (d, d + c_max[i] + 1))
+        const5 = jm.Sum([j5, t], x[i, j5, t])
         problem += jm.Constraint(
             "maximum-consecutive-shifts",
             const5 - c_max[i] <= 0,
@@ -238,25 +239,29 @@ class NurseScheduling(JijModelingTarget, DefaultInstanceMixin):
         )
 
         # Constraint6: 最小連続勤務
+        s6 = jm.Element("s6", (1, c_min[i]))
+        j6 = jm.Element("j6", (d + 1, d + s6 + 1))
         problem += jm.Constraint(
             "minimum-consecutive-shifts",
             jm.Sum(t, x[i, d, t])
-            + (s - jm.Sum([{j: (d + 1, d + s + 1)}, t], x[i, j, t]))
-            + jm.Sum(t, x[i, d + s + 1, t])
+            + (s6 - jm.Sum([j6, t], x[i, j6, t]))
+            + jm.Sum(t, x[i, d + s6 + 1, t])
             - 1
             >= 0,
-            forall=[i, {s: (1, c_min[i])}, (d, d < (D - (s + 1)))],
+            forall=[i, s6, (d, d < (D - (s6 + 1)))],
         )
 
         # Constraint7: 最低連続休暇日数
+        s7 = jm.Element("s7", (1, o_min[i]))
+        j7 = jm.Element("j7", (d + 1, d + s7 + 1))
         problem += jm.Constraint(
             "minimum-consecutive-days-off",
             (1 - jm.Sum(t, x[i, d, t]))
-            + jm.Sum([{j: (d + 1, d + s + 1)}, t], x[i, j, t])
-            + (1 - jm.Sum(t, x[i, d + s + 1, t]))
+            + jm.Sum([j7, t], x[i, j7, t])
+            + (1 - jm.Sum(t, x[i, d + s7 + 1, t]))
             - 1
             >= 0,
-            forall=[i, {s: (1, o_min[i])}, (d, d < (D - (s + 1)))],
+            forall=[i, s7, (d, d < (D - (s7 + 1)))],
         )
 
         # Constraint8: 週末休みの最大回数
@@ -307,7 +312,7 @@ class TSPTW(JijModelingTarget, DefaultInstanceMixin):
         e = jm.Placeholder("e", shape=(N,))  # ready time
         l = jm.Placeholder("l", shape=(N,))  # due time
         x = jm.Binary("x", shape=(N, N))
-        t = jm.LogEncIntArray("t", shape=(N,), lower=e, upper=l)
+        t = jm.Integer("t", shape=(N,), lower=e, upper=l)
 
         i = jm.Element("i", N)
         j = jm.Element("j", N)
