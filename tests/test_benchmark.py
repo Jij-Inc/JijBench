@@ -9,6 +9,7 @@ import jijbench as jb
 from jijbench.exceptions import (
     SolverFailedError,
     ConcurrentFailedError,
+    StoreResultFailedError,
     LoadFailedError,
 )
 
@@ -532,6 +533,22 @@ def test_benchmark_for_change_solver_return_name():
     )
     bench.run()
     assert "return_1" in bench.table.columns
+
+
+def test_benchmark_for_store_failed_case():
+    s = jm.SampleSet.from_serializable(
+        {
+            "record": {"solution": {"x": [(([],), [], (1,))]}, "num_occurrences": [1]},
+            "evaluation": {"energy": [1.0]},
+            "measuring_time": {"solve": None, "system": None, "total": None},
+        }
+    )
+
+    bench = jb.Benchmark(
+        params={"sampleset": [s]}, solver=lambda: (), benchmark_id="test"
+    )
+    with pytest.raises(StoreResultFailedError):
+        bench.run()
 
 
 def test_bench_for_unsupported_solver():

@@ -11,6 +11,7 @@ import openjij as oj
 import pytest
 
 import jijbench as jb
+from jijbench.exceptions import StoreResultFailedError
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -368,3 +369,19 @@ def test_store_as_artifact_for_obj_cannot_pickle():
     assert isinstance(loaded_experiment.artifact[run_id]["sampler"], str)
     assert isinstance(loaded_experiment.artifact[run_id]["sample_qubo"], str)
     assert loaded_experiment.artifact[run_id]["value"] == 1.0
+
+
+def test_store_failed():
+    s = jm.SampleSet.from_serializable(
+        {
+            "record": {"solution": {"x": [(([],), [], (1,))]}, "num_occurrences": [1]},
+            "evaluation": {"constraint_violations": None},
+            "measuring_time": {"solve": None, "system": None, "total": None},
+        }
+    )
+
+    experiment = jb.Experiment(autosave=False)
+
+    with pytest.raises(StoreResultFailedError):
+        with experiment:
+            experiment.store({"sampleset": s})

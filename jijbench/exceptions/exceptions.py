@@ -18,3 +18,7 @@ class SolverFailedError(JijBenchmarkError):
 
 class LoadFailedError(JijBenchmarkError):
     pass
+
+
+class StoreResultFailedError(JijBenchmarkError):
+    pass

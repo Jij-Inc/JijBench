@@ -7,6 +7,7 @@ import jijbench.exceptions.exceptions as exceptions
 from jijbench.exceptions.exceptions import (
     ConcurrentFailedError,
     SolverFailedError,
+    StoreResultFailedError,
     LoadFailedError,
 )
 
@@ -14,5 +15,6 @@ __all__ = [
     "exceptions",
     "ConcurrentFailedError",
     "SolverFailedError",
+    "StoreResultFailedError",
     "LoadFailedError",
 ]
