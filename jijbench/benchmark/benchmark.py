@@ -386,7 +386,7 @@ def get_experiment_id_list(
     save_dir: str = ExperimentResultDefaultDir,
 ):
     if not f"benchmark_{benchmark_id}" in os.listdir(save_dir):
-        msg = f"benchmark_id={benchmark_id} file does not exist in {save_dir}. Please check you benchmark_id."
+        msg = f"benchmark_id={benchmark_id} file does not exist in {save_dir}. Please check your benchmark_id."
         raise LoadFailedError(msg)
 
     return os.listdir(os.path.normcase(f"{save_dir}/benchmark_{benchmark_id}"))
