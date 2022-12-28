@@ -67,19 +67,8 @@ class Benchmark:
     def __init__(
         self,
         params: Dict[str, List],
-        solver: Union[str, Callable, List[Union[str, Callable]]],
+        solver: Union[Callable, List[Union[str, Callable]]],
         *,
-        problem: Optional[Union[jm.Problem, List[jm.Problem]]] = None,
-        instance_data: Optional[
-            Union[
-                PH_VALUES_INTERFACE,
-                List[PH_VALUES_INTERFACE],
-                List[List[PH_VALUES_INTERFACE]],
-                Tuple[str, PH_VALUES_INTERFACE],
-                List[Tuple[str, PH_VALUES_INTERFACE]],
-                List[List[Tuple[str, PH_VALUES_INTERFACE]]],
-            ]
-        ] = None,
         solver_return_name: Optional[Dict[str, List[str]]] = None,
         benchmark_id: Optional[Union[int, str]] = None,
         id_rule: Union[str, Dict[str, str]] = "uuid",
@@ -93,8 +82,6 @@ class Benchmark:
         self.save_dir = save_dir
 
         self._set_solver(solver)
-        self._set_problem(problem)
-        self._set_instance_data(instance_data)
         self._id = ID(benchmark_id=benchmark_id)
         self._experiments: List[Experiment] = []
         self._table = Table()
@@ -113,22 +100,6 @@ class Benchmark:
     @validation.on_solver
     def _set_solver(self, solver):
         self._solver = solver
-
-    @property
-    def problem(self):
-        return self._problem
-
-    @validation.on_problem
-    def _set_problem(self, problem):
-        self._problem = problem
-
-    @property
-    def instance_data(self):
-        return self._instance_data
-
-    @validation.on_instance_data
-    def _set_instance_data(self, instance_data):
-        self._instance_data = instance_data
 
     @property
     def id(self):
@@ -158,28 +129,17 @@ class Benchmark:
                     raise ConcurrentFailedError(
                         "sync=False is not supported using your custom solver."
                     )
-        if self._problem is None:
-            problem = [None]
-        else:
-            problem = self._problem
-
-        if self._instance_data is None:
-            instance_data = [[None]]
-        else:
-            instance_data = self._instance_data
 
         for solver in self.solver:
-            for problem_i, instance_data_i in zip(problem, instance_data):
-                for instance_data_ij in instance_data_i:
-                    if sync:
-                        self._run_by_sync(solver, problem_i, instance_data_ij)
-                    else:
-                        if "openjij" in solver.name:
-                            self._run_by_sync(solver, problem_i, instance_data_ij)
-                        else:
-                            self._run_by_async(solver, problem_i, instance_data_ij)
+            if sync:
+                self._run_by_sync(solver)
+            else:
+                if "openjij" in solver.name:
+                    self._run_by_sync(solver)
+                else:
+                    self._run_by_async(solver)
 
-    def _run_by_async(self, solver, problem, instance_data, **kwargs):
+    def _run_by_async(self, solver, **kwargs):
         _, ph_value = instance_data
         idx = [
             s in inspect.getsource(solver.function)
@@ -232,7 +192,7 @@ class Benchmark:
             self._artifact.data.update(experiment.artifact)
             self._experiments.append(experiment)
 
-    def _run_by_sync(self, solver, problem, instance_data):
+    def _run_by_sync(self, solver):
         experiment = Experiment(
             benchmark_id=self._id.benchmark_id, save_dir=self.save_dir
         )

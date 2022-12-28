@@ -88,11 +88,12 @@ class Experiment:
         self._id.reset(kind="run")
         self._dir.make_dirs(self.run_id)
         # TODO fix deprecate
-        self._table.data.loc[self._table.current_index] = np.nan
+        self._table.data.loc[self._table.current_index] = ""
         return self
 
     def stop(self):
         if self.autosave:
+            self._table.data.replace("", np.nan, inplace=True)
             record = self._table.data.loc[self._table.current_index].to_dict()
             self.log_table(record)
             self.log_artifact()
