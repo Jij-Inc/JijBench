@@ -158,7 +158,7 @@ class Benchmark:
         Args:
             concurrent (bool, optional): True -> concurrent mode, False -> async mode. Defaults to True. Note that concurrent=False is not supported using your custom solver.
         """
-        if concurrent is True:
+        if concurrent:
             for solver in self.solver:
                 if solver.is_jijzept_sampler is False:
                     raise ConcurrentFailedError(
