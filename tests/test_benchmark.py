@@ -240,13 +240,13 @@ def test_benchmark_with_custom_solver():
     assert bench.table["solver_return_values[1]"][0] == 1.0
 
 
-def test_benchmark_with_custom_solver_by_sync_False():
+def test_benchmark_with_custom_solver_by_concurrent_False():
     def func():
         return "a", 1
 
     bench = jb.Benchmark({"num_reads": [1, 2], "num_sweeps": [10]}, solver=func)
     with pytest.raises(ConcurrentFailedError):
-        bench.run(sync=False)
+        bench.run(concurrent=False)
 
 
 def test_benchmark_with_custom_sample_model(
@@ -429,6 +429,12 @@ def test_get_experiment_id_list():
     from jijbench.benchmark.benchmark import get_experiment_id_list
     from jijbench.components import ExperimentResultDefaultDir
 
+    import shutil
+
+    # ローカルでは問題なくテストが通るが、Actionでは余分なフォルダがExperimentResultDefaultDirに残っておりテストが失敗する現象が確認されたため、この処理を追加
+    if os.path.exists(ExperimentResultDefaultDir):
+        shutil.rmtree(ExperimentResultDefaultDir)
+
     save_dir = ExperimentResultDefaultDir
 
     def func1(x):
@@ -437,8 +443,10 @@ def test_get_experiment_id_list():
     bench = jb.Benchmark(params={"x": [1, 2, 3]}, solver=func1, benchmark_id="test")
     bench.run()
     experiment_id_list = list(set(bench.table["experiment_id"].values))
+    print(f"experiment_id_list: {experiment_id_list}")
 
     experiment_id_list_load = get_experiment_id_list("test", save_dir)
+    print(f"experiment_id_list_load: {experiment_id_list_load}")
 
     assert sorted(experiment_id_list) == sorted(experiment_id_list_load)
 
