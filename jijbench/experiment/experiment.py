@@ -163,6 +163,9 @@ class Experiment:
         for key, value in record.items():
             if isinstance(value, (int, float)):
                 value_type = type(value)
+                if isinstance(value, bool):
+                    value_type = str
+                    value = str(value)
             elif isinstance(value, Callable):
                 value_type = str
                 value = re.split(
