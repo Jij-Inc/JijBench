@@ -74,7 +74,7 @@ class Table:
         self._data = data
 
     @property
-    def current_index(self):
+    def current_index(self) -> int:
         return self._current_index
 
     @current_index.setter
