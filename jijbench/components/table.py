@@ -218,26 +218,3 @@ class Table:
             return json.loads(x)
         except (TypeError, json.JSONDecodeError):
             return x
-
-    @staticmethod
-    def _numpystr_to_liststr(x):
-        try:
-            return re.sub(
-                r"\n+",
-                "",
-                re.sub(
-                    r" +",
-                    ", ",
-                    re.sub(
-                        r"\[ +",
-                        "[",
-                        re.sub(
-                            r" +\]",
-                            "]",
-                            re.sub(r"\.\]", ".0]", re.sub(r"\. ", ".0 ", x)),
-                        ),
-                    ),
-                ),
-            )
-        except TypeError:
-            return x
