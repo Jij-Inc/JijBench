@@ -56,7 +56,7 @@ jobs:
         id: pip-cache
         run: |
           set -eux
-          echo "::set-output name=dir::$(python -m pip cache dir)"    
+          echo "dir=$(python -m pip cache dir)" >> $GITHUB_OUTPUT
       - uses: actions/cache@v3
         with:
           path: ${{ steps.pip-cache.outputs.dir }}

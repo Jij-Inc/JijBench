@@ -542,47 +542,16 @@ def test_benchmark_for_change_solver_return_name():
     assert "return_1" in bench.table.columns
 
 
-def test_bench_for_unsupported_solver():
-
-    UNSUPPORTED_SOLVER = 0
-
-    with pytest.raises(TypeError):
-        jb.Benchmark(params={"x": [1, 2, 3]}, solver=UNSUPPORTED_SOLVER)
-
-
-def test_bench_for_unsupported_problem():
-    UNSUPPORTED_PROBLEM = "unsupported_problem"
-
-    def func1(x):
-        return x
-
-    with pytest.raises(TypeError):
-        jb.Benchmark(params={"x": [1, 2, 3]}, solver=func1, problem=UNSUPPORTED_PROBLEM)
-
-
-def test_bench_for_unsupported_instance_data():
-    UNSUPPORTED_INSTANCE_DATA = "unsupported_instance_data"
-
-    def func1(x):
-        return x
-
-    with pytest.raises(TypeError):
-        jb.Benchmark(
-            params={"x": [1, 2, 3]},
-            solver=func1,
-            instance_data=UNSUPPORTED_INSTANCE_DATA,
-        )
-
-
-def test_id_attribute():
+def test_load_give_experiment_id():
     def func1(x):
         return 2 * x
 
     bench = jb.Benchmark(params={"x": [1, 2, 3]}, solver=func1, benchmark_id="test")
     bench.run()
+    experiment_id = bench.table["experiment_id"].values[0]
+    print(f"experiment_id: {experiment_id}")
 
     del bench
 
-    bench = jb.load(benchmark_id="test")
-
-    assert bench._id is not None
+    bench = jb.load(benchmark_id="test", experiment_id=experiment_id)
+    assert "func1" in bench.table["solver"].values

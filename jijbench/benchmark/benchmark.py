@@ -16,7 +16,10 @@ from jijbench.exceptions import ConcurrentFailedError, LoadFailedError
 from jijbench.experiment.experiment import Experiment
 from jijbench.evaluation.evaluation import Evaluator
 from jijbench.benchmark import validation
-from jijbench.components import ID, Artifact, ExperimentResultDefaultDir, Table
+from jijbench.artifact import Artifact
+from jijbench.const import ExperimentResultDefaultDir
+from jijbench.id import ID
+from jijbench.table import Table
 from jijbench.solver import DefaultSolver
 
 __all__ = []
@@ -363,6 +366,8 @@ class Benchmark:
             if experiment_id
             else get_experiment_id_list(benchmark_id, save_dir)
         )
+        if not isinstance(experiment_ids, list):
+            experiment_ids = [experiment_ids]
         for experiment_id in experiment_ids:
             experiment = Experiment.load(
                 benchmark_id=benchmark_id,
@@ -386,7 +391,7 @@ def get_experiment_id_list(
     save_dir: str = ExperimentResultDefaultDir,
 ):
     if not f"benchmark_{benchmark_id}" in os.listdir(save_dir):
-        msg = f"benchmark_id={benchmark_id} file does not exist in {save_dir}. Please check your benchmark_id."
+        msg = f"benchmark_id={benchmark_id} file does not exist in {save_dir}. Please check you benchmark_id."
         raise LoadFailedError(msg)
 
     return os.listdir(os.path.normcase(f"{save_dir}/benchmark_{benchmark_id}"))
