@@ -482,3 +482,18 @@ def test_benchmark_for_change_solver_return_name():
     )
     bench.run()
     assert "return_1" in bench.table.columns
+
+
+def test_load_give_experiment_id():
+    def func1(x):
+        return 2 * x
+
+    bench = jb.Benchmark(params={"x": [1, 2, 3]}, solver=func1, benchmark_id="test")
+    bench.run()
+    experiment_id = bench.table["experiment_id"].values[0]
+    print(f"experiment_id: {experiment_id}")
+
+    del bench
+
+    bench = jb.load(benchmark_id="test", experiment_id=experiment_id)
+    assert "func1" in bench.table["solver"].values
