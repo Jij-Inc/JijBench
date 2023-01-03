@@ -146,17 +146,17 @@ class Benchmark:
     def artifact(self):
         return self._artifact.data
 
-    def run(self, sync=True):
+    def run(self, concurrent=True):
         """run benchmark
 
         Args:
-            sync (bool, optional): True -> sync mode, False -> async mode. Defaults to True. Note that sync=False is not supported using your custom solver.
+            concurrent (bool, optional): True -> concurrent mode, False -> async mode. Defaults to True. Note that concurrent=False is not supported using your custom solver.
         """
-        if sync is False:
+        if concurrent is False:
             for solver in self.solver:
                 if solver.is_jijzept_sampler is False:
                     raise ConcurrentFailedError(
-                        "sync=False is not supported using your custom solver."
+                        "concurrent=False is not supported using your custom solver."
                     )
         if self._problem is None:
             problem = [None]
@@ -171,11 +171,11 @@ class Benchmark:
         for solver in self.solver:
             for problem_i, instance_data_i in zip(problem, instance_data):
                 for instance_data_ij in instance_data_i:
-                    if sync:
-                        self._run_by_sync(solver, problem_i, instance_data_ij)
+                    if concurrent:
+                        self._run_by_concurrent(solver, problem_i, instance_data_ij)
                     else:
                         if "openjij" in solver.name:
-                            self._run_by_sync(solver, problem_i, instance_data_ij)
+                            self._run_by_concurrent(solver, problem_i, instance_data_ij)
                         else:
                             self._run_by_async(solver, problem_i, instance_data_ij)
 
@@ -198,7 +198,7 @@ class Benchmark:
                         args = dict([(k, v) for k, v in zip(self.params.keys(), r)])
                         solver_args = {k: w for k, w in args.items() if k in parameters}
                         solution_id = sampler.sample_model(
-                            problem, ph_value, sync=False, **solver_args
+                            problem, ph_value, concurrent=False, **solver_args
                         ).solution_id
                         args_map[(i, solution_id)] = args
 
@@ -232,7 +232,7 @@ class Benchmark:
             self._artifact.data.update(experiment.artifact)
             self._experiments.append(experiment)
 
-    def _run_by_sync(self, solver, problem, instance_data):
+    def _run_by_concurrent(self, solver, problem, instance_data):
         experiment = Experiment(
             benchmark_id=self._id.benchmark_id, save_dir=self.save_dir
         )
@@ -256,7 +256,7 @@ class Benchmark:
         self._experiments.append(experiment)
 
     @staticmethod
-    def _setup_experiment(solver, problem, instance_data, sync):
+    def _setup_experiment(solver, problem, instance_data, concurrent):
         if problem is None:
             problem_name = np.nan
         else:
@@ -269,7 +269,7 @@ class Benchmark:
             instance_data_name, ph_value = instance_data
             opt_value = ph_value["opt_value"] if "opt_value" in ph_value else np.nan
 
-        solver_args = {"problem": problem, "instance_data": ph_value, "sync": sync}
+        solver_args = {"problem": problem, "instance_data": ph_value, "concurrent": concurrent}
         record = {
             "problem_name": problem_name,
             "instance_data_name": instance_data_name,
