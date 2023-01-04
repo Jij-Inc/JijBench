@@ -385,3 +385,14 @@ def test_store_failed():
     with pytest.raises(StoreResultFailedError):
         with experiment:
             experiment.store({"sampleset": s})
+
+def test_artifact():
+    experiment = jb.Experiment(autosave=False)
+
+    row_num = 2
+
+    for _ in range(row_num):
+        with experiment:
+            experiment.store_as_artifact({"dictobj": {"value": 10}})
+    
+    assert sorted(experiment.artifact)[0] != sorted(experiment.artifact)[1]
