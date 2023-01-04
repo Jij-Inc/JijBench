@@ -1,8 +1,11 @@
 from __future__ import annotations
 
 import jijbench as jb
+import jijmodeling as jm
+import openjij as oj
 
 from jijbench.problem import TSP, TSPTW, Knapsack
+# from jijmodeling.transpiler.pyqubo import to_pyqubo
 
 
 def test_tsptw():
@@ -14,6 +17,26 @@ def test_tsptw():
     instance_name = target.instance_names("small")[0]
     ins_data = target.get_instance("small", instance_name)
     assert isinstance(ins_data, dict)
+
+
+def test_tsptw_time_window_constraint():
+    target = TSPTW()
+    instance_name = target.instance_names("small")[0]
+    instance_data = target.get_instance("small", instance_name)
+    print(vars(target))  # あとで消す
+    print(instance_data)  # あとで消す
+
+    model,cache = jm.transpiler.pyqubo.to_pyqubo(target,instance_data,{})  # ここが問題となっているので、この行以降確認できていない
+    multipliers = {"onehot-constraint1":1.0, "onehot-constraint1":1.0, "time-window-constraint":1.0}
+    Q,_ = model.compile().to_qubo(feed_dict = multipliers)
+
+    sampler = oj.SASampler(num_reads=10)
+    res = sampler.sample_qubo(Q=Q)
+    result = cache.decode(res)
+
+    constraint_violations = result.evaluation.constraint_violations
+    print(constraint_violations)  # あとで消す
+    assert min(constraint_violations["time-window-constraint"]) == 0
 
 
 def test_tsp():
