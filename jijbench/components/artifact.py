@@ -5,6 +5,7 @@ import os, pickle
 import pandas as pd
 
 from jijbench.components.dir import Dir
+from jijbench.exceptions import LoadFailedError
 
 __all__ = []
 
@@ -38,17 +39,22 @@ class Artifact:
             autosave=autosave,
             save_dir=save_dir,
         )
-        artifact = cls()
 
-        dir_names = os.listdir(d.artifact_dir)
-        for dn in dir_names:
-            load_dir = os.path.normcase(f"{d.artifact_dir}/{dn}")
-            if os.path.exists(os.path.normcase(f"{load_dir}/artifact.pkl")):
-                with open(os.path.normcase(f"{load_dir}/artifact.pkl"), "rb") as f:
-                    artifact.data[dn] = pickle.load(f)
-            if os.path.exists(os.path.normcase(f"{load_dir}/timestamp.txt")):
-                with open(os.path.normcase(f"{load_dir}/timestamp.txt"), "r") as f:
-                    artifact.timestamp[dn] = pd.Timestamp(f.read())
+        artifact = cls()
+        try:
+            dir_names = os.listdir(d.artifact_dir)
+            for dn in dir_names:
+                load_dir = os.path.normcase(f"{d.artifact_dir}/{dn}")
+                if os.path.exists(os.path.normcase(f"{load_dir}/artifact.pkl")):
+                    with open(os.path.normcase(f"{load_dir}/artifact.pkl"), "rb") as f:
+                        artifact.data[dn] = pickle.load(f)
+                if os.path.exists(os.path.normcase(f"{load_dir}/timestamp.txt")):
+                    with open(os.path.normcase(f"{load_dir}/timestamp.txt"), "r") as f:
+                        artifact.timestamp[dn] = pd.Timestamp(f.read())
+        except Exception as e:
+            msg = f"An error occurred in loading saved data. Please check your benchmark_id and experiment_id first. -> {e}"
+            raise LoadFailedError(msg)
+
         return artifact
 
     def save(self, savepath):

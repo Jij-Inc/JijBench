@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 
 from jijbench.components import ID, Artifact, Dir, ExperimentResultDefaultDir, Table
+from jijbench.exceptions import StoreResultFailedError
 from jijbench.experiment._parser import _parse_dimod_sampleset, _parse_jm_sampleset
 
 np.set_printoptions(threshold=np.inf)
@@ -117,23 +118,26 @@ class Experiment:
             artifact_keys (list[str], optional): _description_. Defaults to None.
             timestamp: Optional[Union[pd.Timestamp, datetime.datetime]]: timestamp. Defaults to None (current time is recorded).
         """
+        try:
+            if timestamp is None:
+                _timestamp = pd.Timestamp.now()
+            else:
+                _timestamp = pd.Timestamp(timestamp)
 
-        if timestamp is None:
-            _timestamp = pd.Timestamp.now()
-        else:
-            _timestamp = pd.Timestamp(timestamp)
+            if table_keys is None:
+                self.store_as_table(results, timestamp=_timestamp)
+            else:
+                record = {k: results[k] for k in table_keys if k in results.keys()}
+                self.store_as_table(record, timestamp=_timestamp)
 
-        if table_keys is None:
-            self.store_as_table(results, timestamp=_timestamp)
-        else:
-            record = {k: results[k] for k in table_keys if k in results.keys()}
-            self.store_as_table(record, timestamp=_timestamp)
-
-        if artifact_keys is None:
-            self.store_as_artifact(results, timestamp=_timestamp)
-        else:
-            artifact = {k: results[k] for k in artifact_keys if k in results.keys()}
-            self.store_as_artifact(artifact, timestamp=_timestamp)
+            if artifact_keys is None:
+                self.store_as_artifact(results, timestamp=_timestamp)
+            else:
+                artifact = {k: results[k] for k in artifact_keys if k in results.keys()}
+                self.store_as_artifact(artifact, timestamp=_timestamp)
+        except Exception as e:
+            msg = f"The solver worked fine, but an error occurred while storing the results (in a format such as a pandas table). -> {e}"
+            raise StoreResultFailedError(msg)
 
     def store_as_table(
         self,
@@ -159,6 +163,9 @@ class Experiment:
         for key, value in record.items():
             if isinstance(value, (int, float)):
                 value_type = type(value)
+                if isinstance(value, bool):
+                    value_type = str
+                    value = str(value)
             elif isinstance(value, Callable):
                 value_type = str
                 value = re.split(
