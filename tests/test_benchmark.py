@@ -583,3 +583,17 @@ def test_bench_for_unsupported_instance_data():
             solver=func1,
             instance_data=UNSUPPORTED_INSTANCE_DATA,
         )
+
+
+def test_id_attribute():
+    def func1(x):
+        return 2 * x
+
+    bench = jb.Benchmark(params={"x": [1, 2, 3]}, solver=func1, benchmark_id="test")
+    bench.run()
+
+    del bench
+
+    bench = jb.load(benchmark_id="test")
+
+    assert bench._id is not None
