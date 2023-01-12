@@ -5,7 +5,7 @@ import jijmodeling as jm
 import openjij as oj
 
 from jijbench.problem import TSP, TSPTW, Knapsack
-# from jijmodeling.transpiler.pyqubo import to_pyqubo
+from jijmodeling.transpiler.pyqubo import to_pyqubo
 
 
 def test_tsptw():
