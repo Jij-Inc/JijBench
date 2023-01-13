@@ -343,8 +343,7 @@ class TSPTW(JijModelingTarget, DefaultInstanceMixin):
         )
 
         # Const3: Time Windows制約
-        term3 = t[i] + dist[i, j] - t[j]
-        # term3 = t[i] + dist[i, j] - t[j] - 20 * (1 - x[i, j])  # こうしたらいいはず
+        term3 = t[i] + dist[i, j] - t[j] - 20 * (1 - x[i, j])
         forall_list = [(j, j != 0), (i, (i != 0) & (i != j))]
         problem += jm.Constraint(
             "time-window-constraint", term3 <= 0, forall=forall_list
