@@ -93,7 +93,7 @@ class Evaluator:
             pandas.Series: Evalution results.
         """
         is_warning = kwargs.pop("is_warning", False)
-        func = make_scorer(func, is_warning, **kwargs)
+        func: Scorer = make_scorer(func, is_warning, **kwargs)
         metrics = self.table.apply(func, axis=axis)
         if expand:
             self.table[column] = metrics
@@ -137,13 +137,28 @@ class Evaluator:
         Args:
             opt_value (float, optional): Optimal value for instance_data.
             pr (float, optional): Probability of obtaining optimal value. Defaults to 0.99.
-            column (str, optional): Column name for metircs table that is pandas.Dataframe. Defaults to "TTS(optimal)".
+            column (str, optional): Column name for metrics table that is pandas.Dataframe. Defaults to "TTS(optimal)".
             expand (bool, optional): Whether to expand table with evaluation results. Defaults to True.
 
         Returns:
             pandas.Series: Time to Solution for optimal value.
         """
 
+        print("opt_value: ") # 以下後で消す
+        print(opt_value)
+        print("optimal_time_to_solution: ")
+        print(optimal_time_to_solution)
+        print("pr: ")
+        print(pr)
+
+        print(self.apply(
+            func=optimal_time_to_solution,
+            opt_value=opt_value,
+            pr=pr,
+            column=f"{column}",
+            expand=expand,
+            axis=1,
+            is_warning=True,))
         return self.apply(
             func=optimal_time_to_solution,
             opt_value=opt_value,

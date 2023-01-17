@@ -43,7 +43,7 @@ class Scorer:
         return self._score_func(x, **self._kwargs)
 
 
-def make_scorer(score_func: Callable, is_warning=False, **kwargs):
+def make_scorer(score_func: Callable, is_warning=False, **kwargs) -> Scorer:
     return Scorer(score_func, kwargs, is_warning)
 
 
@@ -52,6 +52,13 @@ def optimal_time_to_solution(
     opt_value: Union[int, float],
     pr: float,
 ):
+    print("x.num_reads: ") # 以下後で消す
+    print(x.num_reads)
+    if x.num_reads == 1:
+        Warning
+        # warnings.warn(_generate_warning_msg("objective"))
+        print("Warning!")
+
     ps = success_probability(x, opt_value)
 
     if ps:

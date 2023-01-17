@@ -430,3 +430,22 @@ def test_warning():
 
     evaluator.table.num_feasible = 0
     evaluator.calc_typical_metrics(opt_value=opt_value, pr=np.nan)
+
+
+def test_warning_tts():
+    def solve():
+        pass
+
+    opt_value = 0.0
+    pr = 0.0
+
+    bench = jb.Benchmark(params={"num_reads": [1]}, solver=solve)
+    bench.run()
+
+    print("bench.table[['num_reads']]: ")
+    print(bench.table[['num_reads']])
+    evaluator = jb.Evaluator(bench)
+    metrics = evaluator.calc_typical_metrics(opt_value=opt_value, pr=pr)
+    # print(metrics)
+    print('metrics["TTS(optimal)"]: ')
+    print(metrics["TTS(optimal)"])  # これが1になるはず？& Warningが出るはず
