@@ -52,7 +52,7 @@ def optimal_time_to_solution(
     opt_value: Union[int, float],
     pr: float,
 ):
-    print("x.num_reads: ") # 以下後で消す
+    print("x.num_reads: ")  # 以下後で消す
     print(x.num_reads)
     if x.num_reads == 1:
         Warning

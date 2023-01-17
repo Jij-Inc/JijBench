@@ -93,7 +93,11 @@ class Evaluator:
             pandas.Series: Evalution results.
         """
         is_warning = kwargs.pop("is_warning", False)
-        func: Scorer = make_scorer(func, is_warning, **kwargs)
+        func = make_scorer(func, is_warning, **kwargs)
+        print(func)
+        print(func._score_func)
+        print(self.table)
+        print("aaa")
         metrics = self.table.apply(func, axis=axis)
         if expand:
             self.table[column] = metrics
@@ -151,14 +155,6 @@ class Evaluator:
         print("pr: ")
         print(pr)
 
-        print(self.apply(
-            func=optimal_time_to_solution,
-            opt_value=opt_value,
-            pr=pr,
-            column=f"{column}",
-            expand=expand,
-            axis=1,
-            is_warning=True,))
         return self.apply(
             func=optimal_time_to_solution,
             opt_value=opt_value,

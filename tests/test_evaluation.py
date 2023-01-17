@@ -433,19 +433,34 @@ def test_warning():
 
 
 def test_warning_tts():
-    def solve():
-        pass
+    def solve(num_reads):
+        return np.arange(5, dtype=float), np.array([1]), 2.0, 1
 
     opt_value = 0.0
     pr = 0.0
 
-    bench = jb.Benchmark(params={"num_reads": [1]}, solver=solve)
+    bench = jb.Benchmark(
+        params={"num_reads": [1]},
+        solver=solve,
+        solver_return_name={"solve": ["objective", "num_occurrences", "execution_time", "num_feasible"]},
+    )
     bench.run()
+    print(bench.table.columns)
+    print(bench.table)
+    
+    x = [0, 1, 0, 0, 1], [0, 1, 0, 0, 1], [0, 0, 0, 0, 0]
+    x = [1, 1, 1]
 
     print("bench.table[['num_reads']]: ")
-    print(bench.table[['num_reads']])
+    print(bench.table[["objective", "num_reads", "execution_time"]])
     evaluator = jb.Evaluator(bench)
-    metrics = evaluator.calc_typical_metrics(opt_value=opt_value, pr=pr)
+    tts = evaluator.optimal_time_to_solution(opt_value=opt_value)
+    print(f"tts: {tts}")
+
+    # from jijbench.evaluation._metrics import optimal_time_to_solution
+    # evaluator.table.apply(optimal_time_to_solution, axis=1, opt_value=opt_value, pr=pr)
+
+    # metrics = evaluator.calc_typical_metrics(opt_value=opt_value, pr=pr)
     # print(metrics)
-    print('metrics["TTS(optimal)"]: ')
-    print(metrics["TTS(optimal)"])  # これが1になるはず？& Warningが出るはず
+    # print('metrics["TTS(optimal)"]: ')
+    # print(metrics["TTS(optimal)"])  # これが1になるはず？& Warningが出るはず
