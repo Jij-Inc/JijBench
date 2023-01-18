@@ -445,22 +445,8 @@ def test_warning_tts():
         solver_return_name={"solve": ["objective", "num_occurrences", "execution_time", "num_feasible"]},
     )
     bench.run()
-    print(bench.table.columns)
-    print(bench.table)
-    
-    x = [0, 1, 0, 0, 1], [0, 1, 0, 0, 1], [0, 0, 0, 0, 0]
-    x = [1, 1, 1]
-
-    print("bench.table[['num_reads']]: ")
-    print(bench.table[["objective", "num_reads", "execution_time"]])
     evaluator = jb.Evaluator(bench)
-    tts = evaluator.optimal_time_to_solution(opt_value=opt_value)
-    print(f"tts: {tts}")
-
-    # from jijbench.evaluation._metrics import optimal_time_to_solution
-    # evaluator.table.apply(optimal_time_to_solution, axis=1, opt_value=opt_value, pr=pr)
-
-    # metrics = evaluator.calc_typical_metrics(opt_value=opt_value, pr=pr)
-    # print(metrics)
-    # print('metrics["TTS(optimal)"]: ')
-    # print(metrics["TTS(optimal)"])  # これが1になるはず？& Warningが出るはず
+    
+    evaluator.optimal_time_to_solution(opt_value=opt_value, pr=pr)
+    evaluator.feasible_time_to_solution(pr=pr)
+    evaluator.derived_time_to_solution(pr=pr)

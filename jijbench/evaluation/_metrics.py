@@ -52,12 +52,8 @@ def optimal_time_to_solution(
     opt_value: Union[int, float],
     pr: float,
 ):
-    print("x.num_reads: ")  # 以下後で消す
-    print(x.num_reads)
     if x.num_reads == 1:
-        Warning
-        # warnings.warn(_generate_warning_msg("objective"))
-        print("Warning!")
+        warnings.warn("num_reads = 1; should be increased to measure optimal TTS")
 
     ps = success_probability(x, opt_value)
 
@@ -71,6 +67,9 @@ def feasible_time_to_solution(
     x,
     pr: float,
 ):
+    if x.num_reads == 1:
+        warnings.warn("num_reads = 1; should be increased to measure feasible TTS")
+
     ps = feasible_rate(x)
 
     if ps:
@@ -83,6 +82,9 @@ def derived_time_to_solution(
     x,
     pr: float,
 ):
+    if x.num_reads == 1:
+        warnings.warn("num_reads = 1; should be increased to measure derived TTS")
+
     feas = _to_bool_values_for_feasible(x)
     if feas.any():
         opt_value = x.objective[feas].min()
