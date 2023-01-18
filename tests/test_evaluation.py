@@ -245,12 +245,21 @@ def test_single_metrics(
         metrics["residual_energy"][0]
         == evaluator.residual_energy(opt_value=opt_value)[0]
     )
-    assert (
-        metrics["TTS(optimal)"][0]
-        == evaluator.optimal_time_to_solution(opt_value=opt_value)[0]
-    )
-    assert metrics["TTS(feasible)"][0] == evaluator.feasible_time_to_solution()[0]
-    assert metrics["TTS(derived)"][0] == evaluator.derived_time_to_solution()[0]
+    if np.isnan(metrics["TTS(optimal)"][0]):
+        assert np.isnan(evaluator.optimal_time_to_solution(opt_value=opt_value)[0])
+    else:
+        assert (
+            metrics["TTS(optimal)"][0]
+            == evaluator.optimal_time_to_solution(opt_value=opt_value)[0]
+        )
+    if np.isnan(metrics["TTS(feasible)"][0]):
+        assert np.isnan(evaluator.feasible_time_to_solution()[0])
+    else:
+        assert metrics["TTS(feasible)"][0] == evaluator.feasible_time_to_solution()[0]
+    if np.isnan(metrics["TTS(derived)"][0]):
+        assert np.isnan(evaluator.derived_time_to_solution()[0])
+    else:
+        assert metrics["TTS(derived)"][0] == evaluator.derived_time_to_solution()[0]
 
     evaluator = jb.Evaluator(bench_for_success_probability_eq_0p5)
     metrics = evaluator.calc_typical_metrics(opt_value=opt_value)
@@ -446,7 +455,7 @@ def test_warning_tts():
     )
     bench.run()
     evaluator = jb.Evaluator(bench)
-    
+
     evaluator.optimal_time_to_solution(opt_value=opt_value, pr=pr)
     evaluator.feasible_time_to_solution(pr=pr)
     evaluator.derived_time_to_solution(pr=pr)
