@@ -57,7 +57,9 @@ def optimal_time_to_solution(
 
     ps = success_probability(x, opt_value)
 
-    if ps:
+    if ps == 1:
+        return np.nan
+    elif ps:
         return np.log(1 - pr) / np.log(1 - ps) * x.execution_time
     else:
         return np.inf
@@ -72,7 +74,9 @@ def feasible_time_to_solution(
 
     ps = feasible_rate(x)
 
-    if ps:
+    if ps == 1:
+        return np.nan
+    elif ps:
         return np.log(1 - pr) / np.log(1 - ps) * x.execution_time
     else:
         return np.inf
@@ -92,7 +96,9 @@ def derived_time_to_solution(
     else:
         ps = 0.0
 
-    if ps:
+    if ps == 1:
+        return np.nan
+    elif ps:
         return np.log(1 - pr) / np.log(1 - ps) * x.execution_time
     else:
         return np.inf
