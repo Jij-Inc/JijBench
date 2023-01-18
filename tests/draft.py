@@ -8,17 +8,17 @@ import jijmodeling as jm
 import pathlib
 import uuid
 
+T = tp.TypeVar("T")
 T_in = tp.TypeVar("T_in", bound="DataNode", covariant=True)
+# T_d = tp.TypeVar("T_d", covariant=True)
 T_out = tp.TypeVar("T_out", bound="DataNode", covariant=True)
-T_f = tp.TypeVar("T_f", bound="FunctionNode", covariant=True)
-T_c = tp.TypeVar("T_c", "Artifact", "Table")
 
 
 @dataclass
-class DataNode(tp.Generic[T_f]):
+class DataNode(tp.Generic[T_in, T_out]):
     data: tp.Any
     name: str | None = None
-    operator: T_f | None = None
+    operator: FunctionNode[T_in, T_out] | None = None
 
 
 class FunctionNode(tp.Generic[T_in, T_out]):
@@ -27,7 +27,7 @@ class FunctionNode(tp.Generic[T_in, T_out]):
     def __init__(
         self,
     ) -> None:
-        self.inputs = []
+        self.inputs: list[T_in] = []
 
     def apply(self, inputs: list[T_in], **kwargs: tp.Any) -> T_out:
         self.inputs += inputs
@@ -42,7 +42,7 @@ DEFAULT_RESULT_DIR = "./.jb_results"
 
 @dataclass
 class ID(DataNode):
-    data: str | uuid.UUID = field(default_factory=uuid.uuid4)
+    data: str = field(default_factory=lambda: str(uuid.uuid4()))
 
     def __post_init__(self):
         self.data = str(self.data)
@@ -58,27 +58,37 @@ class Date(DataNode):
             self.data = pd.Timestamp(self.data)
 
 
-class Min(FunctionNode["Array", "DataNode[Min]"]):
+@dataclass
+class Value(DataNode):
+    data: int | float
+
+
+class Min(FunctionNode["Array", "Value"]):
     name = "min"
 
-    def operate(self, inputs: list[Array]) -> DataNode[Min]:
+    def operate(self, inputs: list[Array]) -> Value:
         data = inputs[0].data.min()
         name = inputs[0].name + f"_{self.name}" if inputs[0].name else None
-        node = DataNode(data=data, name=name, operator=self)
+        node = Value(data=data, name=name, operator=self)
         return node
 
 
-class Max(FunctionNode["Array", "DataNode[Max]"]):
+dn = DataNode("a", "n", operator=Min())
+Min().operate()
+Min().apply()
+
+
+class Max(FunctionNode["Array", "DataNode"]):
     name = "max"
 
-    def operate(self, inputs: list[Array]) -> DataNode[Max]:
+    def operate(self, inputs: list[Array]) -> DataNode:
         data = inputs[0].data.max()
         name = inputs[0].name + f"_{self.name}" if inputs[0].name else None
         node = DataNode(data=data, name=name, operator=self)
         return node
 
 
-class Mean(FunctionNode["Array", "DataNode[Mean]"]):
+class Mean(FunctionNode["Array", "DataNode"]):
     name = "mean"
 
     def operate(self, inputs: list[Array]) -> DataNode:
@@ -167,11 +177,16 @@ class Record(DataNode):
 
 
 @dataclass
+class Result(DataNode):
+    pass
+
+
+@dataclass
 class Table(DataNode):
     data: pd.DataFrame = field(default_factory=pd.DataFrame)
 
     def append(self, record: Record, axis: tp.Literal[0, 1] = 0) -> Table:
-        table = TableFactory().apply([record])
+        table = TableFactory().apply([record], name=self.name)
         return Concat().apply([self, table], axis=axis)
 
 
@@ -179,11 +194,17 @@ class Table(DataNode):
 class Artifact(DataNode):
     data: dict = field(default_factory=dict)
 
+    def append(self, record: Record) -> Artifact:
+        artifact = ArtifactFactory().apply([record], name=self.name)
+        return Concat().apply([self, artifact])
 
-class Concat(FunctionNode[T_c, T_c]):
+
+class Concat(FunctionNode[T_in, "DataNode[Concat]"]):
     name = "concat"
 
-    def operate(self, inputs: list[T_c], name=None, axis: tp.Literal[0, 1] = 0) -> T_c:
+    def operate(
+        self, inputs: list[T_in], name: str | None = None, axis: tp.Literal[0, 1] = 0
+    ) -> DataNode[Concat]:
         dtype = type(inputs[0])
         if not all([isinstance(node, dtype) for node in inputs]):
             raise TypeError(
@@ -191,7 +212,15 @@ class Concat(FunctionNode[T_c, T_c]):
             )
 
         if isinstance(inputs[0], Artifact):
-            data = {node.name: node.data for node in inputs}
+            # data = {node.name: node.data for node in inputs}
+            data = {}
+            for n in [1, 2, 3]:
+                pass
+            # for node in inputs:
+            #     if node.name in data:
+            #         data[node.name].update(node.data)
+            #     else:
+            #         data[node.name] = node.data
             return Artifact(data=data, name=name, operator=self)
         elif isinstance(inputs[0], Table):
             data = pd.concat(
