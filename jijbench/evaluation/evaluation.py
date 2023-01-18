@@ -94,10 +94,6 @@ class Evaluator:
         """
         is_warning = kwargs.pop("is_warning", False)
         func = make_scorer(func, is_warning, **kwargs)
-        print(func)
-        print(func._score_func)
-        print(self.table)
-        print("aaa")
         metrics = self.table.apply(func, axis=axis)
         if expand:
             self.table[column] = metrics
@@ -147,13 +143,6 @@ class Evaluator:
         Returns:
             pandas.Series: Time to Solution for optimal value.
         """
-
-        print("opt_value: ") # 以下後で消す
-        print(opt_value)
-        print("optimal_time_to_solution: ")
-        print(optimal_time_to_solution)
-        print("pr: ")
-        print(pr)
 
         return self.apply(
             func=optimal_time_to_solution,
