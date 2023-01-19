@@ -8,32 +8,34 @@ import jijmodeling as jm
 import pathlib
 import uuid
 
-T = tp.TypeVar("T")
-T_in = tp.TypeVar("T_in", bound="DataNode", covariant=True)
-# T_d = tp.TypeVar("T_d", covariant=True)
-T_out = tp.TypeVar("T_out", bound="DataNode", covariant=True)
+DNodeInType = tp.TypeVar("DNodeInType", bound="DataNode")
+DNodeOutType = tp.TypeVar("DNodeOutType", bound="DataNode")
+RecordOr
+FNodeType = tp.TypeVar("FNodeType", bound="FunctionNode")
 
 
 @dataclass
-class DataNode(tp.Generic[T_in, T_out]):
+class DataNode:
     data: tp.Any
     name: str | None = None
-    operator: FunctionNode[T_in, T_out] | None = None
+    operator: FunctionNode | None = None
 
 
-class FunctionNode(tp.Generic[T_in, T_out]):
-    name: str | None = None
-
+class FunctionNode(tp.Generic[DNodeInType, DNodeOutType]):
     def __init__(
         self,
     ) -> None:
-        self.inputs: list[T_in] = []
+        self.inputs: list[DataNode] = []
 
-    def apply(self, inputs: list[T_in], **kwargs: tp.Any) -> T_out:
+    @property
+    def name(self) -> str | None:
+        raise NotImplementedError
+
+    def apply(self, inputs: list[DNodeInType], **kwargs: tp.Any) -> DNodeOutType:
         self.inputs += inputs
         return self.operate(inputs, **kwargs)
 
-    def operate(self, inputs: list[T_in], **kwargs: tp.Any) -> T_out:
+    def operate(self, inputs: list[DNodeInType], **kwargs: tp.Any) -> DNodeOutType:
         raise NotImplementedError
 
 
@@ -44,7 +46,7 @@ DEFAULT_RESULT_DIR = "./.jb_results"
 class ID(DataNode):
     data: str = field(default_factory=lambda: str(uuid.uuid4()))
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.data = str(self.data)
 
 
@@ -53,7 +55,7 @@ class Date(DataNode):
     data: str | pd.Timestamp = field(default_factory=pd.Timestamp.now)
     name: str = "timestamp"
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if isinstance(self.data, str):
             self.data = pd.Timestamp(self.data)
 
@@ -63,56 +65,11 @@ class Value(DataNode):
     data: int | float
 
 
-class Min(FunctionNode["Array", "Value"]):
-    name = "min"
-
-    def operate(self, inputs: list[Array]) -> Value:
-        data = inputs[0].data.min()
-        name = inputs[0].name + f"_{self.name}" if inputs[0].name else None
-        node = Value(data=data, name=name, operator=self)
-        return node
-
-
-dn = DataNode("a", "n", operator=Min())
-Min().operate()
-Min().apply()
-
-
-class Max(FunctionNode["Array", "DataNode"]):
-    name = "max"
-
-    def operate(self, inputs: list[Array]) -> DataNode:
-        data = inputs[0].data.max()
-        name = inputs[0].name + f"_{self.name}" if inputs[0].name else None
-        node = DataNode(data=data, name=name, operator=self)
-        return node
-
-
-class Mean(FunctionNode["Array", "DataNode"]):
-    name = "mean"
-
-    def operate(self, inputs: list[Array]) -> DataNode:
-        data = inputs[0].data.mean()
-        name = inputs[0].name + f"_{self.name}" if inputs[0].name else None
-        node = DataNode(data=data, name=name, operator=self)
-        return node
-
-
-class Std(FunctionNode["Array", "DataNode[Std]"]):
-    name = "std"
-
-    def operate(self, inputs: list[Array]) -> DataNode[Std]:
-        data = inputs[0].data.std()
-        name = inputs[0].name + f"_{self.name}" if inputs[0].name else None
-        node = DataNode(data=data, name=name, operator=self)
-        return node
-
-
 @dataclass
 class Array(DataNode):
     data: np.ndarray
 
-    def min(self) -> DataNode:
+    def min(self) -> Value:
         return Min().apply([self])
 
     def max(self) -> DataNode:
@@ -123,6 +80,58 @@ class Array(DataNode):
 
     def std(self) -> DataNode:
         return Std().apply([self])
+
+
+class Min(FunctionNode["Array", "Value"]):
+    @property
+    def name(self) -> str:
+        return "min"
+
+    def apply(self, inputs: list[Array], **kwargs: tp.Any) -> Value:
+        return self.operate(inputs, **kwargs)
+
+    def operate(self, inputs: list[Array]) -> Value:
+        data = inputs[0].data.min()
+        name = inputs[0].name + f"_{self.name}" if inputs[0].name else None
+        node = Value(data=data, name=name)
+        node.operator = self
+        return node
+
+
+class Max(FunctionNode["Array", "Value"]):
+    @property
+    def name(self) -> str:
+        return "max"
+
+    def operate(self, inputs: list[Array]) -> Value:
+        data = inputs[0].data.max()
+        name = inputs[0].name + f"_{self.name}" if inputs[0].name else None
+        node = Value(data=data, name=name, operator=self)
+        return node
+
+
+class Mean(FunctionNode["Array", "Value"]):
+    @property
+    def name(self) -> str:
+        return "mean"
+
+    def operate(self, inputs: list[Array]) -> Value:
+        data = inputs[0].data.mean()
+        name = inputs[0].name + f"_{self.name}" if inputs[0].name else None
+        node = Value(data=data, name=name, operator=self)
+        return node
+
+
+class Std(FunctionNode["Array", "Value"]):
+    @property
+    def name(self) -> str:
+        return "std"
+
+    def operate(self, inputs: list[Array]) -> Value:
+        data = inputs[0].data.std()
+        name = inputs[0].name + f"_{self.name}" if inputs[0].name else None
+        node = Value(data=data, name=name, operator=self)
+        return node
 
 
 @dataclass
@@ -147,16 +156,20 @@ class SampleSet(DataNode):
     data: jm.SampleSet
 
 
-class RecordFactory(FunctionNode["T_in", "Record"]):
-    name = "record"
+class RecordFactory(FunctionNode[DNodeInType, "Record"]):
+    @property
+    def name(self) -> str:
+        return "record"
 
-    def operate(self, inputs: list[T_in], name: str | None = None) -> Record:
+    def operate(self, inputs: list[DNodeInType], name: str | None = None) -> Record:
         data = pd.Series({node.name: node.data for node in inputs})
         return Record(data, name=name, operator=self)
 
 
 class TableFactory(FunctionNode["Record", "Table"]):
-    name = "table"
+    @property
+    def name(self) -> str:
+        return "table"
 
     def operate(self, inputs: list[Record], name: str | None = None) -> Table:
         data = pd.DataFrame({node.name: node.data for node in inputs})
@@ -164,7 +177,9 @@ class TableFactory(FunctionNode["Record", "Table"]):
 
 
 class ArtifactFactory(FunctionNode["Record", "Artifact"]):
-    name = "artifact"
+    @property
+    def name(self) -> str:
+        return "artifact"
 
     def operate(self, inputs: list[Record], name: str | None = None) -> Artifact:
         data = {node.name: node.data.to_dict() for node in inputs}
@@ -199,11 +214,11 @@ class Artifact(DataNode):
         return Concat().apply([self, artifact])
 
 
-class Concat(FunctionNode[T_in, "DataNode[Concat]"]):
+class Concat(FunctionNode[DNodeInType, DNodeOutType]):
     name = "concat"
 
     def operate(
-        self, inputs: list[T_in], name: str | None = None, axis: tp.Literal[0, 1] = 0
+        self, inputs: list[DNodeInType], name: str | None = None, axis: tp.Literal[0, 1] = 0
     ) -> DataNode[Concat]:
         dtype = type(inputs[0])
         if not all([isinstance(node, dtype) for node in inputs]):
