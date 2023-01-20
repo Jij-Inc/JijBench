@@ -4,7 +4,13 @@ import copy
 import typing as tp
 
 from dataclasses import dataclass
-from jijbench.node import DataNode
+from jijbench.node.base import DataNode
+import jijbench.node.functions.concat as _concat
+
+if tp.TYPE_CHECKING:
+    from jijbench.node.data.record import Record
+    from jijbench.node.functions.factory import ArtifactFactory, TableFactory
+
 
 @dataclass
 class DataBase(DataNode):
@@ -17,7 +23,7 @@ class DataBase(DataNode):
         node = factory.apply([record], name=self.name)
         node.operator = factory
 
-        c = Concat()
+        c = _concat.Concat()
         inputs = [copy.deepcopy(self), node]
         c.inputs = inputs
         self.data = c(inputs, **kwargs).data
