@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import json, os, pathlib
+import jijmodeling as jm
+
+from jijbench import datasets
 
 from typing import Dict, List, Tuple, Union
 
-import jijmodeling as jm
 
 __all__ = []
 
@@ -403,3 +405,7 @@ class TSP(JijModelingTarget, DefaultInstanceMixin):
 
     def __init__(self):
         super().__init__(self.problem, self.small_instance()[0])
+
+
+def get_problem(problem_name):
+    return getattr(datasets, problem_name).problem
