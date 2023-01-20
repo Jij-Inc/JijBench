@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import uuid
 import datetime as dt
-import networkx as nx
 import pandas as pd
 
 from dataclasses import dataclass

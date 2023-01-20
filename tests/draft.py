@@ -1,6 +1,8 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
 
+import copy
+import dill
 import numpy as np
 import pandas as pd
 import typing as tp
@@ -8,11 +10,11 @@ import jijmodeling as jm
 import pathlib
 import uuid
 
+
 DNodeInType = tp.TypeVar("DNodeInType", bound="DataNode")
 DNodeOutType = tp.TypeVar("DNodeOutType", bound="DataNode")
-ConcatInType = tp.TypeVar("ConcatInType", "Artifact", "Table")
-ConcatOutType = tp.TypeVar("ConcatOutType", "Artifact", "Table")
-# FNodeType = tp.TypeVar("FNodeType", bound="FunctionNode")
+
+DEFAULT_RESULT_DIR = pathlib.Path("./.jb_results")
 
 
 @dataclass
@@ -42,9 +44,6 @@ class FunctionNode(tp.Generic[DNodeInType, DNodeOutType]):
         node = self(inputs, **kwargs)
         node.operator = self
         return node
-
-
-DEFAULT_RESULT_DIR = "./.jb_results"
 
 
 @dataclass
@@ -157,8 +156,8 @@ class SampleSet(DataNode):
     data: jm.SampleSet
 
 
-class RecordFactory(FunctionNode[DNodeInType, "Record"]):
-    def __call__(self, inputs: list[DNodeInType], name: str | None = None) -> Record:
+class RecordFactory(FunctionNode["DataNode", "Record"]):
+    def __call__(self, inputs: list[DataNode], name: str | None = None) -> Record:
         data = pd.Series({node.name: node.data for node in inputs})
         return Record(data, name=name)
 
@@ -168,8 +167,14 @@ class RecordFactory(FunctionNode[DNodeInType, "Record"]):
 
 
 class TableFactory(FunctionNode["Record", "Table"]):
-    def __call__(self, inputs: list[Record], name: str | None = None) -> Table:
-        data = pd.DataFrame({node.name: node.data for node in inputs})
+    def __call__(
+        self,
+        inputs: list[Record],
+        name: str | None = None,
+        index_name: str | None = None,
+    ) -> Table:
+        data = pd.DataFrame({node.name: node.data for node in inputs}).T
+        data.index.name = index_name
         return Table(data, name=name)
 
     @property
@@ -193,30 +198,53 @@ class Record(DataNode):
 
 
 @dataclass
-class Table(DataNode):
-    data: pd.DataFrame = field(default_factory=pd.DataFrame)
+class DataBase(DataNode):
+    def append(self, record: Record, **kwargs: tp.Any) -> None:
+        raise NotImplementedError
 
-    def append(self, record: Record, axis: tp.Literal[0, 1] = 0) -> Table:
-        table = TableFactory().apply([record], name=self.name)
-        return Concat().apply([self, table], axis=axis)
+    def _append(
+        self, record: Record, factory: TableFactory | ArtifactFactory, **kwargs: tp.Any
+    ) -> None:
+        node = factory.apply([record], name=self.name)
+        node.operator = factory
+
+        c = Concat()
+        inputs = [copy.deepcopy(self), node]
+        c.inputs = inputs
+        self.data = c(inputs, **kwargs).data
+        self.operator = c
 
 
 @dataclass
-class Artifact(DataNode):
+class Table(DataBase):
+    data: pd.DataFrame = field(default_factory=pd.DataFrame)
+
+    def append(
+        self,
+        record: Record,
+        axis: tp.Literal[0, 1] = 0,
+        index_name: str | None = None,
+        **kwargs: tp.Any,
+    ) -> None:
+        self._append(record, TableFactory(), axis=axis, index_name=index_name)
+
+
+@dataclass
+class Artifact(DataBase):
     data: dict = field(default_factory=dict)
 
-    def append(self, record: Record) -> Artifact:
-        artifact = ArtifactFactory().apply([record], name=self.name)
-        return Concat().apply([self, artifact])
+    def append(self, record: Record, **kwargs: tp.Any) -> None:
+        self._append(record, ArtifactFactory(), **kwargs)
 
 
-class Concat(FunctionNode[ConcatInType, ConcatOutType]):
+class Concat(FunctionNode["DataBase", "DataBase"]):
     def __call__(
         self,
-        inputs: list[Artifact] | list[Table],
+        inputs: list[DataBase],
         name: str | None = None,
         axis: tp.Literal[0, 1] = 0,
-    ) -> Artifact | Table:
+        index_name: str | None = None,
+    ) -> DataBase:
         dtype = type(inputs[0])
         if not all([isinstance(node, dtype) for node in inputs]):
             raise TypeError(
@@ -224,17 +252,16 @@ class Concat(FunctionNode[ConcatInType, ConcatOutType]):
             )
 
         if isinstance(inputs[0], Artifact):
-            data = {}
-            for node in inputs:
+            data = inputs[0].data.copy()
+            for node in inputs[1:]:
                 if node.name in data:
-                    data[node.name].update(node.data)
+                    data[node.name].update(node.data.copy())
                 else:
-                    data[node.name] = node.data
+                    data[node.name] = node.data.copy()
             return Artifact(data=data, name=name)
         elif isinstance(inputs[0], Table):
-            data = pd.concat(
-                [node.data for node in inputs if isinstance(node, Table)], axis=axis
-            )
+            data = pd.concat([node.data for node in inputs], axis=axis)
+            data.index.name = index_name
             return Table(data=data, name=name)
         else:
             raise TypeError(f"'{inputs[0].__class__.__name__}' type is not supported.")
@@ -245,9 +272,97 @@ class Concat(FunctionNode[ConcatInType, ConcatOutType]):
 
 
 @dataclass
-class Experiment(DataNode):
-    data: tuple = ()
+class Experiment(DataBase):
+    def __init__(
+        self,
+        data: tuple[Artifact, Table] | None = None,
+        name: str | None = None,
+        autosave: bool = True,
+        savedir: str | pathlib.Path = DEFAULT_RESULT_DIR,
+    ):
+        if name is None:
+            name = ID().data
 
-    def __post_init__(self):
-        if not self.data:
-            self.data = (Table(), Artifact())
+        if data is None:
+            data = (Artifact(), Table())
+
+        if data[0].name is None:
+            data[0].name = name
+
+        if data[1].name is None:
+            data[1].name = name
+
+        self.data = data
+        self.name = name
+        self.autosave = autosave
+
+        if isinstance(savedir, str):
+            savedir = pathlib.Path(savedir)
+        self.savedir = savedir
+
+    @property
+    def artifact(self) -> dict:
+        return self.data[0].data
+
+    @property
+    def table(self) -> pd.DataFrame:
+        t = self.data[1].data
+        is_tuple_index = all([isinstance(i, tuple) for i in t.index])
+        if is_tuple_index:
+            names = t.index.names if len(t.index.names) >= 2 else None
+            index = pd.MultiIndex.from_tuples(t.index, names=names)
+            t.index = index
+        return t
+
+    def __enter__(self) -> Experiment:
+        p = self.savedir / str(self.name)
+        (p / "table").mkdir(parents=True, exist_ok=True)
+        (p / "artifact").mkdir(parents=True, exist_ok=True)
+        return self
+
+    def __exit__(self, exception_type, exception_value, traceback) -> None:
+        index = (self.name, self.table.index[-1])
+        self.table.rename(index={self.table.index[-1]: index}, inplace=True)
+
+        if self.autosave:
+            self.save()
+
+    def append(self, record: Record) -> None:
+        for d in self.data:
+            d.append(record, index_name=("experiment_id", "run_id"))
+
+    def save(self):
+        def is_dillable(obj: tp.Any):
+            try:
+                dill.dumps(obj)
+                return True
+            except Exception:
+                return False
+
+        p = self.savedir / str(self.name) / "table" / "table.csv"
+        self.table.to_csv(p)
+
+        p = self.savedir / str(self.name) / "artifact" / "artifact.dill"
+        record_name = list(self.data[0].operator.inputs[1].data.keys())[0]
+        if p.exists():
+            with open(p, "rb") as f:
+                artifact = dill.load(f)
+                artifact[self.name][record_name] = {}
+        else:
+            artifact = {self.name: {record_name: {}}}
+
+        record = {}
+        for k, v in self.artifact[self.name][record_name].items():
+            if is_dillable(v):
+                record[k] = v
+            else:
+                record[k] = str(v)
+        artifact[self.name][record_name].update(record)
+
+        with open(p, "wb") as f:
+            dill.dump(artifact, f)
+
+
+class Solver(FunctionNode):
+    def __init__(self, f: tp.Callable) -> None:
+        super().__init__()

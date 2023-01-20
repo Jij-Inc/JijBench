@@ -256,7 +256,7 @@ class Experiment:
             try:
                 pickle.dumps(obj)
                 return True
-            except TypeError:
+            except Exception:
                 return False
 
         run_id = self.run_id
