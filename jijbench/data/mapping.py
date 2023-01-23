@@ -4,27 +4,31 @@ import copy
 import pandas as pd
 import typing as tp
 
+from abc import ABCMeta, abstractmethod
 from dataclasses import dataclass, field
 from jijbench.node.base import DataNode
-from jijbench.node.data.record import Record
-import jijbench.node.functions.concat
+from jijbench.data.record import Record
 
 if tp.TYPE_CHECKING:
-    from jijbench.node.functions.factory import ArtifactFactory, TableFactory
+    from jijbench.functions.factory import ArtifactFactory, TableFactory
 
 
 @dataclass
-class DataBase(DataNode):
+class Mapping(DataNode, metaclass=ABCMeta):
+    @abstractmethod
     def append(self, record: Record, **kwargs: tp.Any) -> None:
-        raise NotImplementedError
+        pass
 
     def _append(
-        self, record: Record, factory: TableFactory | ArtifactFactory, **kwargs: tp.Any
+        self,
+        record: Record,
+        factory: TableFactory | ArtifactFactory,
+        **kwargs: tp.Any,
     ) -> None:
+        from jijbench.functions.concat import Concat
+
         node = factory.apply([record], name=self.name)
         node.operator = factory
-
-        from jijbench.node.functions.concat import Concat
 
         c = Concat()
         inputs = [copy.deepcopy(self), node]
@@ -34,17 +38,17 @@ class DataBase(DataNode):
 
 
 @dataclass
-class Artifact(DataBase):
+class Artifact(Mapping):
     data: dict = field(default_factory=dict)
 
     def append(self, record: Record, **kwargs: tp.Any) -> None:
-        from jijbench.node.functions.factory import ArtifactFactory
+        from jijbench.functions.factory import ArtifactFactory
 
         self._append(record, ArtifactFactory(), **kwargs)
 
 
 @dataclass
-class Table(DataBase):
+class Table(Mapping):
     data: pd.DataFrame = field(default_factory=pd.DataFrame)
 
     def append(
@@ -54,6 +58,6 @@ class Table(DataBase):
         index_name: str | None = None,
         **kwargs: tp.Any,
     ) -> None:
-        from jijbench.node.functions.factory import TableFactory
+        from jijbench.functions.factory import TableFactory
 
         self._append(record, TableFactory(), axis=axis, index_name=index_name)

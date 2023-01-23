@@ -6,8 +6,7 @@ import numpy as np
 import pytest
 
 import jijbench as jb
-from jijbench.exceptions import SolverFailedError, ConcurrentFailedError
-
+from jijbench.exceptions.exceptions import SolverFailedError, ConcurrentFailedError
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -141,16 +140,16 @@ def sample_model():
 
 # def test_set_problem_in_benchmark(problem, problem_list):
 #     bench = jb.Benchmark({"dummy": [1]}, solver="JijSASampler", problem=problem)
-# 
+#
 #     assert isinstance(bench.problem, list)
 #     assert isinstance(bench.problem[0], jm.Problem)
-# 
+#
 #     bench = jb.Benchmark({"dummy": [1]}, solver="JijSASampler", problem=problem_list)
-# 
+#
 #     assert isinstance(bench.problem, list)
 #     assert isinstance(bench.problem[0], jm.Problem)
-# 
-# 
+#
+#
 # def test_set_instance_data_in_benchmark(
 #     ph_value,
 #     ph_value_list,
@@ -164,7 +163,7 @@ def sample_model():
 #     assert len(bench.instance_data) == 1
 #     assert isinstance(bench.instance_data[0], list)
 #     assert isinstance(bench.instance_data[0][0], tuple)
-# 
+#
 #     # List[PH_VALUES_INTERFACE]
 #     bench = jb.Benchmark(
 #         {"dummy": [1]}, solver="JijSASampler", instance_data=ph_value_list
@@ -172,7 +171,7 @@ def sample_model():
 #     assert len(bench.instance_data) == 1
 #     assert isinstance(bench.instance_data[0], list)
 #     assert isinstance(bench.instance_data[0][0], tuple)
-# 
+#
 #     # List[List[PH_VALUES_INTERFACE]]
 #     bench = jb.Benchmark(
 #         {"dummy": [1]}, solver="JijSASampler", instance_data=multi_ph_value_list
@@ -180,7 +179,7 @@ def sample_model():
 #     assert len(bench.instance_data) == 2
 #     assert isinstance(bench.instance_data[0], list)
 #     assert isinstance(bench.instance_data[0][0], tuple)
-# 
+#
 #     # Tuple[str, PH_VALUES_INTERFACE]
 #     bench = jb.Benchmark(
 #         {"dummy": [1]}, solver="JijSASampler", instance_data=instance_data
@@ -188,16 +187,16 @@ def sample_model():
 #     assert len(bench.instance_data) == 1
 #     assert isinstance(bench.instance_data[0], list)
 #     assert isinstance(bench.instance_data[0][0], tuple)
-# 
+#
 #     # List[Tuple[str, PH_VALUES_INTERFACE]]
 #     bench = jb.Benchmark(
 #         {"dummy": [1]}, solver="JijSASampler", instance_data=instance_data_list
 #     )
-# 
+#
 #     assert len(bench.instance_data) == 1
 #     assert isinstance(bench.instance_data[0], list)
 #     assert isinstance(bench.instance_data[0][0], tuple)
-# 
+#
 #     # List[List[Tuple[str, PH_VALUES_INTERFACE]]]
 #     bench = jb.Benchmark(
 #         {"dummy": [1]},
@@ -211,7 +210,12 @@ def sample_model():
 
 def test_simple_benchmark(problem, instance_data):
     bench = jb.Benchmark(
-        {"num_reads": [1, 2], "num_sweeps": [10], "problem": [problem], "instance_data": instance_data},
+        {
+            "num_reads": [1, 2],
+            "num_sweeps": [10],
+            "problem": [problem],
+            "instance_data": instance_data,
+        },
         solver=sample_qubo,
     )
     res = bench()

@@ -4,18 +4,17 @@ import pandas as pd
 import typing as tp
 
 from jijbench.node.base import FunctionNode
-#from jijbench.node.data.database import Artifact, DataBase, Table
-import jijbench.node.data.database
+from jijbench.data.mapping import Artifact, Mapping, Table
 
 
-class Concat(FunctionNode[DataBase, DataBase]):
+class Concat(FunctionNode[Mapping, Mapping]):
     def __call__(
         self,
-        inputs: list[DataBase],
+        inputs: list[Mapping],
         name: str | None = None,
         axis: tp.Literal[0, 1] = 0,
         index_name: str | None = None,
-    ) -> DataBase:
+    ) -> Mapping:
         dtype = type(inputs[0])
         if not all([isinstance(node, dtype) for node in inputs]):
             raise TypeError(

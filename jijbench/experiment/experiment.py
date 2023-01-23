@@ -6,15 +6,14 @@ import typing as tp
 import pathlib
 
 from dataclasses import dataclass
-from jijbench.const import DEFAULT_RESULT_DIR
-
-from jijbench.node.data.database import Artifact, DataBase, Table
-from jijbench.node.data.id import ID
-from jijbench.node.data.record import Record
+from jijbench.consts.path import DEFAULT_RESULT_DIR
+from jijbench.data.mapping import Artifact, Mapping, Table
+from jijbench.data.elements.id import ID
+from jijbench.data.record import Record
 
 
 @dataclass
-class Experiment(DataBase):
+class Experiment(Mapping):
     def __init__(
         self,
         data: tuple[Artifact, Table] | None = None,
@@ -74,7 +73,7 @@ class Experiment(DataBase):
             d.append(record, index_name=("experiment_id", "run_id"))
 
     def concat(self, experiment: Experiment) -> None:
-        from jijbench.node.functions.concat import Concat
+        from jijbench.functions.concat import Concat
 
         c = Concat()
 

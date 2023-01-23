@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from jijbench.node.base import FunctionNode
-from jijbench.node.data.array import Array
+from jijbench.data.elements.array import Array
 
 
 class Min(FunctionNode[Array, Array]):

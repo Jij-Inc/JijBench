@@ -3,6 +3,7 @@ from __future__ import annotations
 import pandas as pd
 
 from dataclasses import dataclass, field
+
 from jijbench.node.base import DataNode
 
 

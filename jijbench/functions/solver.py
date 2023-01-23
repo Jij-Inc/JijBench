@@ -4,10 +4,10 @@ from __future__ import annotations
 import typing as tp
 import inspect
 
-from jijbench.exceptions import SolverFailedError
+from jijbench.exceptions.exceptions import SolverFailedError
 from jijbench.node.base import DataNode, FunctionNode
-from jijbench.node.data.record import Record
-from jijbench.node.functions.factory import RecordFactory
+from jijbench.data.record import Record
+from jijbench.functions.factory import RecordFactory
 
 
 class Solver(FunctionNode[DataNode, Record]):
@@ -15,16 +15,18 @@ class Solver(FunctionNode[DataNode, Record]):
         super().__init__()
         self.function = function
 
-    def __call__(self, extract: bool = True, **kwargs: tp.Any) -> Record:
+    def __call__(
+        self, is_parsed_sampleset: bool = True, **solver_args: tp.Any
+    ) -> Record:
         parameters = inspect.signature(self.function).parameters
         is_kwargs = any([p.kind == 4 for p in parameters.values()])
-        kwargs = (
-            kwargs
+        solver_args = (
+            solver_args
             if is_kwargs
-            else {k: v for k, v in kwargs.items() if k in parameters}
+            else {k: v for k, v in solver_args.items() if k in parameters}
         )
         try:
-            ret = self.function(**kwargs)
+            ret = self.function(**solver_args)
             if not isinstance(ret, tuple):
                 ret = (ret,)
         except Exception as e:
@@ -36,7 +38,7 @@ class Solver(FunctionNode[DataNode, Record]):
             DataNode(data=data, name=name)
             for data, name in zip(ret, solver_return_names)
         ]
-        return RecordFactory().apply(nodes, extract=extract)
+        return RecordFactory().apply(nodes, is_parsed_sampleset=is_parsed_sampleset)
 
     @property
     def name(self) -> str:
