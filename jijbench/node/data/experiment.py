@@ -7,30 +7,26 @@ import pathlib
 
 from dataclasses import dataclass
 from jijbench.const import DEFAULT_RESULT_DIR
-import jijbench.node.data.artifact as _artifact
-import jijbench.node.data.database as _dataBase
-import jijbench.node.data.id as _id
-import jijbench.node.data.table as _table
-import jijbench.node.functions as _concat
 
-if tp.TYPE_CHECKING:
-    from jijbench.node.data.record import Record
+from jijbench.node.data.database import Artifact, DataBase, Table
+from jijbench.node.data.id import ID
+from jijbench.node.data.record import Record
 
 
 @dataclass
-class Experiment(_dataBase.DataBase):
+class Experiment(DataBase):
     def __init__(
         self,
-        data: tuple[_artifact.Artifact, _table.Table] | None = None,
+        data: tuple[Artifact, Table] | None = None,
         name: str | None = None,
         autosave: bool = True,
         savedir: str | pathlib.Path = DEFAULT_RESULT_DIR,
     ):
         if name is None:
-            name = _id.ID().data
+            name = ID().data
 
         if data is None:
-            data = (_artifact.Artifact(), _table.Table())
+            data = (Artifact(), Table())
 
         if data[0].name is None:
             data[0].name = name
@@ -78,7 +74,9 @@ class Experiment(_dataBase.DataBase):
             d.append(record, index_name=("experiment_id", "run_id"))
 
     def concat(self, experiment: Experiment) -> None:
-        c = _concat.Concat()
+        from jijbench.node.functions.concat import Concat
+
+        c = Concat()
 
         artifact = c([self.data[0], experiment.data[0]])
         table = c([self.data[1], experiment.data[1]])

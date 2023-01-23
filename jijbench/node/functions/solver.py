@@ -6,10 +6,8 @@ import inspect
 
 from jijbench.exceptions import SolverFailedError
 from jijbench.node.base import DataNode, FunctionNode
-import jijbench.node.functions.factory as _factory
-
-if tp.TYPE_CHECKING:
-    from jijbench.node.data.record import Record
+from jijbench.node.data.record import Record
+from jijbench.node.functions.factory import RecordFactory
 
 
 class Solver(FunctionNode[DataNode, Record]):
@@ -38,7 +36,7 @@ class Solver(FunctionNode[DataNode, Record]):
             DataNode(data=data, name=name)
             for data, name in zip(ret, solver_return_names)
         ]
-        return _factory.RecordFactory().apply(nodes, extract=extract)
+        return RecordFactory().apply(nodes, extract=extract)
 
     @property
     def name(self) -> str:

@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 from jijbench.node.base import FunctionNode
-import jijbench.node.data.array as _array
+from jijbench.node.data.array import Array
 
 
-class Min(FunctionNode[_array.Array, _array.Array]):
-    def __call__(self, inputs: list[_array.Array]) -> _array.Array:
+class Min(FunctionNode[Array, Array]):
+    def __call__(self, inputs: list[Array]) -> Array:
         data = inputs[0].data.min()
         name = inputs[0].name + f"_{self.name}"
-        node = _array.Array(data=data, name=name)
+        node = Array(data=data, name=name)
         return node
 
     @property
@@ -16,11 +16,11 @@ class Min(FunctionNode[_array.Array, _array.Array]):
         return "min"
 
 
-class Max(FunctionNode[_array.Array, _array.Array]):
-    def __call__(self, inputs: list[_array.Array]) -> _array.Array:
+class Max(FunctionNode[Array, Array]):
+    def __call__(self, inputs: list[Array]) -> Array:
         data = inputs[0].data.max()
         name = inputs[0].name + f"_{self.name}"
-        node = _array.Array(data=data, name=name)
+        node = Array(data=data, name=name)
         return node
 
     @property
@@ -28,11 +28,11 @@ class Max(FunctionNode[_array.Array, _array.Array]):
         return "max"
 
 
-class Mean(FunctionNode[_array.Array, _array.Array]):
-    def __call__(self, inputs: list[_array.Array]) -> _array.Array:
+class Mean(FunctionNode[Array, Array]):
+    def __call__(self, inputs: list[Array]) -> Array:
         data = inputs[0].data.mean()
         name = inputs[0].name + f"_{self.name}"
-        node = _array.Array(data=data, name=name)
+        node = Array(data=data, name=name)
         return node
 
     @property
@@ -40,11 +40,11 @@ class Mean(FunctionNode[_array.Array, _array.Array]):
         return "mean"
 
 
-class Std(FunctionNode[_array.Array, _array.Array]):
-    def __call__(self, inputs: list[_array.Array]) -> _array.Array:
+class Std(FunctionNode[Array, Array]):
+    def __call__(self, inputs: list[Array]) -> Array:
         data = inputs[0].data.std()
         name = inputs[0].name + f"_{self.name}"
-        node = _array.Array(data=data, name=name)
+        node = Array(data=data, name=name)
         return node
 
     @property

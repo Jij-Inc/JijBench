@@ -4,7 +4,8 @@ import numpy as np
 
 from dataclasses import dataclass
 from jijbench.node.base import DataNode
-import jijbench.node.functions.math as _math
+
+# import jijbench.node.functions.math as _math
 
 
 @dataclass
@@ -13,13 +14,21 @@ class Array(DataNode):
     name: str
 
     def min(self) -> Array:
-        return _math.Min().apply([self])
+        from jijbench.node.functions.math import Min
+
+        return Min().apply([self])
 
     def max(self) -> Array:
-        return _math.Max().apply([self])
+        from jijbench.node.functions.math import Max
+
+        return Max().apply([self])
 
     def mean(self) -> Array:
-        return _math.Mean().apply([self])
+        from jijbench.node.functions.math import Mean
+        
+        return Mean().apply([self])
 
     def std(self) -> Array:
-        return _math.Std().apply([self])
+        from jijbench.node.functions.math import Std
+        
+        return Std().apply([self])

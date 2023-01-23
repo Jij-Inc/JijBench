@@ -5,13 +5,11 @@ import itertools
 import pathlib
 
 from jijbench.const import DEFAULT_RESULT_DIR
-from jijbench.node.base import FunctionNode
+from jijbench.node.base import DataNode, FunctionNode
 import jijbench.node.data.experiment as _experiment
 import jijbench.node.data.id as _id
 import jijbench.node.functions.solver as _solver
 
-if tp.TYPE_CHECKING:
-    from jijbench.node.base import DataNode
 
 
 class Benchmark(FunctionNode[DataNode, _experiment.Experiment]):

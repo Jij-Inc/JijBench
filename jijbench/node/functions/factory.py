@@ -3,35 +3,31 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 import jijmodeling as jm
-import typing as tp
 import warnings
 
 from jijbench.node.base import FunctionNode
-import jijbench.node.data.artifact as _artifact
-import jijbench.node.data.array as _array
-import jijbench.node.data.record as _record
-import jijbench.node.data.table as _table
-import jijbench.node.data.value as _value
 
-if tp.TYPE_CHECKING:
-    from jijbench.node.base import DataNode
+from jijbench.node.base import DataNode
+from jijbench.node.data.database import Artifact, Table
+from jijbench.node.data.array import Array
+from jijbench.node.data.record import Record
+from jijbench.node.data.value import Value
 
 
-
-class ArtifactFactory(FunctionNode[_record.Record, _artifact.Artifact]):
-    def __call__(self, inputs: list[_record.Record], name: str | None = None) -> _artifact.Artifact:
+class ArtifactFactory(FunctionNode[Record, Artifact]):
+    def __call__(self, inputs: list[Record], name: str | None = None) -> Artifact:
         data = {node.name: node.data.to_dict() for node in inputs}
-        return _artifact.Artifact(data, name=name)
+        return Artifact(data, name=name)
 
     @property
     def name(self) -> str:
         return "artifact"
 
 
-class RecordFactory(FunctionNode[DataNode, _record.Record]):
+class RecordFactory(FunctionNode[DataNode, Record]):
     def __call__(
         self, inputs: list[DataNode], name: str | None = None, extract: bool = True
-    ) -> _record.Record:
+    ) -> Record:
         data = {}
         for node in inputs:
             if isinstance(node.data, jm.SampleSet) and extract:
@@ -41,7 +37,7 @@ class RecordFactory(FunctionNode[DataNode, _record.Record]):
             else:
                 data[node.name] = node.data
         data = pd.Series(data)
-        return _record.Record(data, name=name)
+        return Record(data, name=name)
 
     @property
     def name(self) -> str:
@@ -63,7 +59,9 @@ class RecordFactory(FunctionNode[DataNode, _record.Record]):
 
         data.append(_value.Value(sum(sampleset.record.num_occurrences), "num_samples"))
         data.append(
-            _value.Value(sum(sampleset.feasible().record.num_occurrences), "num_feasible")
+            _value.Value(
+                sum(sampleset.feasible().record.num_occurrences), "num_feasible"
+            )
         )
 
         # TODO スキーマが変わったら修正
@@ -85,16 +83,16 @@ class RecordFactory(FunctionNode[DataNode, _record.Record]):
         return data
 
 
-class TableFactory(FunctionNode[_record.Record, _table.Table]):
+class TableFactory(FunctionNode[Record, Table]):
     def __call__(
         self,
-        inputs: list[_record.Record],
+        inputs: list[Record],
         name: str | None = None,
         index_name: str | None = None,
-    ) -> _table.Table:
+    ) -> Table:
         data = pd.DataFrame({node.name: node.data for node in inputs}).T
         data.index.name = index_name
-        return _table.Table(data, name=name)
+        return Table(data, name=name)
 
     @property
     def name(self) -> str:
