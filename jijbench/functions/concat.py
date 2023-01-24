@@ -18,7 +18,7 @@ def _is_table_list(inputs: list[Artifact] | list[Table]) -> TypeGuard[list[Table
     return all([isinstance(node, Table) for node in inputs])
 
 
-class Concat(FunctionNode[Mapping, Mapping]):
+class Concat(FunctionNode[Mapping]):
     @tp.overload
     def operate(
         self,

@@ -16,7 +16,7 @@ if tp.TYPE_CHECKING:
 @dataclass
 class Mapping(DataNode, metaclass=ABCMeta):
     @abstractmethod
-    def append(self, record: Record, **kwargs: tp.Any) -> None:
+    def append(self: Mapping, record: Record, **kwargs: tp.Any) -> None:
         pass
 
     def _append(
@@ -25,24 +25,13 @@ class Mapping(DataNode, metaclass=ABCMeta):
         factory: TableFactory | ArtifactFactory,
         **kwargs: tp.Any,
     ) -> None:
-        from jijbench.functions.concat import Concat
-
-        node = record.apply(factory, name=self.name)
-
-        concat = Concat()
-        inputs = [copy.deepcopy(self), node]
-        self.data = concat(inputs, **kwargs).data
-        self.operator = c
+        append(self, record, **kwargs)
 
 
 @dataclass
 class Artifact(Mapping):
     data: dict = field(default_factory=dict)
 
-    def append(self, record: Record, **kwargs: tp.Any) -> None:
-        from jijbench.functions.factory import ArtifactFactory
-
-        self._append(record, ArtifactFactory(), **kwargs)
 
 
 @dataclass
@@ -54,8 +43,45 @@ class Table(Mapping):
         record: Record,
         axis: tp.Literal[0, 1] = 0,
         index_name: str | None = None,
-        **kwargs: tp.Any,
     ) -> None:
         from jijbench.functions.factory import TableFactory
 
         self._append(record, TableFactory(), axis=axis, index_name=index_name)
+
+
+@tp.overload
+def append(
+    mapping: Artifact,
+    record: Record,
+) -> None:
+    ...
+
+
+@tp.overload
+def append(
+    mapping: Table,
+    record: Record,
+    axis: tp.Literal[0, 1] = 0,
+    index_name: str | None = None,
+) -> None:
+    ...
+
+
+def append(
+    mapping: Mapping,
+    record: Record,
+    axis: tp.Literal[0, 1] = 0,
+    index_name: str | None = None,
+) -> None:
+    from jijbench.functions.concat import Concat
+    from jijbench.functions.factory import TableFactory, ArtifactFactory
+
+    if isinstance(mapping, Artifact):
+        node = record.apply(ArtifactFactory(), name=mapping.name)
+    elif isinstance(mapping, Table):
+        node = record.apply(TableFactory(), name=mapping.name)
+    else:
+        raise TypeError(f"{mapping.__class__.__name__} does not support 'append'.")
+    concat = Concat()
+    mapping.data = mapping.apply(concat, [node], axis=axis, index_name=index_name).data
+    mapping.operator = concat

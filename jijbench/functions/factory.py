@@ -7,28 +7,25 @@ import jijmodeling as jm
 import typing as tp
 import warnings
 
-from jijbench.node.base import FunctionNode, DNodeIT_co, DNodeOT_co
-from jijbench.node.base import DataNode
+from jijbench.node.base import DataNode, DNodeT_co, FunctionNode
 from jijbench.data.mapping import Artifact, Table
 from jijbench.data.record import Record
 from jijbench.data.elements.array import Array
 from jijbench.data.elements.values import Number
 
 
-class Factory(FunctionNode[DNodeIT_co, DNodeOT_co]):
+class Factory(FunctionNode[DNodeT_co]):
     @abc.abstractmethod
-    def create(
-        self, inputs: list[DNodeIT_co], name: str | None = None
-    ) -> DNodeOT_co:
+    def create(self, inputs: list[DataNode], name: str | None = None) -> DNodeT_co:
         pass
 
     def operate(
-        self, inputs: list[DNodeIT_co], name: str | None = None, **kwargs: tp.Any
-    ) -> DNodeOT_co:
+        self, inputs: list[DataNode], name: str | None = None, **kwargs: tp.Any
+    ) -> DNodeT_co:
         return self.create(inputs, name, **kwargs)
 
 
-class RecordFactory(Factory[DataNode, Record]):
+class RecordFactory(Factory[Record]):
     def create(
         self,
         inputs: list[DataNode],
@@ -84,13 +81,13 @@ class RecordFactory(Factory[DataNode, Record]):
         return data
 
 
-class ArtifactFactory(Factory[Record, Artifact]):
+class ArtifactFactory(Factory[Artifact]):
     def create(self, inputs: list[Record], name: str = "") -> Artifact:
         data = {node.name: node.data.to_dict() for node in inputs}
         return Artifact(data, name)
 
 
-class TableFactory(Factory[Record, Table]):
+class TableFactory(Factory[Table]):
     def create(
         self,
         inputs: list[Record],

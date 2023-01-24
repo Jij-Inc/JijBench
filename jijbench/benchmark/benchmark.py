@@ -12,7 +12,7 @@ from jijbench.data.elements.id import ID
 from jijbench.functions.solver import Solver
 
 
-class Benchmark(FunctionNode[DataNode, Experiment]):
+class Benchmark(FunctionNode[Experiment]):
     def __init__(
         self,
         params: dict[str, tp.Iterable[tp.Any]],

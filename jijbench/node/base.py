@@ -1,18 +1,18 @@
 from __future__ import annotations
 
 import abc
+import copy
 import typing as tp
 
 from dataclasses import dataclass
 
 
-DNodeIT_co = tp.TypeVar("DNodeIT_co", bound="DataNode", covariant=True)
-DNodeOT_co = tp.TypeVar("DNodeOT_co", bound="DataNode", covariant=True)
+DNodeT_co = tp.TypeVar("DNodeT_co", bound="DataNode", covariant=True)
 FNodeT_co = tp.TypeVar("FNodeT_co", bound="FunctionNode", covariant=True)
 
 
 @dataclass
-class DataNode(tp.Generic[DNodeIT_co, DNodeOT_co]):
+class DataNode:
     data: tp.Any
     name: str = ""
 
@@ -26,25 +26,25 @@ class DataNode(tp.Generic[DNodeIT_co, DNodeOT_co]):
     def apply(
         self,
         f: FunctionNode,
-        others: list[DNodeIT_co] | None = None,
+        others: list[DataNode] | None = None,
         **kwargs: tp.Any,
-    ) -> DNodeOT_co:
-        inputs = [self]
-        if others:
-            inputs += others
-        node = f(inputs, **kwargs)
+    ) -> DataNode:
+        if others is None:
+            others = []
+        inputs = others + [copy.deepcopy(self)]
+        node = f(inputs[::-1], **kwargs)
         node.operator = f
         return node
 
 
-class FunctionNode(tp.Generic[DNodeIT_co, DNodeOT_co], metaclass=abc.ABCMeta):
+class FunctionNode(tp.Generic[DNodeT_co], metaclass=abc.ABCMeta):
     def __init__(self, name: str | None = None) -> None:
         if name is None:
             name = self.__class__.__name__
         self._name = name
-        self.inputs: list[DNodeIT_co] = []
+        self.inputs: list[DataNode] = []
 
-    def __call__(self, inputs: list[DNodeIT_co], **kwargs: tp.Any) -> DNodeOT_co:
+    def __call__(self, inputs: list[DataNode], **kwargs: tp.Any) -> DNodeT_co:
         self.inputs += inputs
         node = self.operate(inputs, **kwargs)
         return node
@@ -54,5 +54,5 @@ class FunctionNode(tp.Generic[DNodeIT_co, DNodeOT_co], metaclass=abc.ABCMeta):
         return self._name
 
     @abc.abstractmethod
-    def operate(self, inputs: list[DNodeIT_co], **kwargs: tp.Any) -> DNodeOT_co:
+    def operate(self, inputs: list[DataNode], **kwargs: tp.Any) -> DNodeT_co:
         pass
