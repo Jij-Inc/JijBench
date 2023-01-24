@@ -27,13 +27,11 @@ class Mapping(DataNode, metaclass=ABCMeta):
     ) -> None:
         from jijbench.functions.concat import Concat
 
-        node = factory.apply([record], name=self.name)
-        node.operator = factory
+        node = record.apply(factory, name=self.name)
 
-        c = Concat()
+        concat = Concat()
         inputs = [copy.deepcopy(self), node]
-        c.inputs = inputs
-        self.data = c(inputs, **kwargs).data
+        self.data = concat(inputs, **kwargs).data
         self.operator = c
 
 

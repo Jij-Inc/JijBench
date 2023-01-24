@@ -12,8 +12,10 @@ from jijbench.functions.factory import RecordFactory
 
 
 class Solver(FunctionNode[Any, Record]):
-    def __init__(self, function: tp.Callable) -> None:
-        super().__init__()
+    def __init__(self, function: tp.Callable, name: str = "") -> None:
+        if name is None:
+            name = function.__name__
+        super().__init__(name)
         self.function = function
 
     def __call__(
@@ -36,11 +38,6 @@ class Solver(FunctionNode[Any, Record]):
 
         solver_return_names = [f"{self.name}_return[{i}]" for i in range(len(ret))]
         nodes = [
-            Any(data=data, name=name)
-            for data, name in zip(ret, solver_return_names)
+            Any(data=data, name=name) for data, name in zip(ret, solver_return_names)
         ]
         return RecordFactory().apply(nodes, is_parsed_sampleset=is_parsed_sampleset)
-
-    @property
-    def name(self) -> str:
-        return self.function.__name__

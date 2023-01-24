@@ -9,3 +9,4 @@ from jijbench.node.base import DataNode
 @dataclass
 class Record(DataNode):
     data: pd.Series = field(default_factory=lambda: pd.Series(dtype="object"))
+    name: str = ""

@@ -7,36 +7,32 @@ import jijmodeling as jm
 import typing as tp
 import warnings
 
-from jijbench.node.base import FunctionNode, DataNodeKT_co, DataNodeVT_co
+from jijbench.node.base import FunctionNode, DNodeIT_co, DNodeOT_co
 from jijbench.node.base import DataNode
 from jijbench.data.mapping import Artifact, Table
 from jijbench.data.record import Record
 from jijbench.data.elements.array import Array
-from jijbench.data.elements.value import Value
+from jijbench.data.elements.values import Number
 
 
-class Factory(FunctionNode[DataNodeKT_co, DataNodeVT_co]):
-    def __call__(
-        self, inputs: list[DataNodeKT_co], name: str | None = None, **kwargs: tp.Any
-    ) -> DataNodeVT_co:
-        return self.create(inputs, name, **kwargs)
-
+class Factory(FunctionNode[DNodeIT_co, DNodeOT_co]):
     @abc.abstractmethod
     def create(
-        self, inputs: list[DataNodeKT_co], name: str | None = None
-    ) -> DataNodeVT_co:
+        self, inputs: list[DNodeIT_co], name: str | None = None
+    ) -> DNodeOT_co:
         pass
+
+    def operate(
+        self, inputs: list[DNodeIT_co], name: str | None = None, **kwargs: tp.Any
+    ) -> DNodeOT_co:
+        return self.create(inputs, name, **kwargs)
 
 
 class RecordFactory(Factory[DataNode, Record]):
-    @property
-    def name(self) -> str:
-        return "record"
-
     def create(
         self,
         inputs: list[DataNode],
-        name: str | None = None,
+        name: str = "",
         is_parsed_sampleset: bool = True,
     ) -> Record:
         data = {}
@@ -64,9 +60,9 @@ class RecordFactory(Factory[DataNode, Record]):
             for k, v in constraint_violations.items():
                 data.append(Array(np.array(v), k))
 
-        data.append(Value(sum(sampleset.record.num_occurrences), "num_samples"))
+        data.append(Number(sum(sampleset.record.num_occurrences), "num_samples"))
         data.append(
-            Value(sum(sampleset.feasible().record.num_occurrences), "num_feasible")
+            Number(sum(sampleset.feasible().record.num_occurrences), "num_feasible")
         )
 
         # TODO スキーマが変わったら修正
@@ -84,29 +80,21 @@ class RecordFactory(Factory[DataNode, Record]):
                 )
             else:
                 execution_time = solving_time.solve
-        data.append(Value(execution_time, "execution_time"))
+        data.append(Number(execution_time, "execution_time"))
         return data
 
 
 class ArtifactFactory(Factory[Record, Artifact]):
-    @property
-    def name(self) -> str:
-        return "artifact"
-
-    def create(self, inputs: list[Record], name: str | None = None) -> Artifact:
+    def create(self, inputs: list[Record], name: str = "") -> Artifact:
         data = {node.name: node.data.to_dict() for node in inputs}
         return Artifact(data, name)
 
 
 class TableFactory(Factory[Record, Table]):
-    @property
-    def name(self) -> str:
-        return "table"
-
     def create(
         self,
         inputs: list[Record],
-        name: str | None = None,
+        name: str = "",
         index_name: str | None = None,
     ) -> Table:
         data = pd.DataFrame({node.name: node.data for node in inputs}).T
