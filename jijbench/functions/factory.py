@@ -43,10 +43,10 @@ class RecordFactory(Factory[DataNode, Record]):
         for node in inputs:
             if isinstance(node.data, jm.SampleSet) and is_parsed_sampleset:
                 data.update(
-                    {n.name: n.data for n in self._to_nodes_from_sampleset(node.data)}
+                    {n.name: n for n in self._to_nodes_from_sampleset(node.data)}
                 )
             else:
-                data[node.name] = node.data
+                data[node.name] = node
         data = pd.Series(data)
         return Record(data, name)
 

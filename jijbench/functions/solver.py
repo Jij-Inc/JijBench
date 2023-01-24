@@ -6,11 +6,12 @@ import inspect
 
 from jijbench.exceptions.exceptions import SolverFailedError
 from jijbench.node.base import DataNode, FunctionNode
+from jijbench.data.elements.values import Any
 from jijbench.data.record import Record
 from jijbench.functions.factory import RecordFactory
 
 
-class Solver(FunctionNode[DataNode, Record]):
+class Solver(FunctionNode[Any, Record]):
     def __init__(self, function: tp.Callable) -> None:
         super().__init__()
         self.function = function
@@ -35,7 +36,7 @@ class Solver(FunctionNode[DataNode, Record]):
 
         solver_return_names = [f"{self.name}_return[{i}]" for i in range(len(ret))]
         nodes = [
-            DataNode(data=data, name=name)
+            Any(data=data, name=name)
             for data, name in zip(ret, solver_return_names)
         ]
         return RecordFactory().apply(nodes, is_parsed_sampleset=is_parsed_sampleset)

@@ -43,9 +43,9 @@ class Benchmark(FunctionNode[DataNode, Experiment]):
         )
         for f in self.solver:
             if concurrent:
-                experiment = self._run_concurrently(experiment, Solver(f))
+                experiment = self._run_co(experiment, Solver(f))
             else:
-                experiment = self._run_sequentially(
+                experiment = self._run_seq(
                     experiment, Solver(f), is_parsed_sampleset=is_parsed_sampleset
                 )
         return experiment
@@ -54,10 +54,10 @@ class Benchmark(FunctionNode[DataNode, Experiment]):
     def name(self) -> str:
         return self._name
 
-    def _run_concurrently(self, experiment: Experiment, solver: Solver) -> Experiment:
+    def _run_co(self, experiment: Experiment, solver: Solver) -> Experiment:
         raise NotImplementedError
 
-    def _run_sequentially(
+    def _run_seq(
         self, experiment: Experiment, solver: Solver, is_parsed_sampleset=True
     ) -> Experiment:
         # TODO 返り値名を変更できるようにする。
