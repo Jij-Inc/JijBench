@@ -11,7 +11,7 @@ if tp.TYPE_CHECKING:
 
 
 @dataclass
-class Array(DataNode["Array", "Array"]):
+class Array(DataNode):
     data: np.ndarray
 
     @tp.overload
@@ -30,7 +30,7 @@ class Array(DataNode["Array", "Array"]):
     def apply(self, f: Std) -> Array:
         ...
 
-    def apply(self, f: FunctionNode) -> Array:
+    def apply(self, f: FunctionNode) -> DataNode:
         return super().apply(f)
 
     def min(self) -> Array:
@@ -52,3 +52,4 @@ class Array(DataNode["Array", "Array"]):
         from jijbench.functions.math import Std
 
         return self.apply(Std())
+

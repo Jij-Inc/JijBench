@@ -11,7 +11,7 @@ from jijbench.data.record import Record
 from jijbench.functions.factory import RecordFactory
 
 
-class Solver(FunctionNode[Any, Record]):
+class Solver(FunctionNode[Record]):
     def __init__(self, function: tp.Callable, name: str = "") -> None:
         if name is None:
             name = function.__name__
