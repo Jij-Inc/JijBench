@@ -6,7 +6,7 @@ import jijbench as jb
 def test_record_factory():
     factory = jb.functions.RecordFactory()
 
-    inputs = [jb.ID(), jb.Date(), jb.Array(np.arange(5))]
+    inputs = [jb.ID("id"), jb.Date(), jb.Array(np.arange(5))]
     record = factory(inputs)
 
     print()
@@ -81,12 +81,12 @@ def test_concat_artifact():
 
     a1 = factory([r1])
     a2 = factory([r2])
-    
+
     print()
     print(a1.name, a2.name)
 
     artifact = concat([a1, a2])
-    
+
     print(artifact.data)
     print(artifact.data.keys())
 
@@ -96,21 +96,3 @@ def test_concat_artifact():
     assert "b" in artifact.data
     for i, d in artifact.data["a"].items():
         assert d == factory.inputs[0].data[i]
-
-
-def test_concat():
-    concat = jb.functions.Concat()
-
-    factory = jb.functions.TableFactory()
-    data = [jb.ID(), jb.Date(), jb.Array(np.arange(5))]
-    r1 = jb.Record(pd.Series(data), "a")
-    r2 = jb.Record(pd.Series(data), "b")
-
-    t1 = factory([r1])
-    t2 = factory([r2])
-    
-    # node = jb.Table([t1, t2])
-    # table = node.apply(concat)
-    # print()
-    # print(table.data)
-    

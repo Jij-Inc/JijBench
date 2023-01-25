@@ -6,18 +6,18 @@ import inspect
 
 from jijbench.exceptions.exceptions import SolverFailedError
 from jijbench.node.base import DataNode, FunctionNode
-from jijbench.data.elements.values import Any
-from jijbench.data.record import Record
+from jijbench.data.mapping import Record
 from jijbench.functions.factory import RecordFactory
 
 
 class Solver(FunctionNode[Record]):
     def __init__(self, function: tp.Callable, name: str = "") -> None:
-        if name is None:
+        if not name:
             name = function.__name__
         super().__init__(name)
         self.function = function
 
+    # TODO インターフェースを統一
     def __call__(
         self, is_parsed_sampleset: bool = True, **solver_args: tp.Any
     ) -> Record:
@@ -37,7 +37,14 @@ class Solver(FunctionNode[Record]):
             raise SolverFailedError(msg)
 
         solver_return_names = [f"{self.name}_return[{i}]" for i in range(len(ret))]
-        nodes = [
-            Any(data=data, name=name) for data, name in zip(ret, solver_return_names)
-        ]
-        return RecordFactory().apply(nodes, is_parsed_sampleset=is_parsed_sampleset)
+
+        inputs = [DataNode(data, name) for data, name in zip(ret, solver_return_names)]
+        node = super().__call__(inputs, is_parsed_sampleset=is_parsed_sampleset)
+        node.operator = self
+        return node
+
+    def operate(
+        self, inputs: list[DataNode], is_parsed_sampleset: bool = True
+    ) -> Record:
+        factory = RecordFactory()
+        return factory(inputs, is_parsed_sampleset=is_parsed_sampleset)

@@ -4,17 +4,25 @@ import pandas as pd
 import typing as tp
 
 from jijbench.node.base import FunctionNode
-from jijbench.data.mapping import Artifact, Mapping, Table
+from jijbench.data.mapping import Artifact, Mapping, Record, Table
 from typing_extensions import TypeGuard
 
 
 def _is_artifact_list(
-    inputs: list[Artifact] | list[Table],
+    inputs: list[Artifact] | list[Record] | list[Table],
 ) -> TypeGuard[list[Artifact]]:
     return all([isinstance(node, Artifact) for node in inputs])
 
 
-def _is_table_list(inputs: list[Artifact] | list[Table]) -> TypeGuard[list[Table]]:
+def _is_record_list(
+    inputs: list[Artifact] | list[Record] | list[Table],
+) -> TypeGuard[list[Record]]:
+    return all([isinstance(node, Record) for node in inputs])
+
+
+def _is_table_list(
+    inputs: list[Artifact] | list[Record] | list[Table],
+) -> TypeGuard[list[Table]]:
     return all([isinstance(node, Table) for node in inputs])
 
 
@@ -30,6 +38,13 @@ class Concat(FunctionNode[Mapping]):
     @tp.overload
     def operate(
         self,
+        inputs: list[Record],
+    ) -> Record:
+        ...
+
+    @tp.overload
+    def operate(
+        self,
         inputs: list[Table],
         name: str = "",
         axis: tp.Literal[0, 1] = 0,
@@ -39,16 +54,19 @@ class Concat(FunctionNode[Mapping]):
 
     def operate(
         self,
-        inputs: list[Artifact] | list[Table],
+        inputs: list[Artifact] | list[Record] | list[Table],
         name: str = "",
         axis: tp.Literal[0, 1] = 0,
         index_name: str | None = None,
-    ) -> Artifact | Table:
+    ) -> Mapping:
         if _is_artifact_list(inputs):
             data = {}
             for node in inputs:
                 data.update(node.data.copy())
             return Artifact(data, name)
+        elif _is_record_list(inputs):
+            data = pd.concat([node.data for node in inputs])
+            return Record(data, name)
         elif _is_table_list(inputs):
             data = pd.concat([node.data for node in inputs], axis=axis)
             data.index.name = index_name

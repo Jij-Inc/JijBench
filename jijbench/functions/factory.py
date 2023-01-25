@@ -8,8 +8,7 @@ import typing as tp
 import warnings
 
 from jijbench.node.base import DataNode, DNodeT_co, FunctionNode
-from jijbench.data.mapping import Artifact, Table
-from jijbench.data.record import Record
+from jijbench.data.mapping import Artifact, Record,Table
 from jijbench.data.elements.array import Array
 from jijbench.data.elements.values import Number
 

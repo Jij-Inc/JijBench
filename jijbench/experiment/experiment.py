@@ -9,7 +9,6 @@ from dataclasses import dataclass
 from jijbench.consts.path import DEFAULT_RESULT_DIR
 from jijbench.data.mapping import Artifact, Mapping, Table
 from jijbench.data.elements.id import ID
-from jijbench.data.record import Record
 
 
 @dataclass
@@ -68,20 +67,16 @@ class Experiment(Mapping):
         if self.autosave:
             self.save()
 
-    def append(self, record: Record) -> None:
-        for d in self.data:
-            d.append(record, index_name=("experiment_id", "run_id"))
-
-    def concat(self, experiment: Experiment) -> None:
-        from jijbench.functions.concat import Concat
-
-        c = Concat()
-
-        artifact = c([self.data[0], experiment.data[0]])
-        table = c([self.data[1], experiment.data[1]])
-
-        self.data = (artifact, table)
-        self.operator = c
+    # def concat(self, experiment: Experiment) -> None:
+    #    from jijbench.functions.concat import Concat
+    #
+    #    concat = Concat()
+    #
+    #    artifact = concat([self.data[0], experiment.data[0]])
+    #    table = concat([self.data[1], experiment.data[1]])
+    #
+    #    self.data = (artifact, table)
+    #    self.operator = concat
 
     def save(self):
         def is_dillable(obj: tp.Any):
@@ -104,7 +99,7 @@ class Experiment(Mapping):
             artifact = {self.name: {record_name: {}}}
 
         record = {}
-        for k, v in self.artifact[self.name][record_name].items():
+        for k, v in self.artifact[record_name].items():
             if is_dillable(v):
                 record[k] = v
             else:

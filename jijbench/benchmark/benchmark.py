@@ -6,7 +6,7 @@ import pathlib
 
 
 from jijbench.consts.path import DEFAULT_RESULT_DIR
-from jijbench.node.base import DataNode, FunctionNode
+from jijbench.node.base import FunctionNode
 from jijbench.experiment.experiment import Experiment
 from jijbench.data.elements.id import ID
 from jijbench.functions.solver import Solver
@@ -35,6 +35,7 @@ class Benchmark(FunctionNode[Experiment]):
         self.autosave = autosave
         self.savedir = savedir
 
+    # TODO インターフェースを統一
     def __call__(
         self, concurrent: bool = False, is_parsed_sampleset: bool = True
     ) -> Experiment:
@@ -49,6 +50,11 @@ class Benchmark(FunctionNode[Experiment]):
                     experiment, Solver(f), is_parsed_sampleset=is_parsed_sampleset
                 )
         return experiment
+
+    def operate(
+        self, concurrent: bool = False, is_parsed_sampleset: bool = True
+    ) -> Experiment:
+        raise NotImplementedError
 
     @property
     def name(self) -> str:
