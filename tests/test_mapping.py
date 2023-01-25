@@ -38,7 +38,7 @@ def test_record_append():
 def test_table_append():
     factory = jb.functions.TableFactory()
 
-    data = [jb.ID(), jb.Date(), jb.Array(np.arange(5))]
+    data = [jb.ID("id"), jb.Date(), jb.Array(np.arange(5), "array")]
     r1 = jb.Record(pd.Series(data), "a")
     table = factory([r1])
 
@@ -56,7 +56,7 @@ def test_table_append():
 def test_artifact_append():
     factory = jb.functions.ArtifactFactory()
 
-    data = [jb.ID(), jb.Date(), jb.Array(np.arange(5))]
+    data = [jb.ID("id"), jb.Date(), jb.Array(np.arange(5), "array")]
     r1 = jb.Record(pd.Series(data), "a")
     artifact = factory([r1])
 

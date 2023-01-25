@@ -14,7 +14,7 @@ FNodeT_co = tp.TypeVar("FNodeT_co", bound="FunctionNode", covariant=True)
 @dataclass
 class DataNode:
     data: tp.Any
-    name: str = ""
+    name: str
 
     def __post_init__(self) -> None:
         self.operator: FunctionNode | None = None
@@ -23,16 +23,17 @@ class DataNode:
     def dtype(self) -> type:
         return type(self.data)
 
+    def copy(self) -> DataNode:
+        return copy.deepcopy(self)
+
     def apply(
         self,
         f: FunctionNode,
         others: list[DataNode] | None = None,
         **kwargs: tp.Any,
     ) -> DataNode:
-        if others is None:
-            others = []
-        inputs = others + [copy.deepcopy(self)]
-        node = f(inputs[::-1], **kwargs)
+        inputs = [self.copy()] + others if others else []
+        node = f(inputs, **kwargs)
         node.operator = f
         return node
 
