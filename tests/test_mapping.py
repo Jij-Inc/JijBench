@@ -1,6 +1,7 @@
 import jijbench as jb
 import numpy as np
 import pandas as pd
+import typing as tp
 
 
 def test_table():
@@ -73,7 +74,15 @@ def test_artifact_append():
 
 def test_experiment_append():
     e = jb.Experiment(name="test")
-    
+
     for i in range(3):
         data = [jb.ID("id"), jb.Date(), jb.Number(i, "num")]
-        record = jb.functions.RecordFactory()(data)
+        record = jb.functions.RecordFactory()(data, name=i)
+        e.append(record)
+
+    for i in range(3):
+        assert i in e.artifact
+        assert e.artifact[i]["num"].data == i
+
+        data = tp.cast("jb.node.DataNode", e.table.loc[i, "num"]).data
+        assert data == i

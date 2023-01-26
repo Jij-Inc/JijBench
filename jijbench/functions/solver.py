@@ -10,7 +10,7 @@ from jijbench.data.mapping import Record
 from jijbench.functions.factory import RecordFactory
 
 
-class Solver(FunctionNode):
+class Solver(FunctionNode[DataNode, Record]):
     def __init__(self, function: tp.Callable, name: str = "") -> None:
         if not name:
             name = function.__name__
@@ -19,7 +19,7 @@ class Solver(FunctionNode):
 
     # TODO インターフェースを統一
     def __call__(
-        self, is_parsed_sampleset: bool = True, **solver_args: tp.Any
+        self, inputs[DataNode]: Data, is_parsed_sampleset: bool = True, **solver_args: tp.Any
     ) -> Record:
         parameters = inspect.signature(self.function).parameters
         is_kwargs = any([p.kind == 4 for p in parameters.values()])
