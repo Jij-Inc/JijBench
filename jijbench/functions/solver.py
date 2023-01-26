@@ -10,7 +10,7 @@ from jijbench.data.mapping import Record
 from jijbench.functions.factory import RecordFactory
 
 
-class Solver(FunctionNode[Record]):
+class Solver(FunctionNode):
     def __init__(self, function: tp.Callable, name: str = "") -> None:
         if not name:
             name = function.__name__
