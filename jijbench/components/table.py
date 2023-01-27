@@ -130,20 +130,10 @@ class Table:
     def to_numpy(self, labels=None):
         if labels is None:
             for col in self._data:
-                self._data[col] = (
-                    self._data[col]
-                    .map(self._numpystr_to_liststr)
-                    .map(self._to_list)
-                    .map(np.array)
-                )
+                self._data[col] = self._data[col].map(self._to_list).map(np.array)
         else:
             for col in labels:
-                self._data[col] = (
-                    self._data[col]
-                    .map(self._numpystr_to_liststr)
-                    .map(self._to_list)
-                    .map(np.array)
-                )
+                self._data[col] = self._data[col].map(self._to_list).map(np.array)
 
     def to_list(self, labels=None):
         if labels is None:
@@ -162,7 +152,9 @@ class Table:
                 self._data[col] = self._data[col].map(self._to_dict)
 
     def save(self, savepath):
-        self._data.to_csv(savepath)
+        self._data.applymap(
+            lambda x: x.tolist() if isinstance(x, np.ndarray) else x
+        ).to_csv(savepath)
 
     def save_dtypes(self, savepath):
         index = self._data.loc[self._current_index].index
@@ -225,27 +217,4 @@ class Table:
             x = x.replace("'", '"')
             return json.loads(x)
         except (TypeError, json.JSONDecodeError):
-            return x
-
-    @staticmethod
-    def _numpystr_to_liststr(x):
-        try:
-            return re.sub(
-                r"\n+",
-                "",
-                re.sub(
-                    r" +",
-                    ", ",
-                    re.sub(
-                        r"\[ +",
-                        "[",
-                        re.sub(
-                            r" +\]",
-                            "]",
-                            re.sub(r"\.\]", ".0]", re.sub(r"\. ", ".0 ", x)),
-                        ),
-                    ),
-                ),
-            )
-        except TypeError:
             return x
