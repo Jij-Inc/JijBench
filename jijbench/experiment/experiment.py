@@ -19,6 +19,8 @@ class Experiment(Mapping):
     savedir: str | pathlib.Path = DEFAULT_RESULT_DIR
 
     def __post_init__(self):
+        super().__post_init__()
+
         if self.name is None:
             self.name = ID().data
 
@@ -49,21 +51,22 @@ class Experiment(Mapping):
 
     def view(self, kind: tp.Literal["artifact", "table"]) -> dict | pd.DataFrame:
         if kind == "artifact":
-            d = self.data[0].data
+            artifact = self.data[0].data
             return {
-                k: {name: node.data} for k, v in d.items() for name, node in v.items()
+                k: {name: node.data for name, node in v.items()}
+                for k, v in artifact.items()
             }
         else:
-            t = self.data[1].data
-            if t.empty:
-                return t
+            table = self.data[1].data
+            if table.empty:
+                return table
             else:
-                is_tuple_index = all([isinstance(i, tuple) for i in t.index])
+                is_tuple_index = all([isinstance(i, tuple) for i in table.index])
                 if is_tuple_index:
-                    names = t.index.names if len(t.index.names) >= 2 else None
-                    index = pd.MultiIndex.from_tuples(t.index, names=names)
-                    t.index = index
-                return t.applymap(lambda x: x.data)
+                    names = table.index.names if len(table.index.names) >= 2 else None
+                    index = pd.MultiIndex.from_tuples(table.index, names=names)
+                    table.index = index
+                return table.applymap(lambda x: x.data)
 
     def __enter__(self) -> Experiment:
         p = tp.cast("pathlib.Path", self.savedir) / str(self.name)

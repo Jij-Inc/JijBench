@@ -80,9 +80,14 @@ def test_experiment_append():
         record = jb.functions.RecordFactory()(data, name=i)
         e.append(record)
 
+    print()
+    print(e.artifact)
+    print(e.operator)
+    print(e.operator.inputs[0].operator.inputs[0].operator.inputs)
+
     for i in range(3):
         assert i in e.artifact
-        assert e.artifact[i]["num"].data == i
+        assert e.artifact[i]["num"] == i
 
         data = tp.cast("jb.node.DataNode", e.table.loc[i, "num"]).data
         assert data == i

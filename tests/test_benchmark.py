@@ -285,6 +285,7 @@ def test_benchmark_with_custom_sample_model(
         print()
         print(res.data[1])
         print(res.table)
+        print(res.operator)
 
         # assert res.table["solver"].iloc[0] == sample_model.__name__
         assert "sample_molel_return[0]" not in columns

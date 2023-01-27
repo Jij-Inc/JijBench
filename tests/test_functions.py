@@ -120,7 +120,7 @@ def test_concat_experiment():
 
     e1 = jb.Experiment((a1, t1), name="test1")
     e2 = jb.Experiment((a2, t2), name="test2")
-    
+
     concat = jb.functions.Concat()
     e = concat([e1, e2])
     print()
