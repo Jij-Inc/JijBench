@@ -430,6 +430,12 @@ def test_get_experiment_id_list():
     from jijbench.benchmark.benchmark import get_experiment_id_list
     from jijbench.components import ExperimentResultDefaultDir
 
+    import shutil
+
+    # ローカルでは問題なくテストが通るが、Actionでは余分なフォルダがExperimentResultDefaultDirに残っておりテストが失敗する現象が確認されたため、この処理を追加
+    if os.path.exists(ExperimentResultDefaultDir):
+        shutil.rmtree(ExperimentResultDefaultDir)
+
     save_dir = ExperimentResultDefaultDir
 
     def func1(x):

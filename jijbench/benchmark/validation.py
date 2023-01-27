@@ -67,9 +67,9 @@ def _is_tuple_to_instance_data(d):
         if isinstance(d[0], str) and isinstance(d[1], dict):
             return True
         else:
-            False
+            return False
     else:
-        False
+        return False
 
 
 def _tuple_to_instance_data(d):
