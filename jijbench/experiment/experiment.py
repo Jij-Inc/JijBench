@@ -33,20 +33,37 @@ class Experiment(Mapping):
 
     @property
     def artifact(self) -> dict:
-        return self.data[0].data
+        return self.view("artifact")
 
     @property
     def table(self) -> pd.DataFrame:
-        t = self.data[1].data
-        if t.empty:
-            return t
+        return self.view("table")
+
+    @tp.overload
+    def view(self, kind: tp.Literal["artifact"]) -> dict:
+        ...
+
+    @tp.overload
+    def view(self, kind: tp.Literal["table"]) -> pd.DataFrame:
+        ...
+
+    def view(self, kind: tp.Literal["artifact", "table"]) -> dict | pd.DataFrame:
+        if kind == "artifact":
+            d = self.data[0].data
+            return {
+                k: {name: node.data} for k, v in d.items() for name, node in v.items()
+            }
         else:
-            is_tuple_index = all([isinstance(i, tuple) for i in t.index])
-            if is_tuple_index:
-                names = t.index.names if len(t.index.names) >= 2 else None
-                index = pd.MultiIndex.from_tuples(t.index, names=names)
-                t.index = index
-            return t
+            t = self.data[1].data
+            if t.empty:
+                return t
+            else:
+                is_tuple_index = all([isinstance(i, tuple) for i in t.index])
+                if is_tuple_index:
+                    names = t.index.names if len(t.index.names) >= 2 else None
+                    index = pd.MultiIndex.from_tuples(t.index, names=names)
+                    t.index = index
+                return t.applymap(lambda x: x.data)
 
     def __enter__(self) -> Experiment:
         p = tp.cast("pathlib.Path", self.savedir) / str(self.name)

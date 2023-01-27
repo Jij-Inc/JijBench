@@ -75,7 +75,7 @@ class Mapping(DataNode):
         concat = Concat()
         node = tp.cast(MappingTypes, self)
         if _is_artifact(node):
-            others = [ArtifactFactory()([record])]
+            others = [ArtifactFactory().operate([record])]
             node.data = node.apply(concat, others).data
         elif _is_experiment(node):
             node.data[0].append(record)
@@ -83,7 +83,7 @@ class Mapping(DataNode):
         elif _is_record(node):
             node.data = node.apply(concat, [record]).data
         elif _is_table(node):
-            others = [TableFactory()([record])]
+            others = [TableFactory().operate([record])]
             node.data = node.apply(concat, others).data
         else:
             raise TypeError(f"{node.__class__.__name__} does not support 'append'.")

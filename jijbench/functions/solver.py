@@ -11,7 +11,7 @@ from jijbench.data.elements.values import Parameter
 from jijbench.functions.factory import RecordFactory
 
 
-class Solver(FunctionNode[DataNode, Record]):
+class Solver(FunctionNode[Parameter, Record]):
     def __init__(self, function: tp.Callable, name: str = "") -> None:
         if not name:
             name = function.__name__
@@ -39,4 +39,4 @@ class Solver(FunctionNode[DataNode, Record]):
             DataNode(data, name) for data, name in zip(ret, solver_return_names)
         ]
         factory = RecordFactory()
-        return factory(ret_nodes, is_parsed_sampleset=is_parsed_sampleset)
+        return factory.operate(ret_nodes, is_parsed_sampleset=is_parsed_sampleset)

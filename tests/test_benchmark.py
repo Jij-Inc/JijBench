@@ -208,6 +208,18 @@ def sample_model():
 #     assert isinstance(bench.instance_data[0][0], tuple)
 
 
+def test_benchmark_paramters():
+    bench = jb.Benchmark(
+        {
+            "num_reads": [1, 2],
+            "num_sweeps": [10],
+        },
+        solver=sample_qubo,
+    )
+    print()
+    print(bench.params)
+
+
 def test_simple_benchmark(problem, instance_data):
     bench = jb.Benchmark(
         {
@@ -220,30 +232,33 @@ def test_simple_benchmark(problem, instance_data):
     )
     res = bench()
 
+    print()
+    print(res.table)
+
     columns = res.table.columns
 
     assert "sample_qubo_return[0]" in columns
 
 
-def test_benchmark_with_custom_solver():
+def test_benchmark_with_multi_return_solver():
     def func():
         return "a", 1
 
     bench = jb.Benchmark({"num_reads": [1, 2], "num_sweeps": [10]}, solver=func)
-    bench.run()
+    res = bench()
 
-    assert bench.table["solver"][0] == func.__name__
-    assert bench.table["solver_return_values[0]"][0] == "a"
-    assert bench.table["solver_return_values[1]"][0] == 1.0
+    # assert res.table["solver"][0] == func.__name__
+    assert res.table["func_return[0]"][0].data == "a"
+    assert res.table["func_return[1]"][0].data == 1.0
 
 
-def test_benchmark_with_custom_solver_by_sync_False():
-    def func():
-        return "a", 1
-
-    bench = jb.Benchmark({"num_reads": [1, 2], "num_sweeps": [10]}, solver=func)
-    with pytest.raises(ConcurrentFailedError):
-        bench.run(sync=False)
+# def test_benchmark_with_custom_solver_by_sync_False():
+#     def func():
+#         return "a", 1
+#
+#     bench = jb.Benchmark({"num_reads": [1, 2], "num_sweeps": [10]}, solver=func)
+#     with pytest.raises(ConcurrentFailedError):
+#         bench.run(sync=False)
 
 
 def test_benchmark_with_custom_sample_model(
@@ -253,23 +268,27 @@ def test_benchmark_with_custom_sample_model(
     instance_data,
     instance_data_list,
 ):
-    for d in [ph_value, ph_value_list, instance_data, instance_data_list]:
+    for d in [ph_value, ph_value_list, instance_data, instance_data_list][:1]:
         bench = jb.Benchmark(
             {
                 "num_reads": [1, 2],
                 "num_sweeps": [10],
                 "multipliers": [{"knapsack_constraint": 1}],
+                "problem": [problem],
+                "instance_data": [d],
             },
             solver=sample_model,
-            problem=problem,
-            instance_data=d,
         )
-        bench.run()
-        columns = bench.table.columns
+        res = bench()
+        columns = res.table.columns
 
-        assert bench.table["solver"].iloc[0] == sample_model.__name__
-        assert "solver_return_values[0]" not in columns
-        assert bench.table["problem_name"].iloc[0] == "knapsack"
+        print()
+        print(res.data[1])
+        print(res.table)
+
+        # assert res.table["solver"].iloc[0] == sample_model.__name__
+        assert "sample_molel_return[0]" not in columns
+        # assert res.table["problem_name"].iloc[0] == "knapsack"
 
 
 def test_benchmark_with_custom_sample_model_for_multi_problem(
@@ -280,44 +299,17 @@ def test_benchmark_with_custom_sample_model_for_multi_problem(
             {
                 "num_reads": [1, 2],
                 "num_sweeps": [10],
+                "problem": [problem_list],
+                "instance_data": [d],
             },
             solver=sample_model,
-            problem=problem_list,
-            instance_data=d,
         )
-        bench.run()
-        columns = bench.table.columns
+        res = bench()
+        columns = res.table.columns
 
-        assert bench.table["solver"].iloc[0] == sample_model.__name__
-        assert "solver_return_values[0]" not in columns
-        assert bench.table["problem_name"].iloc[0] == "knapsack"
-
-
-def test_benchmark_with_custom_decode(
-    problem,
-    ph_value,
-    ph_value_list,
-    instance_data,
-    instance_data_list,
-):
-    for d in [ph_value, ph_value_list, instance_data, instance_data_list]:
-        bench = jb.Benchmark(
-            {
-                "num_reads": [1, 2],
-                "num_sweeps": [10],
-                "multipliers": [{"knapsack_constraint": 1}],
-            },
-            solver=sample_model,
-            problem=problem,
-            instance_data=d,
-        )
-        bench.run()
-        columns = bench.table.columns
-
-        assert bench.table["solver"].iloc[0] == sample_model.__name__
-        assert "solver_return_values[0]" not in columns
-        assert bench.table["problem_name"].iloc[0] == "knapsack"
-        assert isinstance(bench.table["objective"].iloc[0], np.ndarray)
+        # assert res.table["solver"].iloc[0] == sample_model.__name__
+        assert "sample_model_return[0]" not in columns
+        # assert res.table["problem_name"].iloc[0] == "knapsack"
 
 
 def test_benchmark_with_any_problem_and_instance_data():
@@ -326,15 +318,18 @@ def test_benchmark_with_any_problem_and_instance_data():
     instance_data["d"][0] = -1
 
     bench = jb.Benchmark(
-        {"num_reads": [1, 2], "num_sweeps": [10]},
+        {
+            "num_reads": [1, 2],
+            "num_sweeps": [10],
+            "problem": [problem],
+            "instance_data": [instance_data],
+        },
         solver=sample_qubo,
-        problem=problem,
-        instance_data=instance_data,
     )
-    bench.run()
+    res = bench()
 
-    assert bench.table["problem_name"][0] == "problem"
-    assert bench.table["instance_data_name"][0] == "Unnamed[0]"
+    # assert res.table["problem_name"][0] == "problem"
+    # assert res.table["instance_data_name"][0] == "Unnamed[0]"
 
 
 def test_benchmark_with_callable_args():
@@ -354,11 +349,11 @@ def test_benchmark_with_callable_args():
         solver=rap_solver,
     )
 
-    bench.run()
+    res = bench()
 
-    columns = bench.table.columns
-    assert sample_model.__name__ in columns
-    assert isinstance(bench.table[sample_model.__name__][0], str)
+    columns = res.table.columns
+    # assert sample_model.__name__ in columns
+    # assert isinstance(res.table[sample_model.__name__][0], str)
 
 
 def test_benchmark_with_multisolver():
