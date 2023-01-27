@@ -28,7 +28,6 @@ class DataNode:
     ) -> DataNode:
         inputs = [tp.cast("DataNodeIT", copy.deepcopy(self))] + others if others else []
         node = f(inputs, **kwargs)
-        node.operator = f
         return node
 
 
@@ -42,6 +41,7 @@ class FunctionNode(tp.Generic[DataNodeIT_co, DataNodeOT_co], metaclass=abc.ABCMe
     def __call__(self, inputs: list[DataNodeIT_co], **kwargs: tp.Any) -> DataNodeOT_co:
         self.inputs += inputs
         node = self.operate(inputs, **kwargs)
+        node.operator = self
         return node
 
     @property

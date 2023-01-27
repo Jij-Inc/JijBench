@@ -7,6 +7,11 @@ from jijbench.node.base import DataNode
 
 
 @dataclass
+class Parameter(DataNode):
+    data: tp.Any
+
+
+@dataclass
 class Number(DataNode):
     data: int | float
 
@@ -14,8 +19,3 @@ class Number(DataNode):
 @dataclass
 class String(DataNode):
     data: str
-
-
-@dataclass
-class Any(DataNode):
-    data: tp.Any

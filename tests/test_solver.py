@@ -15,7 +15,12 @@ def custom_solver_failed():
 def test_simple_solver():
     solver = jb.functions.Solver(func1)
 
-    ret = solver(x=1)
+    param = jb.Parameter(1, "x")
+    ret = solver([param])
+    
+    print()
+    print(ret.data)
+    print(ret.operator)
 
     assert isinstance(ret, jb.Record)
     assert ret.operator is not None
@@ -25,4 +30,4 @@ def test_simple_solver():
 def test_CallebleSolver_solver_failed_error():
     solver = jb.functions.Solver(custom_solver_failed)
     with pytest.raises(SolverFailedError):
-        solver()
+        solver([])
