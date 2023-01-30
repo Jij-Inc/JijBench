@@ -8,7 +8,20 @@ import pathlib
 from dataclasses import dataclass, field
 from jijbench.consts.path import DEFAULT_RESULT_DIR
 from jijbench.data.mapping import Artifact, Mapping, Table
+from jijbench.functions.concat import Concat
+from jijbench.functions.factory import ArtifactFactory, TableFactory
 from jijbench.data.elements.id import ID
+from typing_extensions import TypeGuard
+
+
+if tp.TYPE_CHECKING:
+    from jijbench.data.mapping import Record
+
+
+def _is_experiment(
+    node: Mapping,
+) -> TypeGuard[Experiment]:
+    return node.__class__.__name__ == "Experiment"
 
 
 @dataclass
@@ -32,6 +45,19 @@ class Experiment(Mapping):
 
         if isinstance(self.savedir, str):
             self.savedir = pathlib.Path(self.savedir)
+
+    def __enter__(self) -> Experiment:
+        p = tp.cast("pathlib.Path", self.savedir) / str(self.name)
+        (p / "table").mkdir(parents=True, exist_ok=True)
+        (p / "artifact").mkdir(parents=True, exist_ok=True)
+        return self
+
+    def __exit__(self, exception_type, exception_value, traceback) -> None:
+        index = (self.name, self.table.index[-1])
+        self.table.rename(index={self.table.index[-1]: index}, inplace=True)
+
+        if self.autosave:
+            self.save()
 
     @property
     def artifact(self) -> dict:
@@ -68,18 +94,15 @@ class Experiment(Mapping):
                     table.index = index
                 return table.applymap(lambda x: x.data)
 
-    def __enter__(self) -> Experiment:
-        p = tp.cast("pathlib.Path", self.savedir) / str(self.name)
-        (p / "table").mkdir(parents=True, exist_ok=True)
-        (p / "artifact").mkdir(parents=True, exist_ok=True)
-        return self
-
-    def __exit__(self, exception_type, exception_value, traceback) -> None:
-        index = (self.name, self.table.index[-1])
-        self.table.rename(index={self.table.index[-1]: index}, inplace=True)
-
-        if self.autosave:
-            self.save()
+    def append(self, record: Record) -> None:
+        data = (ArtifactFactory()([record]), TableFactory()([record]))
+        other = type(self)(data, self.name, self.autosave, self.savedir)
+        node = self.apply(Concat(), [other])
+        if _is_experiment(node):
+            self.data = node.data
+            self.operator = node.operator
+        else:
+            raise TypeError(f"{self.__class__.__name__} does not support 'append'.")
 
     # def concat(self, experiment: Experiment) -> None:
     #    from jijbench.functions.concat import Concat

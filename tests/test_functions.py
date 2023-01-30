@@ -128,7 +128,7 @@ def test_concat_experiment():
     print(e.table)
 
 
-def test_t():
-    from jijbench.typing import DataNodeT
-
-    print(DataNodeT)
+# def test_t():
+#     from jijbench.typing import DataNodeT
+# 
+#     print(DataNodeT)

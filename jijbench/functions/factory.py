@@ -10,22 +10,22 @@ import warnings
 from jijbench.node.base import DataNode, FunctionNode
 from jijbench.data.elements.array import Array
 from jijbench.data.elements.values import Number
-from jijbench.typing import DataNodeIT_co, DataNodeOT_co
+from jijbench.typing import DataNodeT, DataNodeT2
 
 if tp.TYPE_CHECKING:
     from jijbench.data.mapping import Artifact, Record, Table
 
 
-class Factory(FunctionNode[DataNodeIT_co, DataNodeOT_co]):
+class Factory(FunctionNode[DataNodeT, DataNodeT2]):
     @abc.abstractmethod
     def create(
-        self, inputs: list[DataNodeIT_co], name: str | None = None
-    ) -> DataNodeOT_co:
+        self, inputs: list[DataNodeT], name: str | None = None
+    ) -> DataNodeT2:
         pass
 
     def operate(
-        self, inputs: list[DataNodeIT_co], name: str | None = None, **kwargs: tp.Any
-    ) -> DataNodeOT_co:
+        self, inputs: list[DataNodeT], name: str | None = None, **kwargs: tp.Any
+    ) -> DataNodeT2:
         return self.create(inputs, name, **kwargs)
 
 
