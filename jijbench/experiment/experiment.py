@@ -11,17 +11,10 @@ from jijbench.data.mapping import Artifact, Mapping, Table
 from jijbench.functions.concat import Concat
 from jijbench.functions.factory import ArtifactFactory, TableFactory
 from jijbench.data.elements.id import ID
-from typing_extensions import TypeGuard
 
 
 if tp.TYPE_CHECKING:
     from jijbench.data.mapping import Record
-
-
-def _is_experiment(
-    node: Mapping,
-) -> TypeGuard[Experiment]:
-    return node.__class__.__name__ == "Experiment"
 
 
 @dataclass
@@ -81,29 +74,12 @@ class Experiment(Mapping):
         return t
 
     def append(self, record: Record) -> None:
+        concat: Concat[Experiment] = Concat()
         data = (ArtifactFactory()([record]), TableFactory()([record]))
         other = type(self)(data, self.name, self.autosave, self.savedir)
-        node = self.apply(Concat(), [other])
-        if _is_experiment(node):
-            self.data = node.data
-            self.operator = node.operator
-        else:
-            raise TypeError(f"{self.__class__.__name__} does not support 'append'.")
-
-    def append(self, record: Record) -> None:
-        for d in self.data:
-            d.append(record, index_name=("experiment_id", "run_id"))
-
-    def concat(self, experiment: Experiment) -> None:
-        from jijbench.functions.concat import Concat
-
-        c = Concat()
-
-        artifact = c([self.data[0], experiment.data[0]])
-        table = c([self.data[1], experiment.data[1]])
-
-        self.data = (artifact, table)
-        self.operator = c
+        node = self.apply(concat, [other])
+        self.data = node.data
+        self.operator = node.operator
 
     def save(self):
         def is_dillable(obj: tp.Any):

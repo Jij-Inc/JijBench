@@ -7,6 +7,10 @@ from jijbench.node.base import FunctionNode
 from jijbench.typing import MappingT, MappingTypes, MappingListTypes
 from typing_extensions import TypeGuard
 
+if tp.TYPE_CHECKING:
+    from jijbench.data.mapping import Artifact, Record, Table
+    from jijbench.experiment.experiment import Experiment
+
 
 def _is_artifact_list(
     inputs: list[Artifact] | list[Table],
@@ -17,48 +21,16 @@ def _is_artifact_list(
 def _is_table_list(inputs: list[Artifact] | list[Table]) -> TypeGuard[list[Table]]:
     return all([isinstance(node, Table) for node in inputs])
 
-def _is_mapping_list(inputs: MappingListTypes) -> TypeGuard[list[MappingTypes]]:
-    cls_name = inputs[0].__class__.__name__
-    return all([node.__class__.__name__ == cls_name for node in inputs])
-
-
-class Concat(FunctionNode[MappingTypes, MappingT]):
-    # @tp.overload
-    # def __call__(self, inputs: list[Artifact], name: str = "") -> Artifact:
-    #     ...
-    #
-    # @tp.overload
-    # def __call__(
-    #     self,
-    #     inputs: list[Experiment],
-    #     name: str = "",
-    #     axis: tp.Literal[0, 1] = 0,
-    #     index_name: str | None = None,
-    # ) -> Experiment:
-    #     ...
-    #
-    # @tp.overload
-    # def __call__(self, inputs: list[Record]) -> Record:
-    #     ...
-    #
-    # @tp.overload
-    # def __call__(
-    #     self,
-    #     inputs: list[Table],
-    #     name: str = "",
-    #     axis: tp.Literal[0, 1] = 0,
-    #     index_name: str | None = None,
-    # ) -> Table:
-    #     ...
-
+class Concat(FunctionNode[MappingT, MappingT]):
     def __call__(
         self,
-        inputs: MappingListTypes,
+        inputs: list[MappingT],
         name: str = "",
         axis: tp.Literal[0, 1] = 0,
         index_name: str | None = None,
     ) -> MappingT:
-        if _is_mapping_list(inputs):
+        cls_name = inputs[0].__class__.__name__
+        if all([node.__class__.__name__ == cls_name for node in inputs]):
             return super().__call__(inputs, name=name, axis=axis, index_name=index_name)
         else:
             raise TypeError(
