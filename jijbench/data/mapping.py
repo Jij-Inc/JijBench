@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import abc
 import pandas as pd
-import typing as tp
 
 from dataclasses import dataclass, field
 from jijbench.functions.concat import Concat

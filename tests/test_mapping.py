@@ -1,7 +1,6 @@
 import jijbench as jb
 import numpy as np
 import pandas as pd
-import typing as tp
 
 
 def test_table():
