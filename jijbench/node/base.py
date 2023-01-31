@@ -5,7 +5,7 @@ import copy
 import typing as tp
 
 from dataclasses import dataclass
-from jijbench.typing import DataNodeT, DataNodeT2, DataNodeT_co, DataNodeT2_co
+from jijbench.typing import DataNodeT, DataNodeT2
 
 
 @dataclass

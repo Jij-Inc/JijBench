@@ -73,12 +73,9 @@ def test_artifact_append():
 
 
 def test_experiment_append():
-    from icecream import ic
-
     e = jb.Experiment(name="test")
 
-    print()
-    for i in range(1):
+    for i in range(3):
         data = [
             jb.ID(name="id"),
             jb.Date(),
@@ -86,45 +83,17 @@ def test_experiment_append():
             jb.Array(np.arange(5), "array"),
         ]
         record = jb.functions.RecordFactory()(data, name=i)
-        ic(list(map(id, data)))
         e.append(record)
 
-    ic(":::::::")
-    ic(e.operator)
-    ic(len(e.operator.inputs))
-    ic(e.data[1])
-    ic(type(e.data[1]))
-    ic(e.data[1].operator)
-    ic(e.data[1].operator.inputs[0].data.applymap(id))
-    ic(e.data[1].operator.inputs[1].data.applymap(id))
-    # TODO add test
-    # ic(e.data[1].operator.inputs[2].data)
-    # ic(e.data[1].operator.inputs[3].data)
-    # ic(e.data[1].operator.inputs[4].data)
-    # ic(e.data[1].operator.inputs[5].data)
-    ic(e.data[1].operator.inputs[1].operator.inputs[0].data.apply(id))
-    ic(e.data[1].operator.inputs[1].operator.inputs[0].operator)
-    ic(list(map(id, e.data[1].operator.inputs[1].operator.inputs[0].operator.inputs)))
-    ic(list(map(id, e.data[0].operator.inputs[1].operator.inputs[0].operator.inputs)))
-    ic("=========")
-    # ic(
-    #     e.operator.inputs[0]
-    #     .operator.inputs[1]
-    #     .data[0]
-    #     .operator.inputs[0]
-    #     .operator.inputs
-    # )
-    # print(e.operator.inputs[0].operator.inputs[0])
-    # print(e.operator.inputs[0].operator.inputs[0].operator)
-    # print(e.operator.inputs[0].operator.inputs[0].operator.inputs)
-
-    # for i in range(3):
-    #     assert i in e.artifact
-    #     assert e.artifact[i]["num"] == i
-    #     assert e.table.loc[i, "num"] == i
+    for i in range(3):
+        assert i in e.artifact
+        assert e.artifact[i]["num"] == i
+        assert e.table.loc[i, "num"] == i
 
 
 def test_ref():
+    from icecream import ic
+
     factory = jb.functions.RecordFactory()
     inputs1 = [
         jb.ID(name="id1"),
@@ -141,3 +110,31 @@ def test_ref():
     print(table.operator.inputs[0].data.apply(id))
     print(list(map(id, table.operator.inputs[0].operator.inputs)))
     print()
+
+    ic(":::::::")
+    ic(e.operator)
+    ic(len(e.operator.inputs))
+    ic(e.data[1])
+    ic(type(e.data[1]))
+    ic(e.data[1].operator)
+    ic(e.data[1].operator.inputs[0].data.applymap(id))
+    ic(e.data[1].operator.inputs[1].data.applymap(id))
+    # TODO add test
+    # ic(e.data[1].operator.inputs[2].data)
+    # ic(e.data[1].operator.inputs[3].data)
+    # ic(e.data[1].operator.inputs[4].data)
+    # ic(e.data[1].operator.inputs[5].data)
+    ic(e.data[1].data.applymap(id))
+    ic(list(map(id, e.data[1].operator.inputs[1].operator.inputs[0].operator.inputs)))
+    ic(list(map(id, e.data[0].operator.inputs[1].operator.inputs[0].operator.inputs)))
+    ic("=========")
+    # ic(
+    #     e.operator.inputs[0]
+    #     .operator.inputs[1]
+    #     .data[0]
+    #     .operator.inputs[0]
+    #     .operator.inputs
+    # )
+    # print(e.operator.inputs[0].operator.inputs[0])
+    # print(e.operator.inputs[0].operator.inputs[0].operator)
+    # print(e.operator.inputs[0].operator.inputs[0].operator.inputs)
