@@ -7,27 +7,24 @@ import inspect
 from jijbench.exceptions.exceptions import SolverFailedError
 from jijbench.node.base import DataNode, FunctionNode
 from jijbench.data.mapping import Record
+from jijbench.data.elements.values import Parameter
 from jijbench.functions.factory import RecordFactory
 
 
-class Solver(FunctionNode[Record]):
+class Solver(FunctionNode[Parameter, Record]):
     def __init__(self, function: tp.Callable, name: str = "") -> None:
         if not name:
             name = function.__name__
         super().__init__(name)
         self.function = function
 
-    # TODO インターフェースを統一
-    def __call__(
-        self, is_parsed_sampleset: bool = True, **solver_args: tp.Any
+    def operate(
+        self, inputs: list[Parameter], is_parsed_sampleset: bool = True
     ) -> Record:
         parameters = inspect.signature(self.function).parameters
-        is_kwargs = any([p.kind == 4 for p in parameters.values()])
-        solver_args = (
-            solver_args
-            if is_kwargs
-            else {k: v for k, v in solver_args.items() if k in parameters}
-        )
+        solver_args = {
+            node.name: node.data for node in inputs if node.name in parameters
+        }
         try:
             ret = self.function(**solver_args)
             if not isinstance(ret, tuple):
@@ -38,13 +35,8 @@ class Solver(FunctionNode[Record]):
 
         solver_return_names = [f"{self.name}_return[{i}]" for i in range(len(ret))]
 
-        inputs = [DataNode(data, name) for data, name in zip(ret, solver_return_names)]
-        node = super().__call__(inputs, is_parsed_sampleset=is_parsed_sampleset)
-        node.operator = self
-        return node
-
-    def operate(
-        self, inputs: list[DataNode], is_parsed_sampleset: bool = True
-    ) -> Record:
+        ret_nodes = [
+            DataNode(data, name) for data, name in zip(ret, solver_return_names)
+        ]
         factory = RecordFactory()
-        return factory(inputs, is_parsed_sampleset=is_parsed_sampleset)
+        return factory.operate(ret_nodes, is_parsed_sampleset=is_parsed_sampleset)

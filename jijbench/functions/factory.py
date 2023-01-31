@@ -7,30 +7,37 @@ import jijmodeling as jm
 import typing as tp
 import warnings
 
-from jijbench.node.base import DataNode, DNodeT_co, FunctionNode
-from jijbench.data.mapping import Artifact, Record,Table
+from jijbench.node.base import DataNode, FunctionNode
 from jijbench.data.elements.array import Array
 from jijbench.data.elements.values import Number
+from jijbench.typing import DataNodeT, DataNodeT2
+
+if tp.TYPE_CHECKING:
+    from jijbench.data.mapping import Artifact, Record, Table
 
 
-class Factory(FunctionNode[DNodeT_co]):
+class Factory(FunctionNode[DataNodeT, DataNodeT2]):
     @abc.abstractmethod
-    def create(self, inputs: list[DataNode], name: str | None = None) -> DNodeT_co:
+    def create(
+        self, inputs: list[DataNodeT], name: str | None = None
+    ) -> DataNodeT2:
         pass
 
     def operate(
-        self, inputs: list[DataNode], name: str | None = None, **kwargs: tp.Any
-    ) -> DNodeT_co:
+        self, inputs: list[DataNodeT], name: str | None = None, **kwargs: tp.Any
+    ) -> DataNodeT2:
         return self.create(inputs, name, **kwargs)
 
 
-class RecordFactory(Factory[Record]):
+class RecordFactory(Factory[DataNode, "Record"]):
     def create(
         self,
         inputs: list[DataNode],
         name: str = "",
         is_parsed_sampleset: bool = True,
     ) -> Record:
+        from jijbench.data.mapping import Record
+
         data = {}
         for node in inputs:
             if isinstance(node.data, jm.SampleSet) and is_parsed_sampleset:
@@ -80,19 +87,23 @@ class RecordFactory(Factory[Record]):
         return data
 
 
-class ArtifactFactory(Factory[Artifact]):
+class ArtifactFactory(Factory["Record", "Artifact"]):
     def create(self, inputs: list[Record], name: str = "") -> Artifact:
+        from jijbench.data.mapping import Artifact
+
         data = {node.name: node.data.to_dict() for node in inputs}
         return Artifact(data, name)
 
 
-class TableFactory(Factory[Table]):
+class TableFactory(Factory["Record", "Table"]):
     def create(
         self,
         inputs: list[Record],
         name: str = "",
         index_name: str | None = None,
     ) -> Table:
+        from jijbench.data.mapping import Table
+
         data = pd.DataFrame({node.name: node.data for node in inputs}).T
         data.index.name = index_name
         return Table(data, name)

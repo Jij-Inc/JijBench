@@ -7,78 +7,82 @@ import pathlib
 
 from jijbench.consts.path import DEFAULT_RESULT_DIR
 from jijbench.node.base import FunctionNode
-from jijbench.experiment.experiment import Experiment
 from jijbench.data.elements.id import ID
+from jijbench.data.elements.values import Parameter
+from jijbench.experiment.experiment import Experiment
 from jijbench.functions.solver import Solver
 
 
-class Benchmark(FunctionNode[Experiment]):
+class Benchmark(FunctionNode[Parameter, Experiment]):
     def __init__(
         self,
         params: dict[str, tp.Iterable[tp.Any]],
         solver: tp.Callable | list[tp.Callable],
         name: str | None = None,
-        autosave: bool = True,
-        savedir: str | pathlib.Path = DEFAULT_RESULT_DIR,
     ) -> None:
         super().__init__()
-        self.params = params
+
+        self.params = [
+            [Parameter(v, k) for k, v in zip(params.keys(), r)]
+            for r in itertools.product(*params.values())
+        ]
+
         if isinstance(solver, tp.Callable):
-            self.solver = [solver]
+            self.solver = [Solver(solver)]
         else:
-            self.solver = solver
+            self.solver = [Solver(f) for f in solver]
 
         if name is None:
             name = ID().data
         self._name = name
 
-        self.autosave = autosave
-        self.savedir = savedir
-
     # TODO インターフェースを統一
     def __call__(
-        self, concurrent: bool = False, is_parsed_sampleset: bool = True
+        self,
+        concurrent: bool = False,
+        is_parsed_sampleset: bool = True,
+        autosave: bool = True,
+        savedir: str | pathlib.Path = DEFAULT_RESULT_DIR,
     ) -> Experiment:
-        experiment = Experiment(
-            name=ID().data, autosave=self.autosave, savedir=self.savedir
-        )
-        for f in self.solver:
-            if concurrent:
-                experiment = self._run_co(experiment, Solver(f))
-            else:
-                experiment = self._run_seq(
-                    experiment, Solver(f), is_parsed_sampleset=is_parsed_sampleset
-                )
-        return experiment
+        return self.operate(concurrent, is_parsed_sampleset, autosave, savedir)
 
     def operate(
-        self, concurrent: bool = False, is_parsed_sampleset: bool = True
+        self,
+        concurrent: bool = False,
+        is_parsed_sampleset: bool = True,
+        autosave: bool = True,
+        savedir: str | pathlib.Path = DEFAULT_RESULT_DIR,
     ) -> Experiment:
-        raise NotImplementedError
+        if concurrent:
+            return self._run_co()
+        else:
+            experiment = Experiment(name=ID().data, autosave=autosave, savedir=savedir)
+            for f in self.solver:
+                for inputs in self.params:
+                    with experiment:
+                        record = f(inputs, is_parsed_sampleset=is_parsed_sampleset)
+                        record.name = ID().data
+                        experiment.append(record)
+            return experiment
 
     @property
     def name(self) -> str:
         return self._name
 
-    def _run_co(self, experiment: Experiment, solver: Solver) -> Experiment:
+    def _run_co(self) -> Experiment:
         raise NotImplementedError
 
     def _run_seq(
-        self, experiment: Experiment, solver: Solver, is_parsed_sampleset=True
+        self, inputs: list[Parameter], solver: Solver, is_parsed_sampleset=True
     ) -> Experiment:
         # TODO 返り値名を変更できるようにする。
         # solver.rename_return(ret)
-        for r in itertools.product(*self.params.values()):
-            with experiment:
-                solver_args = dict([(k, v) for k, v in zip(self.params.keys(), r)])
-                name = ID().data
-                record = solver(**solver_args, is_parsed_sampleset=is_parsed_sampleset)
-                record.name = name
-                experiment.append(record)
-
-                # TODO 入力パラメータをtableで保持する
-                # params = (dict([(k, v) for k, v in zip(self.params.keys(), r)]))
-                # params = RecordFactory().apply(params)
-                # params.name = name
-                # experiment.append(record)
-        return experiment
+        name = ID().data
+        record = solver(inputs, is_parsed_sampleset=is_parsed_sampleset)
+        record.name = name
+        # TODO 入力パラメータをtableで保持する
+        # params = (dict([(k, v) for k, v in zip(self.params.keys(), r)]))
+        # params = RecordFactory().apply(params)
+        # params.name = name
+        # experiment.append(record)
+        return Experiment()

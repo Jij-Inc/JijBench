@@ -7,6 +7,7 @@ from json import load
 import dimod
 import jijmodeling as jm
 import numpy as np
+import pandas as pd
 import openjij as oj
 import pytest
 
@@ -87,103 +88,123 @@ def sample_model():
 
 
 def test_simple_experiment():
-    experiment = jb.Experiment(name="test")
+    e = jb.Experiment(name="test")
     for x in range(3):
         for y in range(3):
-            with experiment:
+            with e:
                 solver = jb.functions.Solver(sample_model)
                 record = solver(x=x, y=y)
                 record.name = jb.ID().data
-                experiment.append(record)
+                e.append(record)
+
+
+def test_construct_experiment():
+    e = jb.Experiment(name="test")
+
+    a = jb.Artifact({"x": 1})
+    t = jb.Table(pd.DataFrame([1]))
+    e.data = (a, t)
+
+    print()
+    e = jb.Experiment(name="test")
+    print(e.artifact)
+    print(e.data)
+    e.artifact.update({"y": 2})
+    e.table["x"] = [1]
+
+    print()
+    e = jb.Experiment(name="test")
+    print(e.table)
+    print(e.artifact)
 
 
 # def test_run_id():
-#     experiment = jb.Experiment(autosave=# 
-#     row_num = # 
+#     experiment = jb.Experiment(autosave=#
+#     row_num = #
 #     for _ in range(row_num):
 #         with experiment:
 #             experiment.store_as_table({"num_reads": 10})
-#             experiment.store_as_artifact({"dictobj": {"value": 10# 
+#             experiment.store_as_artifact({"dictobj": {"value": 10#
 #     cols = experiment.table.columns
 #     assert "num_reads" in cols
-#     assert "dictobj" not in # 
+#     assert "dictobj" not in #
 #     assert len(experiment.table.index) == row_num
-#     assert len(experiment.artifact) == # 
+#     assert len(experiment.artifact) == #
 #     assert len(experiment.table["run_id"].unique()) == row_num
-#     assert len(experiment.table["experiment_id"].unique()) == # # 
+#     assert len(experiment.table["experiment_id"].unique()) == # #
 # def test_store():
-#     experiment = jb.Experiment(autosave=# 
-#     row_num = # 
+#     experiment = jb.Experiment(autosave=#
+#     row_num = #
 #     for _ in range(row_num):
 #         with experiment:
-#             experiment.store({"num_reads": 10, "dictobj": {"value": 10# 
+#             experiment.store({"num_reads": 10, "dictobj": {"value": 10#
 #     cols = experiment.table.columns
-#     assert "num_reads" in # 
+#     assert "num_reads" in #
 #     assert len(experiment.table.index) == row_num
-#     assert len(experiment.artifact) == # 
+#     assert len(experiment.artifact) == #
 #     assert len(experiment.table["run_id"].unique()) == row_num
-#     assert len(experiment.table["experiment_id"].unique()) == # # 
+#     assert len(experiment.table["experiment_id"].unique()) == # #
 # def test_openjij():
 #     sampler = oj.SASampler()
-#     experiment = jb.Experiment(autosave=# 
+#     experiment = jb.Experiment(autosave=#
 #     with experiment:
 #         response = sampler.sample_qubo({(0, 1): 1})
-#         experiment.store({"result": response# 
-#     droped_table = experiment.table.dropna(axis="columns# 
+#         experiment.store({"result": response#
+#     droped_table = experiment.table.dropna(axis="columns#
 #     cols = droped_table.columns
 #     "energy" in cols
-#     "energy_min" in # # 
+#     "energy_min" in # #
 # def test_openjij_iteration():
 #     sampler = oj.SASampler()
-#     experiment = jb.Experiment(autosave=# 
+#     experiment = jb.Experiment(autosave=#
 #     for _ in range(3):
 #         with experiment:
 #             response = sampler.sample_qubo({(0, 1): 1})
-#             experiment.store({"result": response# 
-#     droped_table = experiment.table.dropna(axis="columns# 
+#             experiment.store({"result": response#
+#     droped_table = experiment.table.dropna(axis="columns#
 #     cols = droped_table.columns
 #     "energy" in cols
-#     "energy_min" in # # 
+#     "energy_min" in # #
 # def test_jijmodeling():
-#     experiment = jb.Experiment(autosave=# 
+#     experiment = jb.Experiment(autosave=#
 #     with experiment:
 #         jm_sampleset = decode()
-#         experiment.store({"result": jm_sampleset# 
-#     droped_table = experiment.table.dropna(axis="columns# 
+#         experiment.store({"result": jm_sampleset#
+#     droped_table = experiment.table.dropna(axis="columns#
 #     cols = droped_table.columns
 #     "energy" in cols
 #     "energy_min" in cols
-#     "num_feasible" in # # 
+#     "num_feasible" in # #
 # def test_jijmodeling_iteration():
-#     experiment = jb.Experiment(autosave=# 
+#     experiment = jb.Experiment(autosave=#
 #     for _ in range(3):
 #         with experiment:
 #             jm_sampleset = decode()
-#             experiment.store({"result": jm_sampleset# 
-#     droped_table = experiment.table.dropna(axis="columns# 
+#             experiment.store({"result": jm_sampleset#
+#     droped_table = experiment.table.dropna(axis="columns#
 #     cols = droped_table.columns
 #     "energy" in cols
 #     "energy_min" in cols
-#     "num_feasible" in # # 
+#     "num_feasible" in # #
 # def test_file_save_load():
-#     experiment = jb.Experiment(autosave=# 
+#     experiment = jb.Experiment(autosave=#
 #     for _ in range(3):
 #         with experiment:
 #             jm_sampleset = decode()
-#             experiment.store({"result": jm_sampleset# 
-#     experiment.save# 
+#             experiment.store({"result": jm_sampleset#
+#     experiment.save#
 #     load_experiment = jb.Experiment.load(
 #         experiment_id=experiment.experiment_id, benchmark_id=experiment.benchmark_id
-#     # 
+#     #
 #     original_cols = experiment.table.columns
 #     load_cols = load_experiment.table.columns
 #     for c in original_cols:
-#         c in # 
+#         c in #
 #     assert len(experiment.table.index) == len(load_experiment.table.index)
 #     assert len(experiment.artifact) == len(load_experiment.artifact)
 #     for artifact in load_experiment.artifact.values():
-#         assert isinstance(artifact["result"], jm.# 
-#     assert experiment._artifact.timestamp == load_experiment._artifact.# # 
+#         assert isinstance(artifact["result"], jm.#
+#     assert experiment._artifact.timestamp == load_experiment._artifact.# #
 # def test_auto_save():
 #     experiment = jb.Experiment(autosave=True)
 #     num_rows = 3
@@ -198,7 +219,7 @@ def test_simple_experiment():
 #         load_experiment = jb.Experiment.load(
 #             experiment_id=experiment.experiment_id, benchmark_id=experiment.benchmark_id
 #         )
-#         assert len(load_experiment.table) == row + # # 
+#         assert len(load_experiment.table) == row + # #
 # def test_custome_dir_save():
 #     custome_dir = os.path.normcase("./custom_result")
 #     experiment = jb.Experiment(autosave=True, save_dir=custome_dir)
@@ -218,24 +239,24 @@ def test_simple_experiment():
 #             benchmark_id=experiment.benchmark_id,
 #             save_dir=custome_dir,
 #         )
-#         assert len(load_experiment.table) == row + # 
+#         assert len(load_experiment.table) == row + #
 #     assert os.path.exists(custome_dir)
-#     shutil.rmtree(# # 
+#     shutil.rmtree(# #
 # def test_store_same_timestamp():
-#     experiment = jb.Experiment(autosave=# 
+#     experiment = jb.Experiment(autosave=#
 #     for _ in range(3):
 #         with experiment:
 #             jm_sampleset = decode()
-#             experiment.store({"result": jm_sampleset# 
-#     run_id = list(experiment.artifact.keys())[# 
+#             experiment.store({"result": jm_sampleset#
+#     run_id = list(experiment.artifact.keys())[#
 #     artifact_timestamp = experiment._artifact.timestamp[run_id]
 #     table_timestamp = experiment.table[experiment.table["run_id"] == run_id][
 #         "timestamp"
-#     ][# 
-#     assert artifact_timestamp == # # 
+#     ][#
+#     assert artifact_timestamp == # #
 # def test_insert_iterobj_into_table():
-#     import numpy as # 
-#     experiment = jb.Experiment(autosave=# 
+#     import numpy as #
+#     experiment = jb.Experiment(autosave=#
 #     with experiment:
 #         experiment.table.dropna(axis=1, inplace=True)
 #         record = {
@@ -245,19 +266,19 @@ def test_simple_experiment():
 #             "nd_array": np.random.normal(size=(10, 5, 4, 3, 2)),
 #             "dict": {"a": {"b": 1}},
 #         }
-#         experiment.store_as_table(# 
+#         experiment.store_as_table(#
 #     assert isinstance(experiment.table.loc[0, "1d_list"], list)
 #     assert isinstance(experiment.table.loc[0, "2d_list"], list)
 #     assert isinstance(experiment.table.loc[0, "1d_array"], np.ndarray)
 #     assert isinstance(experiment.table.loc[0, "nd_array"], np.ndarray)
-#     assert isinstance(experiment.table.loc[0, "dict"], # # 
+#     assert isinstance(experiment.table.loc[0, "dict"], # #
 # def test_load_iterobj():
-#     import numpy as # 
+#     import numpy as #
 #     benchmark_id = "example"
 #     experiment_id = "test"
 #     experiment = jb.Experiment(
 #         experiment_id=experiment_id, benchmark_id=benchmark_id, autosave=True
-#     # 
+#     #
 #     with experiment:
 #         experiment.table.dropna(axis=1, inplace=True)
 #         record = {
@@ -267,37 +288,37 @@ def test_simple_experiment():
 #             "nd_array": np.random.normal(size=(10, 5, 4, 3, 2)),
 #             "dict": {"a": {"b": 1}},
 #         }
-#         experiment.store_as_table(# 
+#         experiment.store_as_table(#
 #     experiment.save()
-#     del # 
+#     del #
 #     experiment = jb.Experiment.load(
 #         experiment_id=experiment_id, benchmark_id=benchmark_id
-#     # 
+#     #
 #     assert isinstance(experiment.table.loc[0, "1d_list"], list)
 #     assert isinstance(experiment.table.loc[0, "2d_list"], list)
 #     assert isinstance(experiment.table.loc[0, "1d_array"], np.ndarray)
 #     assert isinstance(experiment.table.loc[0, "nd_array"], np.ndarray)
-#     assert isinstance(experiment.table.loc[0, "dict"], # # 
+#     assert isinstance(experiment.table.loc[0, "dict"], # #
 # def test_sampling_and_execution_time():
-#     experiment = jb.Experiment(autosave=# 
+#     experiment = jb.Experiment(autosave=#
 #     with experiment:
 #         response = sample_qubo()
-#         experiment.store({"result": response# 
+#         experiment.store({"result": response#
 #     assert np.isnan(experiment.table.sampling_time[0])
-#     assert isinstance(experiment.table.execution_time[0], np.# 
-#     experiment = jb.Experiment(autosave=# 
+#     assert isinstance(experiment.table.execution_time[0], np.#
+#     experiment = jb.Experiment(autosave=#
 #     with experiment.start():
 #         jm_sampleset = decode()
-#         experiment.store({"result": jm_sampleset# 
+#         experiment.store({"result": jm_sampleset#
 #     assert np.isnan(experiment.table.sampling_time[0])
-#     assert isinstance(experiment.table.execution_time[0], np.# # 
+#     assert isinstance(experiment.table.execution_time[0], np.# #
 # def test_store_as_artifact_for_obj_cannot_pickle():
-#     sampler = oj.SASampler# 
+#     sampler = oj.SASampler#
 #     experiment = jb.Experiment()
 #     with experiment:
 #         experiment.store_as_artifact(
 #             {"sampler": sampler, "sample_qubo": sampler.sample_qubo, "value": 1.0}
-#         # 
+#         #
 #     loaded_experiment = jb.Experiment.load(
 #         experiment_id=experiment.experiment_id, benchmark_id=experiment.benchmark_id
 #     )

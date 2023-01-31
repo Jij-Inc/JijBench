@@ -5,57 +5,42 @@ import pandas as pd
 import typing as tp
 import pathlib
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from jijbench.consts.path import DEFAULT_RESULT_DIR
 from jijbench.data.mapping import Artifact, Mapping, Table
+from jijbench.functions.concat import Concat
+from jijbench.functions.factory import ArtifactFactory, TableFactory
 from jijbench.data.elements.id import ID
+
+
+if tp.TYPE_CHECKING:
+    from jijbench.data.mapping import Record
 
 
 @dataclass
 class Experiment(Mapping):
-    def __init__(
-        self,
-        data: tuple[Artifact, Table] | None = None,
-        name: str | None = None,
-        autosave: bool = True,
-        savedir: str | pathlib.Path = DEFAULT_RESULT_DIR,
-    ):
-        if name is None:
-            name = ID().data
+    data: tuple[Artifact, Table] = field(default_factory=lambda: (Artifact(), Table()))
+    name: str | None = None
+    autosave: bool = True
+    savedir: str | pathlib.Path = DEFAULT_RESULT_DIR
 
-        if data is None:
-            data = (Artifact(), Table())
+    def __post_init__(self):
+        super().__post_init__()
 
-        if data[0].name is None:
-            data[0].name = name
+        if self.name is None:
+            self.name = ID().data
 
-        if data[1].name is None:
-            data[1].name = name
+        if self.data[0].name is None:
+            self.data[0].name = self.name
 
-        self.data = data
-        self.name = name
-        self.autosave = autosave
+        if self.data[1].name is None:
+            self.data[1].name = self.name
 
-        if isinstance(savedir, str):
-            savedir = pathlib.Path(savedir)
-        self.savedir = savedir
-
-    @property
-    def artifact(self) -> dict:
-        return self.data[0].data
-
-    @property
-    def table(self) -> pd.DataFrame:
-        t = self.data[1].data
-        is_tuple_index = all([isinstance(i, tuple) for i in t.index])
-        if is_tuple_index:
-            names = t.index.names if len(t.index.names) >= 2 else None
-            index = pd.MultiIndex.from_tuples(t.index, names=names)
-            t.index = index
-        return t
+        if isinstance(self.savedir, str):
+            self.savedir = pathlib.Path(self.savedir)
 
     def __enter__(self) -> Experiment:
-        p = self.savedir / str(self.name)
+        p = tp.cast("pathlib.Path", self.savedir) / str(self.name)
         (p / "table").mkdir(parents=True, exist_ok=True)
         (p / "artifact").mkdir(parents=True, exist_ok=True)
         return self
@@ -67,16 +52,48 @@ class Experiment(Mapping):
         if self.autosave:
             self.save()
 
-    # def concat(self, experiment: Experiment) -> None:
-    #    from jijbench.functions.concat import Concat
-    #
-    #    concat = Concat()
-    #
-    #    artifact = concat([self.data[0], experiment.data[0]])
-    #    table = concat([self.data[1], experiment.data[1]])
-    #
-    #    self.data = (artifact, table)
-    #    self.operator = concat
+    @property
+    def artifact(self) -> dict:
+        return self.view("artifact")
+
+    @property
+    def table(self) -> pd.DataFrame:
+        return self.view("table")
+
+    @tp.overload
+    def view(self, kind: tp.Literal["artifact"]) -> dict:
+        ...
+
+    @tp.overload
+    def view(self, kind: tp.Literal["table"]) -> pd.DataFrame:
+        ...
+
+    def view(self, kind: tp.Literal["artifact", "table"]) -> dict | pd.DataFrame:
+        if kind == "artifact":
+            artifact = self.data[0].data
+            return {
+                k: {name: node.data for name, node in v.items()}
+                for k, v in artifact.items()
+            }
+        else:
+            table = self.data[1].data
+            if table.empty:
+                return table
+            else:
+                is_tuple_index = all([isinstance(i, tuple) for i in table.index])
+                if is_tuple_index:
+                    names = table.index.names if len(table.index.names) >= 2 else None
+                    index = pd.MultiIndex.from_tuples(table.index, names=names)
+                    table.index = index
+                return table.applymap(lambda x: x.data)
+
+    def append(self, record: Record) -> None:
+        concat: Concat[Experiment] = Concat()
+        data = (ArtifactFactory()([record]), TableFactory()([record]))
+        other = type(self)(data, self.name, self.autosave, self.savedir)
+        node = self.apply(concat, [other])
+        self.data = node.data
+        self.operator = node.operator
 
     def save(self):
         def is_dillable(obj: tp.Any):
@@ -86,10 +103,11 @@ class Experiment(Mapping):
             except Exception:
                 return False
 
-        p = self.savedir / str(self.name) / "table" / "table.csv"
+        savedir = tp.cast("pathlib.Path", self.savedir)
+        p = savedir / str(self.name) / "table" / "table.csv"
         self.table.to_csv(p)
 
-        p = self.savedir / str(self.name) / "artifact" / "artifact.dill"
+        p = savedir / str(self.name) / "artifact" / "artifact.dill"
         record_name = list(self.data[0].operator.inputs[1].data.keys())[0]
         if p.exists():
             with open(p, "rb") as f:
