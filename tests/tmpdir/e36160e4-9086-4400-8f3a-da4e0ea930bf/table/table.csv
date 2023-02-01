@@ -1,0 +1,13 @@
+,sample_qubo_return[0]
+f5b9302a-f9bd-432f-9197-6905862b22b1,"  x[0][0] x[0][1] x[1][0] x[1][1] energy num_oc.
+2       0       0       0       0      0       2
+0       1       0       0       1      3       4
+3       1       0       1       0     20       1
+1       0       1       1       0     24       3
+['BINARY', 4 rows, 10 samples, 4 variables]"
+e44b7dfe-250c-42c0-b530-c0b15684d0fc,"  x[0][0] x[0][1] x[1][0] x[1][1] energy num_oc.
+2       0       0       0       0      0       2
+0       1       0       0       1      3       4
+3       1       0       1       0     20       1
+1       0       1       1       0     24       3
+['BINARY', 4 rows, 10 samples, 4 variables]"

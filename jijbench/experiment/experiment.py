@@ -8,6 +8,7 @@ import pathlib
 from dataclasses import dataclass, field
 from jijbench.consts.path import DEFAULT_RESULT_DIR
 from jijbench.data.mapping import Artifact, Mapping, Table
+from jijbench.data.elements.values import Callable, Parameter, Return
 from jijbench.functions.concat import Concat
 from jijbench.functions.factory import ArtifactFactory, TableFactory
 from jijbench.data.elements.id import ID
@@ -21,12 +22,10 @@ if tp.TYPE_CHECKING:
 class Experiment(Mapping):
     data: tuple[Artifact, Table] = field(default_factory=lambda: (Artifact(), Table()))
     name: str | None = None
-    autosave: bool = True
-    savedir: str | pathlib.Path = DEFAULT_RESULT_DIR
+    autosave: bool = field(default=True, repr=False)
+    savedir: str | pathlib.Path = field(default=DEFAULT_RESULT_DIR, repr=False)
 
     def __post_init__(self):
-        super().__post_init__()
-
         if self.name is None:
             self.name = ID().data
 
@@ -60,6 +59,21 @@ class Experiment(Mapping):
     def table(self) -> pd.DataFrame:
         return self.view("table")
 
+    @property
+    def params_table(self) -> pd.DataFrame:
+        bools = self.data[1].data.applymap(lambda x: isinstance(x, Parameter))
+        return self.table[bools].dropna(axis=1)
+
+    @property
+    def solver_table(self) -> pd.DataFrame:
+        bools = self.data[1].data.applymap(lambda x: isinstance(x, Callable))
+        return self.table[bools].dropna(axis=1)
+
+    @property
+    def returns_table(self) -> pd.DataFrame:
+        bools = self.data[1].data.applymap(lambda x: isinstance(x, Return))
+        return self.table[bools].dropna(axis=1)
+
     @tp.overload
     def view(self, kind: tp.Literal["artifact"]) -> dict:
         ...
@@ -70,30 +84,24 @@ class Experiment(Mapping):
 
     def view(self, kind: tp.Literal["artifact", "table"]) -> dict | pd.DataFrame:
         if kind == "artifact":
-            artifact = self.data[0].data
-            return {
-                k: {name: node.data for name, node in v.items()}
-                for k, v in artifact.items()
-            }
+            return self.data[0].view()
         else:
-            table = self.data[1].data
-            if table.empty:
-                return table
-            else:
-                is_tuple_index = all([isinstance(i, tuple) for i in table.index])
-                if is_tuple_index:
-                    names = table.index.names if len(table.index.names) >= 2 else None
-                    index = pd.MultiIndex.from_tuples(table.index, names=names)
-                    table.index = index
-                return table.applymap(lambda x: x.data)
+            return self.data[1].view()
 
     def append(self, record: Record) -> None:
         concat: Concat[Experiment] = Concat()
         data = (ArtifactFactory()([record]), TableFactory()([record]))
-        other = type(self)(data, self.name, self.autosave, self.savedir)
-        node = self.apply(concat, [other])
-        self.data = node.data
-        self.operator = node.operator
+        other = type(self)(
+            data, self.name, autosave=self.autosave, savedir=self.savedir
+        )
+        node = self.apply(
+            concat,
+            [other],
+            name=self.name,
+            autosave=self.autosave,
+            savedir=self.savedir,
+        )
+        self.__init__(**node.__dict__)
 
     def save(self):
         def is_dillable(obj: tp.Any):
@@ -105,10 +113,11 @@ class Experiment(Mapping):
 
         savedir = tp.cast("pathlib.Path", self.savedir)
         p = savedir / str(self.name) / "table" / "table.csv"
+
         self.table.to_csv(p)
 
         p = savedir / str(self.name) / "artifact" / "artifact.dill"
-        record_name = list(self.data[0].operator.inputs[1].data.keys())[0]
+        record_name = list(self.artifact.keys())[-1]
         if p.exists():
             with open(p, "rb") as f:
                 artifact = dill.load(f)

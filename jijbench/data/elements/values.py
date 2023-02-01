@@ -19,3 +19,13 @@ class Number(DataNode):
 @dataclass
 class String(DataNode):
     data: str
+
+
+@dataclass
+class Callable(DataNode):
+    data: tp.Callable
+
+
+@dataclass
+class Return(DataNode):
+    data: tp.Any

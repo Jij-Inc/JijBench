@@ -29,10 +29,10 @@ class Factory(FunctionNode[DataNodeT, DataNodeT2]):
         return self.create(inputs, name, **kwargs)
 
 
-class RecordFactory(Factory[DataNode, "Record"]):
+class RecordFactory(Factory[DataNodeT, "Record"]):
     def create(
         self,
-        inputs: list[DataNode],
+        inputs: list[DataNodeT],
         name: str = "",
         is_parsed_sampleset: bool = True,
     ) -> Record:

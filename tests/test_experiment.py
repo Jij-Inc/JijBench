@@ -88,14 +88,16 @@ def sample_model():
 
 
 def test_simple_experiment():
+    from icecream import ic
+    
     e = jb.Experiment(name="test")
-    for x in range(3):
-        for y in range(3):
-            with e:
-                solver = jb.functions.Solver(sample_model)
-                record = solver(x=x, y=y)
-                record.name = jb.ID().data
-                e.append(record)
+    for _ in range(3):
+        with e:
+            solver = jb.functions.Solver(sample_model)
+            record = solver([])
+            ic(record)
+            record.name = jb.ID().data
+            e.append(record)
 
 
 def test_construct_experiment():
