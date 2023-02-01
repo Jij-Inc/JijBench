@@ -17,5 +17,10 @@ class String(DataNode):
 
 
 @dataclass
-class Any(DataNode):
+class Callable(DataNode):
+    data: tp.Callable
+
+
+@dataclass
+class Return(DataNode):
     data: tp.Any

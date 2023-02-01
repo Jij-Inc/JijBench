@@ -8,6 +8,7 @@ import pathlib
 from dataclasses import dataclass
 from jijbench.consts.path import DEFAULT_RESULT_DIR
 from jijbench.data.mapping import Artifact, Mapping, Table
+from jijbench.data.elements.values import Callable, Parameter, Return
 from jijbench.functions.concat import Concat
 from jijbench.functions.factory import ArtifactFactory, TableFactory
 from jijbench.data.elements.id import ID
@@ -19,21 +20,14 @@ if tp.TYPE_CHECKING:
 
 @dataclass
 class Experiment(Mapping):
-    def __init__(
-        self,
-        data: tuple[Artifact, Table] | None = None,
-        name: str | None = None,
-        autosave: bool = True,
-        savedir: str | pathlib.Path = DEFAULT_RESULT_DIR,
-    ):
-        if name is None:
-            name = ID().data
+    data: tuple[Artifact, Table] = field(default_factory=lambda: (Artifact(), Table()))
+    name: str | None = None
+    autosave: bool = field(default=True, repr=False)
+    savedir: str | pathlib.Path = field(default=DEFAULT_RESULT_DIR, repr=False)
 
-        if data is None:
-            data = (Artifact(), Table())
-
-        if data[0].name is None:
-            data[0].name = name
+    def __post_init__(self):
+        if self.name is None:
+            self.name = ID().data
 
         if data[1].name is None:
             data[1].name = name
@@ -65,21 +59,51 @@ class Experiment(Mapping):
 
     @property
     def table(self) -> pd.DataFrame:
-        t = self.data[1].data
-        is_tuple_index = all([isinstance(i, tuple) for i in t.index])
-        if is_tuple_index:
-            names = t.index.names if len(t.index.names) >= 2 else None
-            index = pd.MultiIndex.from_tuples(t.index, names=names)
-            t.index = index
-        return t
+        return self.view("table")
+
+    @property
+    def params_table(self) -> pd.DataFrame:
+        bools = self.data[1].data.applymap(lambda x: isinstance(x, Parameter))
+        return self.table[bools].dropna(axis=1)
+
+    @property
+    def solver_table(self) -> pd.DataFrame:
+        bools = self.data[1].data.applymap(lambda x: isinstance(x, Callable))
+        return self.table[bools].dropna(axis=1)
+
+    @property
+    def returns_table(self) -> pd.DataFrame:
+        bools = self.data[1].data.applymap(lambda x: isinstance(x, Return))
+        return self.table[bools].dropna(axis=1)
+
+    @tp.overload
+    def view(self, kind: tp.Literal["artifact"]) -> dict:
+        ...
+
+    @tp.overload
+    def view(self, kind: tp.Literal["table"]) -> pd.DataFrame:
+        ...
+
+    def view(self, kind: tp.Literal["artifact", "table"]) -> dict | pd.DataFrame:
+        if kind == "artifact":
+            return self.data[0].view()
+        else:
+            return self.data[1].view()
 
     def append(self, record: Record) -> None:
         concat: Concat[Experiment] = Concat()
         data = (ArtifactFactory()([record]), TableFactory()([record]))
-        other = type(self)(data, self.name, self.autosave, self.savedir)
-        node = self.apply(concat, [other])
-        self.data = node.data
-        self.operator = node.operator
+        other = type(self)(
+            data, self.name, autosave=self.autosave, savedir=self.savedir
+        )
+        node = self.apply(
+            concat,
+            [other],
+            name=self.name,
+            autosave=self.autosave,
+            savedir=self.savedir,
+        )
+        self.__init__(**node.__dict__)
 
     def save(self):
         def is_dillable(obj: tp.Any):
@@ -89,11 +113,13 @@ class Experiment(Mapping):
             except Exception:
                 return False
 
-        p = self.savedir / str(self.name) / "table" / "table.csv"
+        savedir = tp.cast("pathlib.Path", self.savedir)
+        p = savedir / str(self.name) / "table" / "table.csv"
+
         self.table.to_csv(p)
 
-        p = self.savedir / str(self.name) / "artifact" / "artifact.dill"
-        record_name = list(self.data[0].operator.inputs[1].data.keys())[0]
+        p = savedir / str(self.name) / "artifact" / "artifact.dill"
+        record_name = list(self.artifact.keys())[-1]
         if p.exists():
             with open(p, "rb") as f:
                 artifact = dill.load(f)

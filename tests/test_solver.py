@@ -12,6 +12,24 @@ def custom_solver_failed():
     raise Exception("solver is failed.")
 
 
+def test_simple_solver():
+    solver = jb.functions.Solver(func1)
+
+    param = jb.Parameter(1, "x")
+    record = solver([param])
+
+    from icecream import ic
+
+    print()
+    ic(record.data)
+    ic(record.data[0])
+    ic(record.operator)
+
+    assert isinstance(record, jb.Record)
+    assert record.data[0].data == 1
+    assert record.operator is None
+
+
 def test_CallebleSolver_solver_failed_error():
     solver = CallableSolver(custom_solver_failed)
     with pytest.raises(SolverFailedError):

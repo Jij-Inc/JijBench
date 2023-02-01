@@ -9,6 +9,8 @@ if tp.TYPE_CHECKING:
     from jijbench.experiment.experiment import Experiment
     from jijbench.node.base import DataNode
 
+T = tp.TypeVar("T")
+
 DataNodeT = tp.TypeVar("DataNodeT", bound="DataNode")
 DataNodeT2 = tp.TypeVar("DataNodeT2", bound="DataNode")
 DataNodeT_co = tp.TypeVar("DataNodeT_co", bound="DataNode", covariant=True)

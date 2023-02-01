@@ -3,10 +3,13 @@ import os, shutil, time
 import dimod
 import jijmodeling as jm
 import numpy as np
+import pandas as pd
 import pytest
 
 import jijbench as jb
 from jijbench.exceptions.exceptions import SolverFailedError, ConcurrentFailedError
+
+from icecream import ic
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -208,21 +211,84 @@ def sample_model():
 #     assert isinstance(bench.instance_data[0][0], tuple)
 
 
-def test_simple_benchmark(problem, instance_data):
+def test_benchmark_params():
     bench = jb.Benchmark(
         {
             "num_reads": [1, 2],
             "num_sweeps": [10],
-            "problem": [problem],
-            "instance_data": instance_data,
         },
         solver=sample_qubo,
     )
-    res = bench()
+    print()
+    print(bench.params)
 
+
+def test_simple_benchmark():
+    def func(x):
+        return x
+
+    bench = jb.Benchmark(
+        {"x": [1, 2]},
+        solver=func,
+    )
+
+    res = bench()
     columns = res.table.columns
 
-    assert "sample_qubo_return[0]" in columns
+    assert isinstance(res, jb.Experiment)
+    assert "func_return[0]" in columns
+
+    op1 = res.operator
+    assert op1 is not None
+    assert isinstance(op1.inputs[0], jb.Experiment)
+    assert isinstance(op1.inputs[1], jb.Experiment)
+    t1 = op1.inputs[0].table
+    t2 = op1.inputs[1].table
+
+    assert t1.iloc[0, 0] == 1
+    assert t2.iloc[0, 0] == 2
+
+
+def test_apply_benchmark():
+    def func(x):
+        return x
+
+    bench = jb.Benchmark(
+        {"x": [1, 2]},
+        solver=func,
+    )
+
+    experiment = jb.Experiment(name=jb.ID().data)
+    res = experiment.apply(bench)
+    columns = res.table.columns
+
+    assert isinstance(res, jb.Experiment)
+    assert "func_return[0]" in columns
+
+    op1 = res.operator
+    assert op1 is not None
+    assert isinstance(op1, jb.Benchmark)
+    assert isinstance(op1.inputs[0], jb.Experiment)
+    assert len(op1.inputs) == 1
+    assert op1.inputs[0].table.empty
+
+
+def test_benchmark_params_table():
+    def func(x):
+        return x
+
+    bench = jb.Benchmark(
+        {"x": [1, 2]},
+        solver=func,
+    )
+
+    res = bench()
+    ic()
+    ic(res.data[1].data)
+    ic(res.table)
+    ic(res.params_table)
+    ic(res.solver_table)
+    ic(res.returns_table)
 
 
 def test_benchmark_with_custom_solver():
@@ -232,9 +298,10 @@ def test_benchmark_with_custom_solver():
     bench = jb.Benchmark({"num_reads": [1, 2], "num_sweeps": [10]}, solver=func)
     bench.run()
 
-    assert bench.table["solver"][0] == func.__name__
-    assert bench.table["solver_return_values[0]"][0] == "a"
-    assert bench.table["solver_return_values[1]"][0] == 1.0
+    # assert res.table["solver"][0] == func.__name__
+    ic(res.table)
+    assert res.table["func_return[0]"][0] == "a"
+    assert res.table["func_return[1]"][0] == 1.0
 
 
 def test_benchmark_with_custom_solver_by_concurrent_False():
@@ -364,50 +431,50 @@ def test_benchmark_with_callable_args():
 # def test_benchmark_with_multisolver():
 #     def func1(x):
 #         return 2 * x
-# 
+#
 #     def func2(x):
 #         return 3 * x
-# 
+#
 #     bench = jb.Benchmark(params={"x": [1, 2, 3]}, solver=[func1, func2])
 #     bench.run()
-# 
+#
 #     columns = bench.table.columns
-# 
+#
 #     assert "solver" in columns
 #     assert "func1" in bench.table["solver"].values
 #     assert "func2" in bench.table["solver"].values
-# 
-# 
+#
+#
 # def test_load():
 #     def func1(x):
 #         return 2 * x
-# 
+#
 #     bench = jb.Benchmark(params={"x": [1, 2, 3]}, solver=func1, benchmark_id="test")
 #     bench.run()
-# 
+#
 #     del bench
-# 
+#
 #     bench = jb.load(benchmark_id="test")
-# 
+#
 #     assert "func1" in bench.table["solver"].values
-# 
-# 
+#
+#
 # def test_save():
 #     def func1(x):
 #         return 2 * x
-# 
+#
 #     import pathlib
-# 
+#
 #     save_dir = str(pathlib.PurePath(__file__).parent / ".my_result")
-# 
+#
 #     bench = jb.Benchmark(
 #         params={"x": [1, 2, 3]}, solver=func1, benchmark_id="test", save_dir=save_dir
 #     )
 #     bench.run()
-# 
+#
 #     shutil.rmtree(save_dir)
-# 
-# 
+#
+#
 # def test_benchmark_for_custom_solver_return_jm_sampleset():
 #     def func():
 #         jm_sampleset = jm.SampleSet.from_serializable(
@@ -441,20 +508,20 @@ def test_benchmark_with_callable_args():
 #         jm_sampleset.measuring_time.system.system = None
 #         jm_sampleset.measuring_time.total = None
 #         return jm_sampleset
-# 
+#
 #     bench = jb.Benchmark(params={"dummy": [1]}, solver=func)
 #     bench.run()
-# 
-# 
+#
+#
 # def test_benchmark_for_custom_solver_failed():
 #     def custom_solver_failed():
 #         raise Exception("solver is failed.")
-# 
+#
 #     bench = jb.Benchmark(params={"dummy": [1]}, solver=custom_solver_failed)
 #     with pytest.raises(SolverFailedError):
 #         bench.run()
-# 
-# 
+#
+#
 # def test_benchmark_for_num_feasible():
 #     bench = jb.Benchmark(
 #         {
@@ -465,12 +532,12 @@ def test_benchmark_with_callable_args():
 #     )
 #     bench.run()
 #     assert (bench.table["num_feasible"].values == 7).all()
-# 
-# 
+#
+#
 # def test_benchmark_for_change_solver_return_name():
 #     def solver():
 #         return 1
-# 
+#
 #     bench = jb.Benchmark(
 #         {
 #             "N": [10, 200],
