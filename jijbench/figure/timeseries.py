@@ -20,7 +20,7 @@ class TimeSeries(Figure):
 
         '''python
         >>> import numpy as np
-        >>> from timeseries import TimeSeries
+        >>> from jijbench.figure.timeseries import TimeSeries
 
         >>> x1 = np.arange(-10, 11, 1)
         >>> y1 = x1 + 1
