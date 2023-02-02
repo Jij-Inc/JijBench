@@ -18,7 +18,7 @@ class TimeSeries(Figure):
         The code below plots a linear function and a quadratic function.
         The style of the graph (e.g. color) can be changed by arguments of the show method.
 
-        '''python
+        ```python
         >>> import numpy as np
         >>> from jijbench.figure.timeseries import TimeSeries
 
@@ -32,7 +32,7 @@ class TimeSeries(Figure):
         >>> timeseries.add_data("linear", x1, y1)
         >>> timeseries.add_data("quadratic", x2, y2)
         >>> timeseries.show(color_list=["red", "green"])
-        '''
+        ```
 
     """
 
