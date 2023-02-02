@@ -11,16 +11,14 @@ from jijbench.node.base import DataNode, DNodeT_co, FunctionNode
 from jijbench.data.mapping import Artifact, Table
 from jijbench.data.record import Record
 from jijbench.data.elements.array import Array
-from jijbench.data.elements.values import Number
+from jijbench.data.elements.base import Number
 from jijbench.typing import DataNodeT, DataNodeT2
 
 
 
 class Factory(FunctionNode[DataNodeT, DataNodeT2]):
     @abc.abstractmethod
-    def create(
-        self, inputs: list[DataNodeT], name: str | None = None
-    ) -> DataNodeT2:
+    def create(self, inputs: list[DataNodeT], name: str | None = None) -> DataNodeT2:
         pass
 
     def operate(
@@ -59,7 +57,7 @@ class RecordFactory(Factory[DataNodeT, "Record"]):
         constraint_violations = sampleset.evaluation.constraint_violations
         if constraint_violations:
             for k, v in constraint_violations.items():
-                data.append(Array(np.array(v), k))
+                data.append(Array(np.array(v), f"{k}_violations"))
 
         data.append(Number(sum(sampleset.record.num_occurrences), "num_samples"))
         data.append(
@@ -87,7 +85,14 @@ class RecordFactory(Factory[DataNodeT, "Record"]):
 
 class ArtifactFactory(Factory[Artifact]):
     def create(self, inputs: list[Record], name: str = "") -> Artifact:
-        data = {node.name: node.data.to_dict() for node in inputs}
+        from jijbench.data.mapping import Artifact
+
+        data = {
+            node.name
+            if isinstance(node.name, tp.Hashable)
+            else str(node.name): node.data.to_dict()
+            for node in inputs
+        }
         return Artifact(data, name)
 
 

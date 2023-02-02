@@ -7,7 +7,7 @@ import inspect
 from jijbench.exceptions.exceptions import SolverFailedError
 from jijbench.node.base import FunctionNode
 from jijbench.data.mapping import Record
-from jijbench.data.elements.values import Parameter, Return
+from jijbench.data.elements.base import Parameter, Return
 from jijbench.functions.factory import RecordFactory
 
 
@@ -18,8 +18,10 @@ class Solver(FunctionNode[Parameter, Record]):
         super().__init__(name)
         self.function = function
 
-    def __call__(
-        self, is_parsed_sampleset: bool = True, **solver_args: tp.Any
+    def operate(
+        self,
+        inputs: list[Parameter],
+        is_parsed_sampleset: bool = True,
     ) -> Record:
         parameters = inspect.signature(self.function).parameters
         is_kwargs = any([p.kind == 4 for p in parameters.values()])

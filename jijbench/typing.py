@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import datetime
+import pandas as pd
 import typing as tp
 
 from typing_extensions import TypeAlias
@@ -16,8 +18,14 @@ DataNodeT2 = tp.TypeVar("DataNodeT2", bound="DataNode")
 DataNodeT_co = tp.TypeVar("DataNodeT_co", bound="DataNode", covariant=True)
 DataNodeT2_co = tp.TypeVar("DataNodeT2_co", bound="DataNode", covariant=True)
 
+ArtifactDataType: TypeAlias = tp.Dict[tp.Hashable, tp.Dict[tp.Hashable, "DataNode"]]
+ExperimentDataType: TypeAlias = tp.Tuple["Artifact", "Table"]
+
+DateTypes: TypeAlias = tp.Union[str, datetime.datetime, pd.Timestamp]
+NumberTypes: TypeAlias = tp.Union[int, float]
+
 MappingT = tp.TypeVar("MappingT", "Artifact", "Experiment", "Record", "Table")
 MappingTypes: TypeAlias = tp.Union["Artifact", "Experiment", "Record", "Table"]
 MappingListTypes: TypeAlias = tp.Union[
-    list["Artifact"], list["Experiment"], list["Record"], list["Table"]
+    tp.List["Artifact"], tp.List["Experiment"], tp.List["Record"], tp.List["Table"]
 ]

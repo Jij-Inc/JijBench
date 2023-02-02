@@ -88,14 +88,11 @@ def decode():
 
 
 def test_simple_experiment():
-    from icecream import ic
-    
     e = jb.Experiment(name="test")
     for _ in range(3):
         with e:
             solver = jb.functions.Solver(sample_model)
             record = solver([])
-            ic(record)
             record.name = jb.ID().data
             e.append(record)
 
@@ -103,21 +100,22 @@ def test_simple_experiment():
 def test_construct_experiment():
     e = jb.Experiment(name="test")
 
-    a = jb.Artifact({"x": 1})
-    t = jb.Table(pd.DataFrame([1]))
+    a = jb.Artifact({"x": {"0": jb.Number(1, "value")}})
+    t = jb.Table(pd.DataFrame([[jb.Number(1, "value")]]))
     e.data = (a, t)
 
     print()
-    e = jb.Experiment(name="test")
     print(e.artifact)
-    print(e.data)
-    e.artifact.update({"y": 2})
-    e.table["x"] = [1]
-
-    print()
-    e = jb.Experiment(name="test")
     print(e.table)
-    print(e.artifact)
+    print()
+    a = e.artifact
+    a.update({"y": 2})
+
+    t = e.table
+    t["x"] = [1]
+
+    print(a)
+    print(t)
 
 
 # def test_run_id():

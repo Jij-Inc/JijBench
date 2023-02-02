@@ -4,9 +4,8 @@ from jijbench.benchmark.benchmark import Benchmark
 from jijbench.data.elements.array import Array
 from jijbench.data.elements.date import Date
 from jijbench.data.elements.id import ID
-from jijbench.data.elements.values import Number, String, Any
-from jijbench.data.mapping import Artifact, Table
-from jijbench.data.record import Record
+from jijbench.data.elements.base import Callable, Number, Parameter, String
+from jijbench.data.mapping import Artifact, Record, Table
 from jijbench.evaluation.evaluation import Evaluator
 from jijbench.experiment.experiment import Experiment
 from jijbench.datasets.instance_data import get_instance_data
@@ -21,6 +20,7 @@ __all__ = [
     "Array",
     "Artifact",
     "Benchmark",
+    "Callable",
     "Date",
     "Evaluator",
     "Experiment",
