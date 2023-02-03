@@ -4,12 +4,12 @@ import numpy as np
 import pytest
 
 from jijbench.figure.timeseries import TimeSeries
+from jijbench.figure.schedule import Schedule
 
-# TODO: showメソッドのfig.subtitle(title)についてちゃんとtitleが設定出来ているか確認するテストの追加
 
 params = {
-    "list case": ("listinput", [1, 2], [3, 4]),
-    "np.ndarray case": ("np.ndarrayinput", np.array([1, 2]), np.array([3, 4])),
+    "list case": ("data", [1, 2], [3, 4]),
+    "np.ndarray case": ("data", np.array([1, 2]), np.array([3, 4])),
 }
 
 
@@ -22,7 +22,7 @@ def test_timeseries_add_data(label, plot_x, plot_y):
     timeseries = TimeSeries()
     timeseries.add_data(label, plot_x, plot_y)
 
-    assert timeseries.data == OrderedDict([(label, ([1, 2], [3, 4]))])
+    assert timeseries.data == OrderedDict([("data", ([1, 2], [3, 4]))])
 
 
 def test_timeseries_add_data_not_same_length():
@@ -34,6 +34,7 @@ def test_timeseries_add_data_not_same_length():
 
 def test_timeseries_fig_ax_attribute():
     timeseries = TimeSeries()
+    timeseries.add_data("data", [1, 2], [3, 4])
     timeseries.show()
     fig, ax = timeseries.fig_ax
 
@@ -43,9 +44,36 @@ def test_timeseries_fig_ax_attribute():
 
 def test_timeseries_fig_ax_attribute_before_show():
     timeseries = TimeSeries()
+    timeseries.add_data("data", [1, 2], [3, 4])
 
     with pytest.raises(AttributeError):
         timeseries.fig_ax
+
+
+def test_timeseries_show_no_plot_data():
+    timeseries = TimeSeries()
+    with pytest.raises(RuntimeError):
+        timeseries.show()
+
+
+def test_timeseries_show_title():
+    title = "title"
+
+    timeseries = TimeSeries()
+    timeseries.add_data("data", [1, 2], [3, 4])
+    timeseries.show(title=title)
+    fig, ax = timeseries.fig_ax
+
+    assert fig.texts[0].get_text() == "title"
+
+
+def test_timeseries_show_title_default():
+    timeseries = TimeSeries()
+    timeseries.add_data("data", [1, 2], [3, 4])
+    timeseries.show()
+    fig, ax = timeseries.fig_ax
+
+    assert fig.texts[0].get_text() == "time series"
 
 
 def test_timeseries_show_x_and_y():
@@ -64,7 +92,7 @@ def test_timeseries_show_x_and_y():
     assert (ax.get_lines()[1].get_ydata() == np.array(y2)).all()
 
 
-def test_timeseries_show_figsize():
+def test_timeseries_show_arg_figsize():
     figwidth, figheight = 8, 4
 
     timeseries = TimeSeries()
@@ -247,3 +275,246 @@ def test_timeseries_show_arg_yticks():
     fig, ax = timeseries.fig_ax
 
     assert (ax.get_yticks() == np.array([3.0, 3.5, 4.0])).all()
+
+
+params = {
+    "list case": ("data", [1, 2], [3, 4], [5.5, 6.6]),
+    "np.ndarray case": (
+        "data",
+        np.array([1, 2]),
+        np.array([3, 4]),
+        np.array([5.5, 6.6]),
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    "task_label, workers, start_times, time_lengths",
+    list(params.values()),
+    ids=list(params.keys()),
+)
+def test_schedule_add_data(task_label, workers, start_times, time_lengths):
+    schedule = Schedule()
+    schedule.add_data(task_label, workers, start_times, time_lengths)
+
+    assert schedule.data == OrderedDict([("data", ([1, 2], [3, 4], [5.5, 6.6]))])
+
+
+params = {
+    "workers and start_times are different": ("data", [1, 2], [3, 4, 5], [5.5, 6.6]),
+    "workers and time_lengths are different": (
+        "data",
+        np.array([1, 2]),
+        np.array([3, 4]),
+        np.array([5.5, 6.6, 7.7]),
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    "task_label, workers, start_times, time_lengths",
+    list(params.values()),
+    ids=list(params.keys()),
+)
+def test_schedule_add_data_not_same_length(
+    task_label, workers, start_times, time_lengths
+):
+    schedule = Schedule()
+
+    with pytest.raises(ValueError):
+        schedule.add_data(task_label, workers, start_times, time_lengths)
+
+
+def test_schedule_fig_ax_attribute():
+    workers, start_times, time_lengths = [1, 2], [1, 2], [3, 4]
+
+    schedule = Schedule()
+    schedule.add_data("data", workers, start_times, time_lengths)
+    schedule.show()
+    fig, ax = schedule.fig_ax
+
+    assert type(fig) == matplotlib.figure.Figure
+    assert type(ax) == matplotlib.axes.Subplot
+
+
+def test_schedule_fig_ax_attribute_before_show():
+    workers, start_times, time_lengths = [1, 2], [1, 2], [3, 4]
+
+    schedule = Schedule()
+    schedule.add_data("data", workers, start_times, time_lengths)
+
+    with pytest.raises(AttributeError):
+        schedule.fig_ax
+
+
+def test_schedule_show_no_plot_data():
+    schedule = Schedule()
+    with pytest.raises(RuntimeError):
+        schedule.show()
+
+
+def test_schedule_show_title():
+    title = "title"
+
+    schedule = Schedule()
+    schedule.add_data("data", [1, 2], [3, 4], [5, 6])
+    schedule.show(title=title)
+    fig, ax = schedule.fig_ax
+
+    assert fig.texts[0].get_text() == "title"
+
+
+def test_schedule_show_title_default():
+    schedule = Schedule()
+    schedule.add_data("data", [1, 2], [3, 4], [5, 6])
+    schedule.show()
+    fig, ax = schedule.fig_ax
+
+    assert fig.texts[0].get_text() == "schedule"
+
+
+def test_schedule_show_bar():
+    workers1, start_times1, time_lengths1 = [1, 2], [1, 2], [3, 4]
+    workers2, start_times2, time_lengths2 = [2], [1], [1]
+
+    schedule = Schedule()
+    schedule.add_data("data1", workers1, start_times1, time_lengths1)
+    schedule.add_data("data2", workers2, start_times2, time_lengths2)
+    schedule.show()
+    fig, ax = schedule.fig_ax
+
+    assert (ax.containers[0].get_children()[0].get_center() == np.array([2.5, 1])).all()
+    assert (ax.containers[0].get_children()[1].get_center() == np.array([4, 2])).all()
+    assert (ax.containers[1].get_children()[0].get_center() == np.array([1.5, 2])).all()
+
+
+def test_schedule_show_text():
+    workers, start_times, time_lengths = [1, 2], [1, 2], [3, 4]
+
+    schedule = Schedule()
+    schedule.add_data("data", workers, start_times, time_lengths)
+    schedule.show()
+    fig, ax = schedule.fig_ax
+
+    assert ax.texts[0].get_position() == (2.5, 1)
+    assert ax.texts[0].get_text() == "3"
+    assert ax.texts[1].get_position() == (4, 2)
+    assert ax.texts[1].get_text() == "4"
+
+
+def test_schedule_show_arg_figsize():
+    figwidth, figheight = 8, 4
+
+    schedule = Schedule()
+    schedule.add_data("data", [1, 2], [1, 2], [3, 4])
+    schedule.show(figsize=tuple([figwidth, figheight]))
+    fig, ax = schedule.fig_ax
+
+    assert fig.get_figwidth() == 8
+    assert fig.get_figheight() == 4
+
+
+def test_schedule_show_arg_color_list():
+    color_list = ["r", "b"]
+
+    schedule = Schedule()
+    schedule.add_data("data0", [1, 2], [1, 2], [3, 4])
+    schedule.add_data("data1", [1, 2], [1, 2], [3, 4])
+    schedule.show(color_list=color_list)
+    fig, ax = schedule.fig_ax
+
+    assert ax.containers[0].get_children()[0].get_facecolor()[0] == 1.0
+    assert ax.containers[1].get_children()[0].get_facecolor()[2] == 1.0
+
+
+def test_schedule_show_arg_color_list_invalid_length():
+    color_list = ["r", "g", "b"]
+
+    schedule = Schedule()
+    schedule.add_data("data0", [1, 2], [1, 2], [3, 4])
+    schedule.add_data("data1", [1, 2], [1, 2], [3, 4])
+
+    with pytest.raises(ValueError):
+        schedule.show(color_list=color_list)
+
+
+def test_schedule_show_arg_alpha_list():
+    alpha_list = [0.5, 0.7]
+
+    schedule = Schedule()
+    schedule.add_data("data0", [1, 2], [1, 2], [3, 4])
+    schedule.add_data("data1", [1, 2], [1, 2], [3, 4])
+    schedule.show(alpha_list=alpha_list)
+    fig, ax = schedule.fig_ax
+
+    assert ax.containers[0].get_children()[0].get_alpha() == 0.5
+    assert ax.containers[1].get_children()[0].get_alpha() == 0.7
+
+
+def test_schedule_show_arg_alpha_list_default():
+    schedule = Schedule()
+    schedule.add_data("data0", [1, 2], [1, 2], [3, 4])
+    schedule.add_data("data1", [1, 2], [1, 2], [3, 4])
+    schedule.show()
+    fig, ax = schedule.fig_ax
+
+    assert ax.containers[0].get_children()[0].get_alpha() == 0.5
+    assert ax.containers[1].get_children()[0].get_alpha() == 0.5
+
+
+def test_schedule_show_arg_alpha_list_invalid_length():
+    alpha_list = [0.1, 0.1, 0.1]
+
+    schedule = Schedule()
+    schedule.add_data("data0", [1, 2], [1, 2], [3, 4])
+    schedule.add_data("data1", [1, 2], [1, 2], [3, 4])
+
+    with pytest.raises(ValueError):
+        schedule.show(alpha_list=alpha_list)
+
+
+def test_schedule_show_arg_xlabel():
+    xlabel = "xlabel"
+
+    schedule = Schedule()
+    schedule.add_data("data", [1, 2], [1, 2], [3, 4])
+    schedule.show(xlabel=xlabel)
+    fig, ax = schedule.fig_ax
+
+    assert ax.get_xlabel() == "xlabel"
+
+
+def test_schedule_show_arg_ylabel():
+    ylabel = "ylabel"
+
+    schedule = Schedule()
+    schedule.add_data("data", [1, 2], [1, 2], [3, 4])
+    schedule.show(ylabel=ylabel)
+    fig, ax = schedule.fig_ax
+
+    assert ax.get_ylabel() == "ylabel"
+
+
+def test_schedule_show_arg_xticks():
+    xticks = [1, 2, 3, 4, 5, 6]
+
+    schedule = Schedule()
+    schedule.add_data("data", [1, 2], [1, 2], [3, 4])
+    schedule.show(xticks=xticks)
+    fig, ax = schedule.fig_ax
+
+    assert (ax.get_xticks() == np.array([1, 2, 3, 4, 5, 6])).all()
+
+
+def test_schedule_show_arg_yticks():
+    yticks = [1, 2]
+
+    schedule = Schedule()
+    schedule.add_data("data", [1, 2], [1, 2], [3, 4])
+    schedule.show(yticks=yticks)
+    fig, ax = schedule.fig_ax
+
+    assert (ax.get_yticks() == np.array([1, 2])).all()
+
+
+# TODO: legendに関するテストの追加

@@ -12,7 +12,7 @@ class TimeSeries(Figure):
     """Visualize time series.
 
     Attributes:
-        data (OrderedDict):the dict of time series. the key is label, and the values is tuple of x and y.
+        data (OrderedDict):the dict of time series. the key is label, and the value is tuple of x and y.
         fig_ax (Tuple[matplotlib.figure.Figure, matplotlib.axes.Subplot]): Figure and Axes of matplotlib. Available after show method is called.
     Example:
         The code below plots a linear function and a quadratic function.
@@ -33,7 +33,6 @@ class TimeSeries(Figure):
         >>> timeseries.add_data("quadratic", x2, y2)
         >>> timeseries.show(color_list=["red", "green"])
         ```
-
     """
 
     def __init__(
@@ -92,6 +91,11 @@ class TimeSeries(Figure):
             yticks (Optional[List[Union[int, float]]]): the yticks of figure. The default uses matplotlib's default.
         """
         data = self.data
+
+        if len(data) == 0:
+            raise RuntimeError(
+                "no plot data. Add at least one plot data with add_data method."
+            )
 
         if title is None:
             title = "time series"
