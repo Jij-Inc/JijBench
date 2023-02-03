@@ -1,10 +1,12 @@
 from collections import OrderedDict
 import matplotlib
+import networkx as nx
 import numpy as np
 import pytest
 
-from jijbench.figure.timeseries import TimeSeries
+from jijbench.figure.graph import Graph, GraphType
 from jijbench.figure.schedule import Schedule
+from jijbench.figure.timeseries import TimeSeries
 
 
 params = {
@@ -517,4 +519,57 @@ def test_schedule_show_arg_yticks():
     assert (ax.get_yticks() == np.array([1, 2])).all()
 
 
-# TODO: legendに関するテストの追加
+params = {
+    "undirected case": ([[0, 1], [1, 2]], GraphType.UNDIRECTED, nx.Graph),
+    "directed case": ([[0, 1], [1, 2]], GraphType.DIRECTED, nx.DiGraph),
+}
+
+
+@pytest.mark.parametrize(
+    "edge_list, graphtype, expect_type",
+    list(params.values()),
+    ids=list(params.keys()),
+)
+def test_graph_from_edge_list(edge_list, graphtype, expect_type):
+    graph = Graph.from_edge_list(edge_list, graphtype)
+    G = graph.G
+
+    assert type(G) == expect_type
+    assert len(G.edges()) == 2
+
+
+params = {
+    "undirected case": ([[-1, 1], [1, -1]], GraphType.UNDIRECTED, nx.Graph, 1),
+    "directed case": ([[-1, 1], [2, -1]], GraphType.DIRECTED, nx.DiGraph, 2),
+    "numpy case": (np.array([[-1, 1], [1, -1]]), GraphType.UNDIRECTED, nx.Graph, 1),
+}
+
+
+@pytest.mark.parametrize(
+    "distance_matrix, graphtype, expect_type, expect_edge_num",
+    list(params.values()),
+    ids=list(params.keys()),
+)
+def test_graph_from_distance_matrix(
+    distance_matrix, graphtype, expect_type, expect_edge_num
+):
+    graph = Graph.from_distance_matrix(distance_matrix, graphtype)
+    G = graph.G
+
+    assert type(G) == expect_type
+    assert len(G.edges()) == expect_edge_num
+    print(G.edges())
+    print(nx.get_edge_attributes(G, "weight"))
+
+
+def test_graph_show_node_pos():
+    pos1 = np.array([1, 1])
+    pos2 = np.array([-1, -1])
+    node_pos = {1: pos1, 2: pos2}
+
+    graph = Graph.from_edge_list([[1, 2]], GraphType.UNDIRECTED)
+    graph.show(node_pos=node_pos)
+
+    ax = matplotlib.pyplot.gca()
+
+    assert (ax.get_children()[0].get_offsets().data == np.vstack([pos1, pos2])).all()
