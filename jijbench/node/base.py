@@ -11,12 +11,37 @@ from jijbench.typing import T, DataNodeT, DataNodeT2
 @dataclass
 class DataNode(tp.Generic[T], metaclass=abc.ABCMeta):
     data: T
-    name: str
+    name: tp.Hashable
     operator: FunctionNode | None = field(default=None, repr=False)
+
+    def __setattr__(self, name: str, value: tp.Any) -> None:
+        if name == "data":
+            value = self.validate_data(value)
+        return super().__setattr__(name, value)
 
     @property
     def dtype(self) -> type:
         return type(self.data)
+
+    @classmethod
+    @abc.abstractmethod
+    def validate_data(cls, data: T) -> T:
+        pass
+
+    @classmethod
+    def _validate_dtype(cls, data: T, cls_tuple: tuple) -> T:
+        if isinstance(data, cls_tuple):
+            return data
+        else:
+            dtype_str = " or ".join(
+                map(
+                    lambda x: x.__name__ if hasattr(x, "__name__") else str(x),
+                    cls_tuple,
+                )
+            )
+            raise TypeError(
+                f"Attribute data of class {cls.__name__} must be type {dtype_str}."
+            )
 
     def apply(
         self,
@@ -31,7 +56,7 @@ class DataNode(tp.Generic[T], metaclass=abc.ABCMeta):
 
 
 class FunctionNode(tp.Generic[DataNodeT, DataNodeT2], metaclass=abc.ABCMeta):
-    def __init__(self, name: str | None = None) -> None:
+    def __init__(self, name: tp.Hashable = None) -> None:
         if name is None:
             name = self.__class__.__name__
         self._name = name
@@ -44,7 +69,7 @@ class FunctionNode(tp.Generic[DataNodeT, DataNodeT2], metaclass=abc.ABCMeta):
         return node
 
     @property
-    def name(self) -> str:
+    def name(self) -> tp.Hashable:
         return self._name
 
     @abc.abstractmethod

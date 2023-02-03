@@ -45,14 +45,14 @@ def _is_mapping_list(inputs: MappingListTypes) -> TypeGuard[list[MappingT]]:
 
 class Concat(FunctionNode[MappingT, MappingT]):
     @tp.overload
-    def __call__(self, inputs: list[Artifact], name: str = "") -> Artifact:
+    def __call__(self, inputs: list[Artifact], name: tp.Hashable = None) -> Artifact:
         ...
 
     @tp.overload
     def __call__(
         self,
         inputs: list[Experiment],
-        name: str = "",
+        name: tp.Hashable = None,
         *,
         autosave: bool = True,
         savedir: str | pathlib.Path = DEFAULT_RESULT_DIR,
@@ -60,14 +60,14 @@ class Concat(FunctionNode[MappingT, MappingT]):
         ...
 
     @tp.overload
-    def __call__(self, inputs: list[Record], name: str = "") -> Record:
+    def __call__(self, inputs: list[Record], name: tp.Hashable = None) -> Record:
         ...
 
     @tp.overload
     def __call__(
         self,
         inputs: list[Table],
-        name: str = "",
+        name: tp.Hashable = None,
         *,
         axis: tp.Literal[0, 1] = 0,
         index_name: str | None = None,
@@ -77,7 +77,7 @@ class Concat(FunctionNode[MappingT, MappingT]):
     def __call__(
         self,
         inputs: MappingListTypes,
-        name: str = "",
+        name: tp.Hashable = None,
         *,
         autosave: bool = True,
         savedir: str | pathlib.Path = DEFAULT_RESULT_DIR,
@@ -99,14 +99,14 @@ class Concat(FunctionNode[MappingT, MappingT]):
             )
 
     @tp.overload
-    def operate(self, inputs: list[Artifact], name: str = "") -> Artifact:
+    def operate(self, inputs: list[Artifact], name: tp.Hashable = None) -> Artifact:
         ...
 
     @tp.overload
     def operate(
         self,
         inputs: list[Experiment],
-        name: str = "",
+        name: tp.Hashable = None,
         *,
         autosave: bool = True,
         savedir: str | pathlib.Path = DEFAULT_RESULT_DIR,
@@ -121,7 +121,7 @@ class Concat(FunctionNode[MappingT, MappingT]):
     def operate(
         self,
         inputs: list[Table],
-        name: str = "",
+        name: tp.Hashable = None,
         *,
         axis: tp.Literal[0, 1] = 0,
         index_name: str | None = None,
@@ -131,7 +131,7 @@ class Concat(FunctionNode[MappingT, MappingT]):
     def operate(
         self,
         inputs: MappingListTypes,
-        name: str = "",
+        name: tp.Hashable = None,
         *,
         autosave: bool = True,
         savedir: str | pathlib.Path = DEFAULT_RESULT_DIR,
@@ -150,6 +150,10 @@ class Concat(FunctionNode[MappingT, MappingT]):
             inputs_t = [n.data[1] for n in inputs]
             artifact = inputs_a[0].apply(concat_a, inputs_a[1:])
             table = inputs_t[0].apply(concat_t, inputs_t[1:])
+
+            if not (isinstance(name, str) or name is None):
+                raise TypeError("Attirbute name of Experiment must be string or None.")
+
             return type(inputs[0])(
                 (artifact, table),
                 name,

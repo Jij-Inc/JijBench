@@ -7,7 +7,7 @@ import inspect
 from jijbench.exceptions.exceptions import SolverFailedError
 from jijbench.node.base import FunctionNode
 from jijbench.data.mapping import Record
-from jijbench.data.elements.values import Parameter, Return
+from jijbench.data.elements.base import Parameter, Return
 from jijbench.functions.factory import RecordFactory
 
 
@@ -19,7 +19,9 @@ class Solver(FunctionNode[Parameter, Record]):
         self.function = function
 
     def operate(
-        self, inputs: list[Parameter], is_parsed_sampleset: bool = True
+        self,
+        inputs: list[Parameter],
+        is_parsed_sampleset: bool = True,
     ) -> Record:
         parameters = inspect.signature(self.function).parameters
         solver_args = {

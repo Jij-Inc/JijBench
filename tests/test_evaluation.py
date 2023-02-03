@@ -146,55 +146,56 @@ def pre_post_process():
 #     return bench
 #
 #
-# @pytest.fixture
-# def bench_for_multi_const_problem():
-#     def solve():
-#         d = jm.Placeholder("d", dim=2)
-#         x = jm.Binary("x", shape=d.shape)
-#         i = jm.Element("i", d.shape[0])
-#         j = jm.Element("j", d.shape[1])
-#
-#         problem = jm.Problem("simple_problem")
-#         problem += jm.Sum([i, j], d[i, j] * x[i, j])
-#         problem += jm.Constraint("onehot1", x[i, :] == 1, forall=i)
-#         problem += jm.Constraint("onehot2", x[:, j] == 1, forall=j)
-#
-#         jm_sampleset_dict = {
-#             "record": {
-#                 "solution": {
-#                     "x": [
-#                         (([0, 1], [0, 1]), [1, 1], (2, 2)),
-#                         (([0, 1], [1, 0]), [1, 1], (2, 2)),
-#                         (([], []), [], (2, 2)),
-#                         (([0, 1], [0, 0]), [1, 1], (2, 2)),
-#                     ]
-#                 },
-#                 "num_occurrences": [4, 3, 2, 1],
-#             },
-#             "evaluation": {
-#                 "energy": [3.0, 24.0, 0.0, 20.0],
-#                 "objective": [3.0, 24.0, 0.0, 17.0],
-#                 "constraint_violations": {
-#                     "onehot1": [0.0, 0.0, 2.0, 0.0],
-#                     "onehot2": [0.0, 0.0, 2.0, 2.0],
-#                 },
-#                 "penalty": {},
-#             },
-#             "measuring_time": {"solve": None, "system": None, "total": None},
-#         }
-#         jm_sampleset = jm.SampleSet.from_serializable(jm_sampleset_dict)
-#         solving_time = jm.SolvingTime(
-#             **{"preprocess": 1.0, "solve": 1.0, "postprocess": 1.0}
-#         )
-#         jm_sampleset.measuring_time.solve = solving_time
-#         return jm_sampleset
-#
-#     bench = jb.Benchmark(
-#         params={"multipliers": [{"onehot": 1}, {"onehot": 2}, {"onehot": 3}]},
-#         solver=solve,
-#     )
-#     bench.run()
-#     return bench
+
+
+@pytest.fixture
+def results_for_multi_const_problem():
+    def solve():
+        d = jm.Placeholder("d", dim=2)
+        x = jm.Binary("x", shape=d.shape)
+        i = jm.Element("i", d.shape[0])
+        j = jm.Element("j", d.shape[1])
+        problem = jm.Problem("simple_problem")
+        problem += jm.Sum([i, j], d[i, j] * x[i, j])
+        problem += jm.Constraint("onehot1", x[i, :] == 1, forall=i)
+        problem += jm.Constraint("onehot2", x[:, j] == 1, forall=j)
+        jm_sampleset_dict = {
+            "record": {
+                "solution": {
+                    "x": [
+                        (([0, 1], [0, 1]), [1, 1], (2, 2)),
+                        (([0, 1], [1, 0]), [1, 1], (2, 2)),
+                        (([], []), [], (2, 2)),
+                        (([0, 1], [0, 0]), [1, 1], (2, 2)),
+                    ]
+                },
+                "num_occurrences": [4, 3, 2, 1],
+            },
+            "evaluation": {
+                "energy": [3.0, 24.0, 0.0, 20.0],
+                "objective": [3.0, 24.0, 0.0, 17.0],
+                "constraint_violations": {
+                    "onehot1": [0.0, 0.0, 2.0, 0.0],
+                    "onehot2": [0.0, 0.0, 2.0, 2.0],
+                },
+                "penalty": {},
+            },
+            "measuring_time": {"solve": None, "system": None, "total": None},
+        }
+        jm_sampleset = jm.SampleSet.from_serializable(jm_sampleset_dict)
+        solving_time = jm.SolvingTime(
+            **{"preprocess": 1.0, "solve": 1.0, "postprocess": 1.0}
+        )
+        jm_sampleset.measuring_time.solve = solving_time
+        return jm_sampleset
+
+    bench = jb.Benchmark(
+        params={"multipliers": [{"onehot": 1}, {"onehot": 2}, {"onehot": 3}]},
+        solver=solve,
+    )
+    return bench()
+
+
 #
 #
 # def test_typical_metrics():
@@ -385,29 +386,36 @@ def pre_post_process():
 #     assert re[0] == 9.0
 #
 #
-# def test_evaluate_for_multi_const_problem(bench_for_multi_const_problem):
-#     # Benchmarkインスタンスのevaluateでテスト
-#     opt_value = 3.0
-#     pr = 0.7
-#     metrics = bench_for_multi_const_problem.evaluate(opt_value=opt_value, pr=pr)
-#
-#     assert metrics["success_probability"][0] == 0.4
-#     assert metrics["feasible_rate"][0] == 0.7
-#     assert metrics["residual_energy"][0] == 9.0
-#     assert metrics["TTS(optimal)"][0] == np.log(1 - 0.7) / np.log(1 - 0.4)
-#     assert metrics["TTS(feasible)"][0] == 1.0
-#     assert metrics["TTS(derived)"][0] == np.log(1 - 0.7) / np.log(1 - 0.4)
-#
-#     opt_value = 0
-#     pr = 0.7
-#     metrics = bench_for_multi_const_problem.evaluate(opt_value=opt_value, pr=pr)
-#
-#     assert metrics["success_probability"][0] == 0.0
-#     assert metrics["feasible_rate"][0] == 0.7
-#     assert metrics["residual_energy"][0] == 12.0
-#     assert metrics["TTS(optimal)"][0] == np.inf
-#     assert metrics["TTS(feasible)"][0] == 1.0
-#     assert metrics["TTS(derived)"][0] == np.log(1 - 0.7) / np.log(1 - 0.4)
+
+
+def test_evaluate_for_multi_const_problem(results_for_multi_const_problem):
+    # Benchmarkインスタンスのevaluateでテスト
+    opt_value = 3.0
+    pr = 0.7
+
+    evaluator = jb.Evaluator(results_for_multi_const_problem)
+    metrics = evaluator.calc_typical_metrics(opt_value=opt_value, pr=pr)
+
+    #
+    assert metrics["success_probability"][0] == 0.4
+    assert metrics["feasible_rate"][0] == 0.7
+    assert metrics["residual_energy"][0] == 9.0
+    assert metrics["TTS(optimal)"][0] == np.log(1 - 0.7) / np.log(1 - 0.4)
+    assert metrics["TTS(feasible)"][0] == 1.0
+    assert metrics["TTS(derived)"][0] == np.log(1 - 0.7) / np.log(1 - 0.4)
+    #
+    opt_value = 0
+    pr = 0.7
+    metrics = evaluator.calc_typical_metrics(opt_value=opt_value, pr=pr)
+    #
+    assert metrics["success_probability"][0] == 0.0
+    assert metrics["feasible_rate"][0] == 0.7
+    assert metrics["residual_energy"][0] == 12.0
+    assert metrics["TTS(optimal)"][0] == np.inf
+    assert metrics["TTS(feasible)"][0] == 1.0
+    assert metrics["TTS(derived)"][0] == np.log(1 - 0.7) / np.log(1 - 0.4)
+
+
 #
 #
 # def test_warning():

@@ -1,55 +1,26 @@
 from __future__ import annotations
 
 import numpy as np
-import typing as tp
 
 from dataclasses import dataclass
-from jijbench.node.base import DataNode, FunctionNode
-
-if tp.TYPE_CHECKING:
-    from jijbench.functions.math import Min, Max, Mean, Std
+from jijbench.data.elements.base import Element, Number
+from jijbench.functions.math import Min, Max, Mean, Std
 
 
 @dataclass
-class Array(DataNode):
-    data: np.ndarray
-
-    @tp.overload
-    def apply(self, f: Min) -> Array:
-        ...
-
-    @tp.overload
-    def apply(self, f: Max) -> Array:
-        ...
-
-    @tp.overload
-    def apply(self, f: Mean) -> Array:
-        ...
-
-    @tp.overload
-    def apply(self, f: Std) -> Array:
-        ...
-
-    def apply(self, f: FunctionNode) -> DataNode:
-        return super().apply(f)
-
-    def min(self) -> Array:
-        from jijbench.functions.math import Min
-
+class Array(Element[np.ndarray]):
+    def min(self) -> Number:
         return self.apply(Min())
 
-    def max(self) -> Array:
-        from jijbench.functions.math import Max
-
+    def max(self) -> Number:
         return self.apply(Max())
 
-    def mean(self) -> Array:
-        from jijbench.functions.math import Mean
-
+    def mean(self) -> Number:
         return self.apply(Mean())
 
-    def std(self) -> Array:
-        from jijbench.functions.math import Std
-
+    def std(self) -> Number:
         return self.apply(Std())
 
+    @classmethod
+    def validate_data(cls, data: np.ndarray) -> np.ndarray:
+        return cls._validate_dtype(data, (np.ndarray,))

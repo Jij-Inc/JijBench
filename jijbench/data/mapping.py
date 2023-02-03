@@ -2,12 +2,14 @@ from __future__ import annotations
 
 import abc
 import pandas as pd
+import typing as tp
 
 from dataclasses import dataclass, field
 from jijbench.functions.concat import Concat
 from jijbench.functions.factory import ArtifactFactory, TableFactory
 from jijbench.node.base import DataNode
-from jijbench.typing import T
+from jijbench.typing import T, ArtifactDataType
+from pandas._typing import Axes
 
 
 @dataclass
@@ -22,9 +24,22 @@ class Mapping(DataNode[T]):
 
 
 @dataclass
-class Record(Mapping):
+class Record(Mapping[pd.Series]):
     data: pd.Series = field(default_factory=lambda: pd.Series(dtype="object"))
-    name: str | None = None
+    name: tp.Hashable = None
+
+    @classmethod
+    def validate_data(cls, data: pd.Series) -> pd.Series:
+        data = cls._validate_dtype(data, (pd.Series,))
+        if data.empty:
+            return data
+        else:
+            if data.apply(lambda x: isinstance(x, DataNode)).all():
+                return data
+            else:
+                raise TypeError(
+                    f"All elements of {data.__class__.__name__} must be type DataNode."
+                )
 
     def append(self, record: Record) -> None:
         concat: Concat[Record] = Concat()
@@ -36,9 +51,30 @@ class Record(Mapping):
 
 
 @dataclass
-class Artifact(Mapping[T]):
-    data: dict[str, dict[str, DataNode[T]]] = field(default_factory=dict)
-    name: str | None = None
+class Artifact(Mapping[ArtifactDataType]):
+    data: ArtifactDataType = field(default_factory=dict)
+    name: tp.Hashable = None
+
+    @classmethod
+    def validate_data(cls, data: ArtifactDataType) -> ArtifactDataType:
+        if data:
+            data = cls._validate_dtype(data, (dict,))
+            values = []
+            for v in data.values():
+                if isinstance(v, dict):
+                    values += list(v.values())
+                else:
+                    raise TypeError(
+                        f"Type of attibute data is {ArtifactDataType}. Input data is invaid."
+                    )
+            if all(map(lambda x: isinstance(x, DataNode), values)):
+                return data
+            else:
+                raise TypeError(
+                    f"Type of attibute data is {ArtifactDataType}. Input data is invaid."
+                )
+        else:
+            return data
 
     def append(self, record: Record) -> None:
         concat: Concat[Artifact] = Concat()
@@ -46,7 +82,7 @@ class Artifact(Mapping[T]):
         node = self.apply(concat, [other], name=self.name)
         self.__init__(**node.__dict__)
 
-    def view(self) -> dict[str, dict[str, T]]:
+    def view(self) -> ArtifactDataType:
         return {
             k: {name: node.data for name, node in v.items()}
             for k, v in self.data.items()
@@ -54,9 +90,38 @@ class Artifact(Mapping[T]):
 
 
 @dataclass
-class Table(Mapping):
+class Table(Mapping[pd.DataFrame]):
     data: pd.DataFrame = field(default_factory=pd.DataFrame)
-    name: str | None = None
+    name: tp.Hashable = None
+
+    @classmethod
+    def validate_data(cls, data: pd.DataFrame) -> pd.DataFrame:
+        data = cls._validate_dtype(data, (pd.DataFrame,))
+        if data.empty:
+            return data
+        else:
+            if data.applymap(lambda x: isinstance(x, DataNode)).values.all():
+                return data
+            else:
+                raise TypeError(
+                    f"All elements of {data.__class__.__name__} must be type DataNode."
+                )
+
+    @property
+    def index(self) -> pd.Index:
+        return self.data.index
+
+    @index.setter
+    def index(self, index: pd.Index) -> None:
+        self.data.index = index
+
+    @property
+    def columns(self) -> pd.Index:
+        return self.data.columns
+
+    @columns.setter
+    def columns(self, columns: pd.Index) -> None:
+        self.data.columns = columns
 
     def append(self, record: Record) -> None:
         concat: Concat[Table] = Concat()
@@ -70,7 +135,9 @@ class Table(Mapping):
         else:
             is_tuple_index = all([isinstance(i, tuple) for i in self.data.index])
             if is_tuple_index:
-                names = self.data.index.names if len(self.data.index.names) >= 2 else None
+                names = (
+                    self.data.index.names if len(self.data.index.names) >= 2 else None
+                )
                 index = pd.MultiIndex.from_tuples(self.data.index, names=names)
                 # TODO 代入しない
                 self.data.index = index
