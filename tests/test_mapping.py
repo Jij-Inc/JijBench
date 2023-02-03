@@ -202,35 +202,3 @@ def test_ref():
 
     factory = jb.functions.TableFactory()
     table = r1.apply(factory)
-    ic()
-    ic(table.data.applymap(id))
-    ic(table.operator.inputs[0].data.apply(id))
-    ic(list(map(id, inputs1)))
-    ic(table.operator.inputs[0].operator)
-    # ic(":::::::")
-    # ic(e.operator)
-    # ic(len(e.operator.inputs))
-    # ic(e.data[1])
-    # ic(type(e.data[1]))
-    # ic(e.data[1].operator)
-    # ic(e.data[1].operator.inputs[0].data.applymap(id))
-    # ic(e.data[1].operator.inputs[1].data.applymap(id))
-    # TODO add test
-    # ic(e.data[1].operator.inputs[2].data)
-    # ic(e.data[1].operator.inputs[3].data)
-    # ic(e.data[1].operator.inputs[4].data)
-    # ic(e.data[1].operator.inputs[5].data)
-    # ic(e.data[1].data.applymap(id))
-    # ic(list(map(id, e.data[1].operator.inputs[1].operator.inputs[0].operator.inputs)))
-    # ic(list(map(id, e.data[0].operator.inputs[1].operator.inputs[0].operator.inputs)))
-    # ic("=========")
-    # ic(
-    #     e.operator.inputs[0]
-    #     .operator.inputs[1]
-    #     .data[0]
-    #     .operator.inputs[0]
-    #     .operator.inputs
-    # )
-    # print(e.operator.inputs[0].operator.inputs[0])
-    # print(e.operator.inputs[0].operator.inputs[0].operator)
-    # print(e.operator.inputs[0].operator.inputs[0].operator.inputs)

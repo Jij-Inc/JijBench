@@ -18,13 +18,6 @@ def test_simple_solver():
     param = jb.Parameter(1, "x")
     record = solver([param])
 
-    from icecream import ic
-
-    print()
-    ic(record.data)
-    ic(record.data[0])
-    ic(record.operator)
-
     assert isinstance(record, jb.Record)
     assert record.data[0].data == 1
     assert record.operator is None
