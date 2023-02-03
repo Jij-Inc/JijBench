@@ -1,12 +1,94 @@
+from __future__ import annotations
+
 import jijbench as jb
 import numpy as np
 import pandas as pd
+import pytest
 
-from icecream import ic
+
+def test_record():
+    inputs = [
+        jb.ID(name="id1"),
+        jb.Date(name="date1"),
+        jb.Array(np.arange(5), name="array1"),
+    ]
+    data = pd.Series(inputs)
+    jb.Record(data)
+
+
+def test_artifact():
+    from jijbench.typing import ArtifactDataType
+
+    data: ArtifactDataType = {
+        "0": {
+            "id": jb.ID(name="id1"),
+            "date": jb.Date(name="date1"),
+            "array": jb.Array(np.arange(5), name="array1"),
+        },
+        "1": {
+            "id": jb.ID(name="id2"),
+            "date": jb.Date(name="date2"),
+            "array": jb.Array(np.arange(5), name="array2"),
+        },
+    }
+    jb.Artifact(data)
 
 
 def test_table():
-    pass
+    inputs = [
+        [
+            jb.ID(name="id1"),
+            jb.Date(name="date1"),
+            jb.Array(np.arange(5), name="array1"),
+        ]
+    ]
+    data = pd.DataFrame(inputs)
+    jb.Table(data)
+
+
+def test_record_invalid_data():
+    with pytest.raises(TypeError):
+        jb.Record(1)
+
+    with pytest.raises(TypeError):
+        inputs = [
+            "id",
+            pd.Timestamp.now(),
+            np.arange(5),
+        ]
+        data = pd.Series(inputs)
+        jb.Record(data)
+
+
+def test_artifact_invalid_data():
+    with pytest.raises(TypeError):
+        jb.Artifact(1)
+
+    with pytest.raises(TypeError):
+        data = {
+            "0": {
+                "id": "id",
+                "date": pd.Timestamp.now(),
+                "array": np.arange(5),
+            }
+        }
+        jb.Artifact(data)
+
+
+def test_table_invalid_data():
+    with pytest.raises(TypeError):
+        jb.Table(1)
+
+    with pytest.raises(TypeError):
+        inputs = [
+            [
+                "id1",
+                pd.Timestamp.now(),
+                np.arange(5),
+            ]
+        ]
+        data = pd.DataFrame(inputs)
+        jb.Table(data)
 
 
 def test_record_append():
@@ -83,24 +165,17 @@ def test_artifact_append():
 
 
 def test_experiment_append():
-    e = jb.Experiment(name="test")
+    ename = "test"
+    e = jb.Experiment(name=ename)
 
     for i in range(3):
         data = [
-            jb.ID(name="id"),
             jb.Date(),
             jb.Number(i, "num"),
             jb.Array(np.arange(5), "array"),
         ]
-        record = jb.functions.RecordFactory()(data, name=i)
+        record = jb.functions.RecordFactory()(data, name=(ename, i))
         e.append(record)
-    
-    ic()
-    ic(e.operator)
-    ic(len(e.operator.inputs))
-    ic(e.data[1].data.applymap(id))
-    ic(e.data[1].data.applymap(id))
-    ic(e.operator.inputs[0].data[1].data.applymap(id))
 
     assert isinstance(e, jb.Experiment)
     assert e.operator is not None
@@ -109,9 +184,10 @@ def test_experiment_append():
     assert len(e.operator.inputs) == 2
 
     for i in range(3):
-        assert i in e.artifact
-        assert e.artifact[i]["num"] == i
-        assert e.table.loc[i, "num"] == i
+        k = (ename, i)
+        assert k in e.artifact
+        assert e.artifact[k]["num"] == i
+        assert e.table.loc[k, "num"] == i
 
 
 def test_ref():

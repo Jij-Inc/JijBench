@@ -8,10 +8,11 @@ import pathlib
 from dataclasses import dataclass, field
 from jijbench.consts.path import DEFAULT_RESULT_DIR
 from jijbench.data.mapping import Artifact, Mapping, Table
-from jijbench.data.elements.values import Callable, Parameter, Return
+from jijbench.data.elements.base import Callable, Parameter, Return
 from jijbench.functions.concat import Concat
 from jijbench.functions.factory import ArtifactFactory, TableFactory
 from jijbench.data.elements.id import ID
+from jijbench.typing import ExperimentDataType
 
 
 if tp.TYPE_CHECKING:
@@ -19,7 +20,7 @@ if tp.TYPE_CHECKING:
 
 
 @dataclass
-class Experiment(Mapping):
+class Experiment(Mapping[ExperimentDataType]):
     data: tuple[Artifact, Table] = field(default_factory=lambda: (Artifact(), Table()))
     name: str | None = None
     autosave: bool = field(default=True, repr=False)
@@ -39,15 +40,17 @@ class Experiment(Mapping):
             self.savedir = pathlib.Path(self.savedir)
 
     def __enter__(self) -> Experiment:
-        p = tp.cast("pathlib.Path", self.savedir) / str(self.name)
+        savedir = (
+            self.savedir
+            if isinstance(self.savedir, pathlib.Path)
+            else pathlib.Path(self.savedir)
+        )
+        p = savedir / str(self.name)
         (p / "table").mkdir(parents=True, exist_ok=True)
         (p / "artifact").mkdir(parents=True, exist_ok=True)
         return self
 
     def __exit__(self, exception_type, exception_value, traceback) -> None:
-        index = (self.name, self.table.index[-1])
-        self.table.rename(index={self.table.index[-1]: index}, inplace=True)
-
         if self.autosave:
             self.save()
 
@@ -73,6 +76,19 @@ class Experiment(Mapping):
     def returns_table(self) -> pd.DataFrame:
         bools = self.data[1].data.applymap(lambda x: isinstance(x, Return))
         return self.table[bools].dropna(axis=1)
+
+    @classmethod
+    def validate_data(cls, data: ExperimentDataType) -> ExperimentDataType:
+        artifact, table = data
+        if not isinstance(artifact, Artifact):
+            raise TypeError(
+                f"Type of attribute data is {ExperimentDataType}, and data[0] must be Artifact instead of {type(artifact).__name__}."
+            )
+        if not isinstance(table, Table):
+            raise TypeError(
+                f"Type of attribute data is {ExperimentDataType}, and data[1] must be Table instead of {type(artifact).__name__}."
+            )
+        return data
 
     @tp.overload
     def view(self, kind: tp.Literal["artifact"]) -> dict:
@@ -111,7 +127,11 @@ class Experiment(Mapping):
             except Exception:
                 return False
 
-        savedir = tp.cast("pathlib.Path", self.savedir)
+        savedir = (
+            self.savedir
+            if isinstance(self.savedir, pathlib.Path)
+            else pathlib.Path(self.savedir)
+        )
         p = savedir / str(self.name) / "table" / "table.csv"
 
         self.table.to_csv(p)

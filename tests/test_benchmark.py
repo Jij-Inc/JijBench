@@ -226,10 +226,10 @@ def test_benchmark_params():
 def test_simple_benchmark():
     def func(x):
         return x
-
     bench = jb.Benchmark(
         {"x": [1, 2]},
         solver=func,
+        name="test"
     )
 
     res = bench()
@@ -237,6 +237,9 @@ def test_simple_benchmark():
 
     assert isinstance(res, jb.Experiment)
     assert "func_return[0]" in columns
+    ic()
+    ic(res.table)
+    ic(res.artifact)
 
     op1 = res.operator
     assert op1 is not None
