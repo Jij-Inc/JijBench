@@ -18,8 +18,8 @@ DataNodeT2 = tp.TypeVar("DataNodeT2", bound="DataNode")
 DataNodeT_co = tp.TypeVar("DataNodeT_co", bound="DataNode", covariant=True)
 DataNodeT2_co = tp.TypeVar("DataNodeT2_co", bound="DataNode", covariant=True)
 
-ArtifactDataType: TypeAlias = dict[tp.Hashable, dict[tp.Hashable, "DataNode"]]
-ExperimentDataType: TypeAlias = tuple["Artifact", "Table"]
+ArtifactDataType: TypeAlias = tp.Dict[tp.Hashable, dict[tp.Hashable, "DataNode"]]
+ExperimentDataType: TypeAlias = tp.Tuple["Artifact", "Table"]
 
 DateTypes: TypeAlias = tp.Union[str, datetime.datetime, pd.Timestamp]
 NumberTypes: TypeAlias = tp.Union[int, float]
