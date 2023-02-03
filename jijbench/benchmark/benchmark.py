@@ -2,14 +2,13 @@ from __future__ import annotations
 
 import typing as tp
 import itertools
-import pandas as pd
 import pathlib
 
 
 from jijbench.consts.path import DEFAULT_RESULT_DIR
 from jijbench.node.base import FunctionNode
 from jijbench.data.elements.id import ID
-from jijbench.data.elements.values import Callable, Parameter
+from jijbench.data.elements.base import Callable, Parameter
 from jijbench.experiment.experiment import Experiment
 from jijbench.functions.concat import Concat
 from jijbench.functions.factory import RecordFactory
@@ -49,7 +48,7 @@ class Benchmark(FunctionNode[Experiment, Experiment]):
         savedir: str | pathlib.Path = DEFAULT_RESULT_DIR,
     ) -> Experiment:
         if inputs is None:
-            inputs = [Experiment(name=ID().data, autosave=autosave, savedir=savedir)]
+            inputs = [Experiment(autosave=autosave, savedir=savedir)]
 
         return super().__call__(
             inputs,
@@ -68,7 +67,7 @@ class Benchmark(FunctionNode[Experiment, Experiment]):
         savedir: str | pathlib.Path = DEFAULT_RESULT_DIR,
     ) -> Experiment:
         concat: Concat[Experiment] = Concat()
-        experiment = concat(inputs, name=self.name, autosave=autosave, savedir=savedir)
+        experiment = concat(inputs, autosave=autosave, savedir=savedir)
         if concurrent:
             return self._co()
         else:
@@ -81,30 +80,25 @@ class Benchmark(FunctionNode[Experiment, Experiment]):
     def _co(self) -> Experiment:
         raise NotImplementedError
 
-    def _seq(self, experiment: Experiment, is_parsed_sampleset: bool) -> Experiment:
+    def _seq(
+        self,
+        experiment: Experiment,
+        is_parsed_sampleset: bool,
+    ) -> Experiment:
         # TODO 返り値名を変更できるようにする。
         # solver.rename_return(ret)
         # name = ID().data
         # record = solver(inputs, is_parsed_sampleset=is_parsed_sampleset)
         # record.name = name
-        # TODO 入力パラメータをtableで保持する
-        # params = (dict([(k, v) for k, v in zip(self.params.keys(), r)]))
-        # params = RecordFactory().apply(params)
-        # params.name = name
-        # experiment.append(record)
-        # return Experiment()
-        names = []
         for f in self.solver:
             for params in self.params:
                 with experiment:
-                    name = ID().data
-                    fdata = [Callable(f.function, f.name)]
+                    name = (self.name, experiment.name, ID().data)
+                    fdata = [Callable(f.function, str(f.name))]
                     record = f(params, is_parsed_sampleset=is_parsed_sampleset)
                     record = Concat()(
                         [RecordFactory()(params + fdata), record], name=name
                     )
                     experiment.append(record)
-                    names.append((experiment.name, name))
-        index = pd.MultiIndex.from_tuples(names, names=("experiment_id", "run_id"))
-        experiment.data[1].data.index = index
+        experiment.data[1].index.names = ["benchmark_id", "experiment_id", "run_id"]
         return experiment

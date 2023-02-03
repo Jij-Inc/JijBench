@@ -9,8 +9,6 @@ import pytest
 import jijbench as jb
 from jijbench.exceptions.exceptions import SolverFailedError, ConcurrentFailedError
 
-from icecream import ic
-
 
 @pytest.fixture(scope="function", autouse=True)
 def pre_post_process():
@@ -227,10 +225,7 @@ def test_simple_benchmark():
     def func(x):
         return x
 
-    bench = jb.Benchmark(
-        {"x": [1, 2]},
-        solver=func,
-    )
+    bench = jb.Benchmark({"x": [1, 2]}, solver=func, name="test")
 
     res = bench()
     columns = res.table.columns
@@ -283,12 +278,6 @@ def test_benchmark_params_table():
     )
 
     res = bench()
-    ic()
-    ic(res.data[1].data)
-    ic(res.table)
-    ic(res.params_table)
-    ic(res.solver_table)
-    ic(res.returns_table)
 
 
 def test_benchmark_with_multi_return_solver():
@@ -299,7 +288,6 @@ def test_benchmark_with_multi_return_solver():
     res = bench()
 
     # assert res.table["solver"][0] == func.__name__
-    ic(res.table)
     assert res.table["func_return[0]"][0] == "a"
     assert res.table["func_return[1]"][0] == 1.0
 

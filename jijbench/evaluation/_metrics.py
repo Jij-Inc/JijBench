@@ -76,7 +76,7 @@ def derived_time_to_solution(
     x,
     pr: float,
 ):
-    feas = _to_bool_values_for_feasible(x)
+    feas = _to_bools_for_feasible(x)
     if feas.any():
         opt_value = x.objective[feas].min()
         ps = success_probability(x, opt_value)
@@ -90,7 +90,7 @@ def derived_time_to_solution(
 
 
 def success_probability(x, opt_value: Union[int, float]):
-    success = _to_bool_values_for_success(x, opt_value)
+    success = _to_bools_for_success(x, opt_value)
     num_success = (success * x.num_occurrences).sum()
 
     return num_success / x.num_occurrences.sum()
@@ -101,7 +101,7 @@ def feasible_rate(x):
 
 
 def residual_energy(x, opt_value: Union[int, float]):
-    feas = _to_bool_values_for_feasible(x)
+    feas = _to_bools_for_feasible(x)
     if np.all(~feas):
         return np.nan
     else:
@@ -110,11 +110,11 @@ def residual_energy(x, opt_value: Union[int, float]):
         return mean - opt_value
 
 
-def _to_bool_values_for_feasible(x):
+def _to_bools_for_feasible(x):
     constraint_violations = np.array([v for v in x[x.index.str.contains("violations")]])
     return constraint_violations.sum(axis=0) == 0
 
 
-def _to_bool_values_for_success(x, opt_value):
-    feas = _to_bool_values_for_feasible(x)
+def _to_bools_for_success(x, opt_value):
+    feas = _to_bools_for_feasible(x)
     return (x.objective <= opt_value) & feas
