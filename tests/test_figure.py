@@ -8,6 +8,8 @@ from jijbench.figure.graph import Graph, GraphType
 from jijbench.figure.schedule import Schedule
 from jijbench.figure.timeseries import TimeSeries
 
+# TODO: colorについて、strだけじゃなくてrgb tupleにも対応させる（テストの追記と型アノテーションでいけると想定）
+# 参考: rgb tupleについての言及 https://networkx.org/documentation/stable/reference/generated/networkx.drawing.nx_pylab.draw_networkx_nodes.html
 
 params = {
     "list case": ("data", [1, 2], [3, 4]),
@@ -558,8 +560,62 @@ def test_graph_from_distance_matrix(
 
     assert type(G) == expect_type
     assert len(G.edges()) == expect_edge_num
-    print(G.edges())
-    print(nx.get_edge_attributes(G, "weight"))
+
+
+def test_graph_fig_ax_attribute():
+    graph = Graph.from_edge_list([[1, 2]], GraphType.UNDIRECTED)
+    graph.show()
+    fig, ax = graph.fig_ax
+
+    assert type(fig) == matplotlib.figure.Figure
+    assert type(ax) == matplotlib.axes.Subplot
+
+
+def test_graph_fig_ax_attribute_before_show():
+    graph = Graph.from_edge_list([[1, 2]], GraphType.UNDIRECTED)
+
+    with pytest.raises(AttributeError):
+        graph.fig_ax
+
+
+def test_graph_show_title():
+    title = "title"
+
+    graph = Graph.from_edge_list([[1, 2]], GraphType.UNDIRECTED)
+    graph.show(title=title)
+    fig, ax = graph.fig_ax
+
+    assert fig.texts[0].get_text() == "title"
+
+
+def test_graph_show_title_default():
+    graph = Graph.from_edge_list([[1, 2]], GraphType.UNDIRECTED)
+    graph.show()
+    fig, ax = graph.fig_ax
+
+    assert fig.texts[0].get_text() == "graph"
+
+
+def test_graph_show_arg_figsize():
+    figwidth, figheight = 8, 4
+
+    graph = Graph.from_edge_list([[1, 2]], GraphType.UNDIRECTED)
+    graph.show(figsize=tuple([figwidth, figheight]))
+    fig, ax = graph.fig_ax
+
+    assert fig.get_figwidth() == 8
+    assert fig.get_figheight() == 4
+
+
+def test_graph_show_node():
+    graph = Graph.from_edge_list([[1, 2], [2, 3]], GraphType.UNDIRECTED)
+    graph.show()
+    fig, ax = graph.fig_ax
+
+    acutal_node_num = ax.get_children()[0].get_offsets().data.shape[0]
+    expect_node_num = 3
+
+    assert acutal_node_num == expect_node_num
 
 
 def test_graph_show_node_pos():
@@ -569,7 +625,72 @@ def test_graph_show_node_pos():
 
     graph = Graph.from_edge_list([[1, 2]], GraphType.UNDIRECTED)
     graph.show(node_pos=node_pos)
+    fig, ax = graph.fig_ax
 
-    ax = matplotlib.pyplot.gca()
+    actual_pos = ax.get_children()[0].get_offsets().data
+    expect_pos = np.vstack([pos1, pos2])
 
-    assert (ax.get_children()[0].get_offsets().data == np.vstack([pos1, pos2])).all()
+    assert (actual_pos == expect_pos).all()
+
+
+def test_graph_show_node_pos_default():
+    graph = Graph.from_edge_list([[1, 2]], GraphType.UNDIRECTED)
+    graph.show()
+    fig, ax = graph.fig_ax
+
+    default_pos = nx.spring_layout(graph.G, seed=1)
+    expect_pos = np.vstack(list(default_pos.values()))
+
+    actual_pos = ax.get_children()[0].get_offsets().data
+
+    assert (np.abs(actual_pos - expect_pos) < 0.0001).all()
+
+
+def test_graph_show_node_color():
+    node_color = ["r", "b"]
+
+    graph = Graph.from_edge_list([[1, 2]], GraphType.UNDIRECTED)
+    graph.show(node_color=node_color)
+    fig, ax = graph.fig_ax
+
+    actual_color_node1, actual_color_node2 = ax.get_children()[0].get_facecolor()
+    expect_color_node1 = np.array([1.0, 0.0, 0.0, 1.0])  # color "r"
+    expect_color_node2 = np.array([0.0, 0.0, 1.0, 1.0])  # color "g"
+
+    assert (actual_color_node1 == expect_color_node1).all()
+    assert (actual_color_node2 == expect_color_node2).all()
+
+
+def test_graph_show_node_color_default():
+    default_color = "#1f78b4"
+
+    graph = Graph.from_edge_list([[1, 2]], GraphType.UNDIRECTED)
+    graph.show()
+    fig, ax = graph.fig_ax
+
+    actual_color = ax.get_children()[0].get_facecolor()[0][:-1]
+    expect_color = np.array(matplotlib.colors.to_rgb(default_color))
+
+    assert (np.abs(actual_color - expect_color) < 0.0001).all()
+
+
+def test_graph_show_node_labels():
+    node_labels = {1: "node1", 2: "node2"}
+
+    graph = Graph.from_edge_list([[1, 2]], GraphType.UNDIRECTED)
+    graph.show(node_labels=node_labels)
+    fig, ax = graph.fig_ax
+
+    assert ax.texts[0].get_text() == "node1"
+    assert ax.texts[1].get_text() == "node2"
+
+
+def test_graph_show_node_labels_default():
+    node1, node2 = 1, 2
+
+    graph = Graph.from_edge_list([[node1, node2]], GraphType.UNDIRECTED)
+    graph.show()
+    fig, ax = graph.fig_ax
+
+    assert ax.texts[0].get_text() == str(node1)
+    assert ax.texts[1].get_text() == str(node2)
