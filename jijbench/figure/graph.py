@@ -6,8 +6,6 @@ from typing import Dict, List, Optional, Tuple, Union
 
 from jijbench.figure.interface import Figure
 
-# TODO: node_labelsのアノテーションのDictの要素をちゃんと書く
-
 
 class GraphType(Enum):
     UNDIRECTED = auto()
@@ -33,7 +31,9 @@ class Graph(Figure):
         title: Optional[str] = None,
         node_pos=None,
         node_color: Optional[Union[str, List[str]]] = None,
+        edge_color: Optional[Union[str, List[str]]] = None,
         node_labels: Optional[Dict] = None,
+        edge_labels: Optional[Dict] = None,
     ):
         G = self.G
 
@@ -46,6 +46,16 @@ class Graph(Figure):
         if node_color is None:
             node_color = "#1f78b4"
 
+        if edge_color is None:
+            edge_color = "k"
+
+        if node_labels is None:
+            node_labels = {node: str(node) for node in G.nodes}
+
+        if edge_labels is None:
+            # If G is not weighted graph, edge_labels will be {}.
+            edge_labels = nx.get_edge_attributes(G, "weight")
+
         fig, ax = plt.subplots(figsize=figsize)
         fig.suptitle(title)
 
@@ -55,10 +65,22 @@ class Graph(Figure):
             node_color=node_color,
             ax=ax,
         )
+        nx.draw_networkx_edges(
+            G=G,
+            pos=node_pos,
+            edge_color=edge_color,
+            ax=ax,
+        )
         nx.draw_networkx_labels(
             G=G,
             pos=node_pos,
             labels=node_labels,
+            ax=ax,
+        )
+        nx.draw_networkx_edge_labels(
+            G=G,
+            pos=node_pos,
+            edge_labels=edge_labels,
             ax=ax,
         )
 
@@ -80,7 +102,7 @@ class Graph(Figure):
         graphtype: GraphType,
     ):
         G = graph_modules[graphtype]()
-        node_list = list(set([node for edge in edge_list for node in edge]))
+        node_list = sorted(set([node for edge in edge_list for node in edge]))
         G.add_nodes_from(node_list)
         G.add_edges_from(edge_list)
         return cls(G)
