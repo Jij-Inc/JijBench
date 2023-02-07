@@ -3,11 +3,11 @@ from __future__ import annotations
 import numpy as np
 import typing as tp
 
-from jijbench.data.elements.base import Number
+from jijbench.elements.base import Number
 from jijbench.node.base import FunctionNode
 
 if tp.TYPE_CHECKING:
-    from jijbench.data.elements.array import Array
+    from jijbench.elements.array import Array
 
 
 class Min(FunctionNode["Array", Number]):

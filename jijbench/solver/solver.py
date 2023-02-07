@@ -1,135 +1,60 @@
 from __future__ import annotations
 
+
+import typing as tp
 import inspect
 
-from typing import Callable, Optional
-
-import jijmodeling as jm
-import jijzept as jz
-
-from jijbench.exceptions import SolverFailedError
-
-__all__ = []
+from dataclasses import dataclass
+from jijbench.elements.base import Element
+from jijbench.exceptions.exceptions import SolverFailedError
+from jijbench.node.base import FunctionNode
+from jijbench.mappings.mappings import Record
+from jijbench.functions.factory import RecordFactory
 
 
-class CallableSolver:
-    def __init__(self, solver):
-        self._is_jijzept_sampler = False
-        self.function = self._parse_solver(solver)
-        self._name = self.function.__name__
-        self._ret_names = (
-            ["response", "decoded"] if solver in dir(DefaultSolver) else None
-        )
+@dataclass
+class Parameter(Element[tp.Any]):
+    @classmethod
+    def validate_data(cls, data: tp.Any) -> tp.Any:
+        return data
 
-    def __call__(self, **kwargs):
+
+@dataclass
+class Return(Element[tp.Any]):
+    @classmethod
+    def validate_data(cls, data: tp.Any) -> tp.Any:
+        return data
+
+
+class Solver(FunctionNode[Parameter, Record]):
+    def __init__(self, function: tp.Callable, name: str | None = None) -> None:
+        if name is None:
+            name = function.__name__
+        super().__init__(name)
+        self.function = function
+
+    def operate(
+        self,
+        inputs: list[Parameter],
+        is_parsed_sampleset: bool = True,
+    ) -> Record:
         parameters = inspect.signature(self.function).parameters
         is_kwargs = any([p.kind == 4 for p in parameters.values()])
-        kwargs = (
-            kwargs
+        solver_args = (
+            solver_args
             if is_kwargs
-            else {k: v for k, v in kwargs.items() if k in parameters}
+            else {k: v for k, v in solver_args.items() if k in parameters}
         )
         try:
-            ret = self.function(**kwargs)
+            rets = self.function(**solver_args)
+            if not isinstance(rets, tuple):
+                rets = (rets,)
         except Exception as e:
             msg = f'An error occurred inside your solver. Please check implementation of "{self.name}". -> {e}'
             raise SolverFailedError(msg)
-        return ret
 
-    @property
-    def name(self):
-        return self._name
+        solver_return_names = [f"{self.name}_return[{i}]" for i in range(len(rets))]
 
-    @name.setter
-    def name(self, name):
-        self._name = name
-
-    @property
-    def ret_names(self):
-        return self._ret_names
-
-    @property
-    def is_jijzept_sampler(self):
-        return self._is_jijzept_sampler
-
-    @ret_names.setter
-    def ret_names(self, names):
-        self._ret_names = names
-
-    def to_named_ret(self, ret):
-        if isinstance(ret, tuple):
-            names = (
-                self._ret_names
-                if self._ret_names
-                else [f"solver_return_values[{i}]" for i in range(len(ret))]
-            )
-            ret = dict(zip(names, ret))
-        else:
-            names = self.ret_names if self._ret_names else ["solver_return_values[0]"]
-            ret = dict(zip(names, [ret]))
-        return ret
-
-    def _parse_solver(self, solver):
-        if isinstance(solver, str):
-            self._is_jijzept_sampler = True
-            return getattr(DefaultSolver(), solver)
-        elif isinstance(solver, Callable):
-            return solver
-        else:
-            raise TypeError("solver of this type is not supported.")
-
-
-class DefaultSolver:
-    jijzept_config: Optional[str] = None
-    dwave_config: Optional[str] = None
-    jijzept_sampler_names = ["JijSASampler", "JijSQASampler", "JijSwapMovingSampler"]
-
-    @property
-    def JijSASampler(self):
-        return self.jijzept_sa_sampler_sample_model
-
-    @property
-    def JijSQASampler(self):
-        return self.jijzept_sqa_sampler_sample_model
-
-    @property
-    def JijSwapMovingSampler(self):
-        return self.jijzept_swapmoving_sampler_sample_model
-
-    @classmethod
-    def jijzept_sa_sampler_sample_model(cls, problem, instance_data, **kwargs):
-        return cls._sample_by_jijzept(
-            jz.JijSASampler,
-            problem,
-            instance_data,
-            **kwargs,
-        )
-
-    @classmethod
-    def jijzept_sqa_sampler_sample_model(cls, problem, instance_data, **kwargs):
-        return cls._sample_by_jijzept(
-            jz.JijSQASampler, problem, instance_data, **kwargs
-        )
-
-    @classmethod
-    def jijzept_swapmoving_sampler_sample_model(cls, problem, instance_data, **kwargs):
-        return cls._sample_by_jijzept(
-            jz.JijSwapMovingSampler, problem, instance_data, **kwargs
-        )
-
-    @staticmethod
-    def _sample_by_jijzept(sampler, problem, instance_data, sync=True, **kwargs):
-        sampler = sampler(config=DefaultSolver.jijzept_config)
-        if sync:
-            parameters = inspect.signature(sampler.sample_model).parameters
-            kwargs = {k: w for k, w in kwargs.items() if k in parameters}
-            response: jm.SampleSet = sampler.sample_model(
-                problem, instance_data, sync=sync, **kwargs
-            )
-        else:
-            response: jm.SampleSet = jz.response.JijModelingResponse.empty_response(
-                jz.response.APIStatus.PENDING, sampler.client, kwargs["solution_id"]
-            )
-            response.get_result()
-
-        return response
+        rets = [Return(data, name) for data, name in zip(rets, solver_return_names)]
+        factory = RecordFactory()
+        return factory(rets, is_parsed_sampleset=is_parsed_sampleset)

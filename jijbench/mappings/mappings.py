@@ -8,7 +8,6 @@ from abc import ABCMeta, abstractmethod
 from dataclasses import dataclass, field
 from jijbench.node.base import DataNode
 from jijbench.typing import T, ArtifactDataType
-from pandas._typing import Axes
 
 
 @dataclass
@@ -39,6 +38,14 @@ class Record(Mapping[pd.Series]):
                 raise TypeError(
                     f"All elements of {data.__class__.__name__} must be type DataNode."
                 )
+
+    @property
+    def index(self) -> pd.Index:
+        return self.data.index
+
+    @index.setter
+    def index(self, index: pd.Index) -> None:
+        self.data.index = index
 
     def append(self, record: Record) -> None:
         concat: Concat[Record] = Concat()
@@ -74,6 +81,17 @@ class Artifact(Mapping[ArtifactDataType]):
                 )
         else:
             return data
+
+    def keys(self) -> tuple[tp.Hashable, ...]:
+        return tuple(self.data.keys())
+
+    def values(self) -> tuple[dict[tp.Hashable, DataNode], ...]:
+        return tuple(self.data.values())
+
+    def items(
+        self,
+    ) -> tuple[tuple[tp.Hashable, dict[tp.Hashable, DataNode]], ...]:
+        return tuple(self.data.items())
 
     def append(self, record: Record) -> None:
         concat: Concat[Artifact] = Concat()
