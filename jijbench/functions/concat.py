@@ -10,7 +10,7 @@ from jijbench.typing import MappingT, MappingTypes, MappingListTypes
 from typing_extensions import TypeGuard
 
 if tp.TYPE_CHECKING:
-    from jijbench.data.mapping import Artifact, Record, Table
+    from jijbench.mappings.mappings import Artifact, Record, Table
     from jijbench.experiment.experiment import Experiment
 
 

@@ -7,16 +7,17 @@ import pathlib
 
 from dataclasses import dataclass, field
 from jijbench.consts.path import DEFAULT_RESULT_DIR
-from jijbench.data.mapping import Artifact, Mapping, Table
-from jijbench.data.elements.base import Callable, Parameter, Return
+from jijbench.mappings.mappings import Artifact, Mapping, Table
+from jijbench.elements.base import Callable
+from jijbench.elements.id import ID
 from jijbench.functions.concat import Concat
 from jijbench.functions.factory import ArtifactFactory, TableFactory
-from jijbench.data.elements.id import ID
+from jijbench.solver.solver import Parameter, Return
 from jijbench.typing import ExperimentDataType
 
 
 if tp.TYPE_CHECKING:
-    from jijbench.data.mapping import Record
+    from jijbench.mappings.mappings import Record
 
 
 @dataclass
@@ -120,7 +121,7 @@ class Experiment(Mapping[ExperimentDataType]):
         self.__init__(**node.__dict__)
 
     def save(self):
-        def is_dillable(obj: tp.Any):
+        def is_dillable(obj: tp.Any) -> bool:
             try:
                 dill.dumps(obj)
                 return True

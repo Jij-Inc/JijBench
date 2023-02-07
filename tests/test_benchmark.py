@@ -226,7 +226,7 @@ def test_simple_benchmark():
         return x
 
     bench = jb.Benchmark({"x": [1, 2]}, solver=func, name="test")
-
+    
     res = bench()
     columns = res.table.columns
 

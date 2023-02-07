@@ -7,15 +7,23 @@ import pathlib
 
 from jijbench.consts.path import DEFAULT_RESULT_DIR
 from jijbench.node.base import FunctionNode
-from jijbench.data.elements.id import ID
-from jijbench.data.elements.base import Callable, Parameter
+from jijbench.elements.base import Callable
+from jijbench.elements.id import ID
 from jijbench.experiment.experiment import Experiment
 from jijbench.functions.concat import Concat
 from jijbench.functions.factory import RecordFactory
-from jijbench.functions.solver import Solver
+from jijbench.solver.solver import Parameter, Solver
 
 
 class Benchmark(FunctionNode[Experiment, Experiment]):
+    """Executes the benchmark.
+
+        Args:
+            params (dict[str, tp.Iterable[tp.Any]]): Parameters to be swept in the benchmark. key is parameter name. list is list of value of a parameter.
+            solver (tp.Callable | list[tp.Callable]): Callable solver or list of the solves.
+            name (str | None, optional): Becnhmark name.
+        """
+
     def __init__(
         self,
         params: dict[str, tp.Iterable[tp.Any]],
@@ -38,7 +46,6 @@ class Benchmark(FunctionNode[Experiment, Experiment]):
             name = ID().data
         self._name = name
 
-    # TODO インターフェースを統一
     def __call__(
         self,
         inputs: list[Experiment] | None = None,
@@ -47,6 +54,18 @@ class Benchmark(FunctionNode[Experiment, Experiment]):
         autosave: bool = True,
         savedir: str | pathlib.Path = DEFAULT_RESULT_DIR,
     ) -> Experiment:
+        """_summary_
+
+        Args:
+            inputs (list[Experiment] | None, optional): _description_. Defaults to None.
+            concurrent (bool, optional): _description_. Defaults to False.
+            is_parsed_sampleset (bool, optional): _description_. Defaults to True.
+            autosave (bool, optional): _description_. Defaults to True.
+            savedir (str | pathlib.Path, optional): _description_. Defaults to DEFAULT_RESULT_DIR.
+
+        Returns:
+            Experiment: _description_
+        """
         if inputs is None:
             inputs = [Experiment(autosave=autosave, savedir=savedir)]
 
@@ -66,6 +85,18 @@ class Benchmark(FunctionNode[Experiment, Experiment]):
         autosave: bool = True,
         savedir: str | pathlib.Path = DEFAULT_RESULT_DIR,
     ) -> Experiment:
+        """_summary_
+
+        Args:
+            inputs (list[Experiment]): _description_
+            concurrent (bool, optional): _description_. Defaults to False.
+            is_parsed_sampleset (bool, optional): _description_. Defaults to True.
+            autosave (bool, optional): _description_. Defaults to True.
+            savedir (str | pathlib.Path, optional): _description_. Defaults to DEFAULT_RESULT_DIR.
+
+        Returns:
+            Experiment: _description_
+        """
         concat: Concat[Experiment] = Concat()
         experiment = concat(inputs, autosave=autosave, savedir=savedir)
         if concurrent:
@@ -85,11 +116,6 @@ class Benchmark(FunctionNode[Experiment, Experiment]):
         experiment: Experiment,
         is_parsed_sampleset: bool,
     ) -> Experiment:
-        # TODO 返り値名を変更できるようにする。
-        # solver.rename_return(ret)
-        # name = ID().data
-        # record = solver(inputs, is_parsed_sampleset=is_parsed_sampleset)
-        # record.name = name
         for f in self.solver:
             for params in self.params:
                 with experiment:

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Callable, Union, Optional, TYPE_CHECKING
+from typing import Callable, Optional, TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
@@ -16,7 +16,6 @@ from jijbench.evaluation._metrics import (
 )
 
 if TYPE_CHECKING:
-    from jijbench.benchmark.benchmark import Benchmark
     from jijbench.experiment.experiment import Experiment
 
 
@@ -30,7 +29,7 @@ class Evaluator:
         artifact (dict): Dict that store experiment results.
     """
 
-    def __init__(self, experiment: Union[Benchmark, Experiment]):
+    def __init__(self, experiment: Experiment):
         self.experiment = experiment
 
     @property

@@ -7,7 +7,7 @@ import typing as tp
 from typing_extensions import TypeAlias
 
 if tp.TYPE_CHECKING:
-    from jijbench.data.mapping import Artifact, Record, Table
+    from jijbench.mappings.mappings import Artifact, Record, Table
     from jijbench.experiment.experiment import Experiment
     from jijbench.node.base import DataNode
 
