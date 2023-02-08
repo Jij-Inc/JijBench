@@ -523,3 +523,47 @@ def test_benchmark_with_callable_args():
 #     )
 #     bench.run()
 #     assert "return_1" in bench.table.columns
+
+
+def load(
+name_or_dir: str | pathlib.Path,
+*,
+experiment_names: list[str] | None = None,
+savedir: str | pathlib.Path = DEFAULT_RESULT_DIR,
+return_type: tp.Literal["Artifact", "Experiment", "Table"] = "Experiment",
+index_col: int | list[int] | None = None,
+) -> Experiment | Artifact | Table:
+    """
+    Load and return an artifact, experiment, or table from the given directory.
+    Args:
+    - name_or_dir (str | pathlib.Path): name of the experiment or the directory of the experiment.
+    - experiment_names (list[str] | None): list of names of experiments to be loaded, if None, all experiments in `savedir` will be loaded.
+    - savedir (str | pathlib.Path): directory of the experiment, default to `DEFAULT_RESULT_DIR`.
+    - return_type (tp.Literal["Artifact", "Experiment", "Table"]): type of the returned object, default to "Experiment".
+    - index_col (int | list[int] | None): the column or columns to set as the index(MultiIndex) of the returned Table.
+
+    Returns:
+    - Experiment | Artifact | Table: The loaded artifact, experiment, or table.
+
+    Raises:
+    - FileNotFoundError: If `name_or_dir` is not found in the `savedir` directory.
+    - ValueError: If `return_type` is not one of "Artifact", "Experiment", or "Table".
+    """
+    from jijbench.experiment.experiment import Experiment
+
+    name_or_dir = (
+        name_or_dir
+        if isinstance(name_or_dir, pathlib.Path)
+        else pathlib.Path(name_or_dir)
+    )
+
+    if name_or_dir.exists():
+        savedir = name_or_dir
+    else:
+        savedir /= name_or_dir
+
+    if not savedir.exists():
+        raise FileNotFoundError(f"{name_or_dir} is not found.")
+
+    if return_type == "Artifact":
+        with open(f"{savedir}/

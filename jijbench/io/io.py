@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import dill
 import pathlib
-import pandas as pd
 import typing as tp
 
 from jijbench.consts.path import DEFAULT_RESULT_DIR
@@ -52,6 +51,23 @@ def save(
     mode: tp.Literal["w", "a"] = "w",
     index_col: int | list[int] | None = None,
 ) -> None:
+    """Saves the given `Artifact`, `Experiment`, or `Table` object.
+
+    Args:
+        obj (Artifact | Experiment | Table): The object to be saved.
+        savedir (str | pathlib.Path, optional): The directory where the object will be saved. Defaults to DEFAULT_RESULT_DIR.
+        mode (tp.Literal[&quot;w&quot;, &quot;a&quot;], optional): _description_. Defaults to "w".
+        index_col (int | list[int] | None, optional): _description_. Defaults to None.
+
+    Raises:
+        ValueError: _description_
+        FileNotFoundError: _description_
+        IOError: _description_
+        TypeError: _description_
+
+    Returns:
+        _type_: _description_
+    """
     from jijbench.experiment.experiment import Experiment
 
     def is_dillable(obj: tp.Any) -> bool:
@@ -179,6 +195,22 @@ def load(
     return_type: tp.Literal["Artifact", "Experiment", "Table"] = "Experiment",
     index_col: int | list[int] | None = None,
 ) -> Experiment | Artifact | Table:
+    """Load and return an artifact, experiment, or table from the given directory.
+
+    Args:
+        name_or_dir (str | pathlib.Path): Name of the experiment or the directory of the experiment.
+        experiment_names (list[str] | None, optional): List of names of experiments to be loaded, if None, all experiments in `savedir` will be loaded. Defaults to None.
+        savedir (str | pathlib.Path, optional): Directory of the experiment. Defaults to DEFAULT_RESULT_DIR.
+        return_type (tp.Literal[&quot;Artifact&quot;, &quot;Experiment&quot;, &quot;Table&quot;], optional): Type of the returned object. Defaults to "Experiment".
+        index_col (int | list[int] | None, optional): The column(s) to set as the index(MultiIndex) of the returned Table.. Defaults to None.
+
+    Raises:
+        FileNotFoundError: _description_
+        ValueError: _description_
+
+    Returns:
+        Experiment | Artifact | Table: _description_
+    """
     from jijbench.experiment.experiment import Experiment
 
     name_or_dir = (
