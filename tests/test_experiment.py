@@ -8,7 +8,6 @@ import dimod
 import jijmodeling as jm
 import numpy as np
 import pandas as pd
-import openjij as oj
 import pytest
 
 import jijbench as jb
