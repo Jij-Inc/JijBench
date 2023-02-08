@@ -9,15 +9,17 @@ import pytest
 import jijbench as jb
 from jijbench.exceptions.exceptions import SolverFailedError, ConcurrentFailedError
 
+from icecream import ic
 
-@pytest.fixture(scope="function", autouse=True)
-def pre_post_process():
-    # preprocess
-    yield
-    # postprocess
-    norm_path = os.path.normcase("./.jb_results")
-    if os.path.exists(norm_path):
-        shutil.rmtree(norm_path)
+
+# @pytest.fixture(scope="function", autouse=True)
+# def pre_post_process():
+#     # preprocess
+#     yield
+#     # postprocess
+#     norm_path = os.path.normcase("./.jb_results")
+#     if os.path.exists(norm_path):
+#         shutil.rmtree(norm_path)
 
 
 @pytest.fixture
@@ -226,9 +228,13 @@ def test_simple_benchmark():
         return x
 
     bench = jb.Benchmark({"x": [1, 2]}, solver=func, name="test")
-    
+
     res = bench()
     columns = res.table.columns
+    
+    ic()
+    ic(res.data[1].data)
+    # ic(res.data[0].data)
 
     assert isinstance(res, jb.Experiment)
     assert "func_return[0]" in columns

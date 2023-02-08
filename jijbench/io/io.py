@@ -6,26 +6,27 @@ import pandas as pd
 import typing as tp
 
 from jijbench.consts.path import DEFAULT_RESULT_DIR
-from jijbench.experiment.experiment import Experiment
 from jijbench.mappings.mappings import Artifact, Table
 from jijbench.functions.concat import Concat
+
+if tp.TYPE_CHECKING:
+    from jijbench.experiment.experiment import Experiment
 
 
 @tp.overload
 def save(
-    obj: Artifact,
-    experiment_name: str,
+    obj: Experiment,
     *,
     savedir: str | pathlib.Path = DEFAULT_RESULT_DIR,
     mode: tp.Literal["w", "a"] = "w",
+    index_col: int | list[int] | None = None,
 ) -> None:
     ...
 
 
 @tp.overload
 def save(
-    obj: Experiment,
-    experiment_name: str,
+    obj: Artifact,
     *,
     savedir: str | pathlib.Path = DEFAULT_RESULT_DIR,
     mode: tp.Literal["w", "a"] = "w",
@@ -36,23 +37,23 @@ def save(
 @tp.overload
 def save(
     obj: Table,
-    experiment_name: str,
     *,
     savedir: str | pathlib.Path = DEFAULT_RESULT_DIR,
     mode: tp.Literal["w", "a"] = "w",
-    index_col: int | list[int] | None = 0,
+    index_col: int | list[int] | None = None,
 ) -> None:
     ...
 
 
 def save(
     obj: Artifact | Experiment | Table,
-    experiment_name: str,
     *,
     savedir: str | pathlib.Path = DEFAULT_RESULT_DIR,
     mode: tp.Literal["w", "a"] = "w",
-    index_col: int | list[int] | None = 0,
+    index_col: int | list[int] | None = None,
 ) -> None:
+    from jijbench.experiment.experiment import Experiment
+
     def is_dillable(obj: tp.Any) -> bool:
         try:
             dill.dumps(obj)
@@ -63,14 +64,9 @@ def save(
     if mode not in ["a", "w"]:
         raise ValueError("Argument mode must be 'a' or 'b'.")
 
-    base_savedir = (
-        savedir if isinstance(savedir, pathlib.Path) else pathlib.Path(savedir)
-    )
-    if not base_savedir.exists():
+    savedir = savedir if isinstance(savedir, pathlib.Path) else pathlib.Path(savedir)
+    if not savedir.exists():
         raise FileNotFoundError(f"Directory {savedir} is not found.")
-
-    savedir = base_savedir / experiment_name
-    savedir.mkdir(exist_ok=True)
 
     if isinstance(obj, Artifact):
         p = savedir / "artifact.dill"
@@ -82,7 +78,10 @@ def save(
             if p.exists():
                 obj = concat_a(
                     [
-                        load(experiment_name, savedir=base_savedir, return_type="Artifact"),
+                        load(
+                            savedir,
+                            return_type="Artifact",
+                        ),
                         obj,
                     ]
                 )
@@ -91,29 +90,34 @@ def save(
             dill.dump(obj, f)
 
     elif isinstance(obj, Experiment):
-        savedir_a = savedir / "artifact"
-        savedir_a.mkdir(exist_ok=True)
-        savedir_t = savedir / "table"
-        savedir_t.mkdir(exist_ok=True)
-        save(obj.data[0], experiment_name, savedir=savedir_a, mode=mode)
+        savedir_a = savedir / obj.name / "artifact"
+        savedir_t = savedir / obj.name / "table"
+        savedir_a.mkdir(parents=True, exist_ok=True)
+        savedir_t.mkdir(parents=True, exist_ok=True)
+        save(
+            obj.data[0],
+            savedir=savedir_a,
+            mode=mode,
+        )
         save(
             obj.data[1],
-            experiment_name,
             savedir=savedir_t,
             mode=mode,
             index_col=index_col,
         )
     elif isinstance(obj, Table):
         p = savedir / "table.csv"
+        p_dill = savedir / "table.dill"
         p_meta = savedir / "meta.dill"
         concat_t: Concat[Table] = Concat()
+        print(savedir)
+        print("llllll")
         if mode == "a":
             if p.exists() and p_meta.exists():
                 obj = concat_t(
                     [
                         load(
-                            experiment_name,
-                            savedir=base_savedir,
+                            savedir,
                             return_type="Table",
                             index_col=index_col,
                         ),
@@ -127,6 +131,8 @@ def save(
             "index": obj.data.index,
             "columns": obj.data.columns,
         }
+        with open(p_dill, "wb") as f:
+            dill.dump(obj, f)
         with open(p_meta, "wb") as f:
             dill.dump(meta, f)
     else:
@@ -137,16 +143,18 @@ def save(
 
 @tp.overload
 def load(
-    experiment_name: str,
+    name_or_dir: str | pathlib.Path,
     *,
+    experiment_names: list[str] | None = None,
     savedir: str | pathlib.Path = DEFAULT_RESULT_DIR,
+    index_col: int | list[int] | None = None,
 ) -> Experiment:
     ...
 
 
 @tp.overload
 def load(
-    experiment_name: str,
+    name_or_dir: str | pathlib.Path,
     *,
     savedir: str | pathlib.Path = DEFAULT_RESULT_DIR,
     return_type: tp.Literal["Artifact"] = ...,
@@ -156,51 +164,57 @@ def load(
 
 @tp.overload
 def load(
-    experiment_name: str,
+    name_or_dir: str | pathlib.Path,
     *,
     savedir: str | pathlib.Path = DEFAULT_RESULT_DIR,
     return_type: tp.Literal["Table"] = ...,
-    index_col: int | list[int] | None = 0,
+    index_col: int | list[int] | None = None,
 ) -> Table:
     ...
 
 
 def load(
-    experiment_name: str,
+    name_or_dir: str | pathlib.Path,
     *,
+    experiment_names: list[str] | None = None,
     savedir: str | pathlib.Path = DEFAULT_RESULT_DIR,
     return_type: tp.Literal["Artifact", "Experiment", "Table"] = "Experiment",
-    index_col: int | list[int] | None = 0,
+    index_col: int | list[int] | None = None,
 ) -> Experiment | Artifact | Table:
-    savedir = savedir if isinstance(savedir, pathlib.Path) else pathlib.Path(savedir)
-    savedir /= experiment_name
+    from jijbench.experiment.experiment import Experiment
+
+    name_or_dir = (
+        name_or_dir
+        if isinstance(name_or_dir, pathlib.Path)
+        else pathlib.Path(name_or_dir)
+    )
+
+    if name_or_dir.exists():
+        savedir = name_or_dir
+    else:
+        savedir /= name_or_dir
 
     if not savedir.exists():
-        raise FileNotFoundError(f"Directory {savedir} is not found.")
+        raise FileNotFoundError(f"{name_or_dir} is not found.")
 
     if return_type == "Artifact":
         with open(f"{savedir}/artifact.dill", "rb") as f:
             return dill.load(f)
     elif return_type == "Experiment":
-        savedir_a = savedir / "artifact"
-        savedir_t = savedir / "table"
-        a = load(experiment_name, savedir=savedir_a, return_type="Artifact")
-        b = load(experiment_name, savedir=savedir_t, return_type="Table")
-        return Experiment((a, b))
+        if experiment_names is None:
+            dirs = savedir.iterdir()
+        else:
+            dirs = [savedir / name for name in experiment_names]
+        experiments = []
+        for p in dirs:
+            if p.is_dir():
+                a = load("artifact", savedir=p, return_type="Artifact")
+                t = load("table", savedir=p, return_type="Table", index_col=index_col)
+                experiments.append(Experiment((a, t), p.name))
+        concat: Concat[Experiment] = Concat()
+        return concat(experiments)
     elif return_type == "Table":
-        p = savedir / "table.csv"
-        p_meta = savedir / "meta.dill"
-        data = pd.read_csv(p, index_col=index_col)
-        with open(p_meta, "rb") as f:
-            meta = dill.load(f)
-        data.index = meta["index"]
-        data.columns = meta["columns"]
-        data = data.apply(
-            lambda x: [
-                meta["dtype"][x.name](data, meta["name"][x.name][index])
-                for index, data in zip(x.index, x)
-            ]
-        )
-        return Table(data)
+        with open(f"{savedir}/table.dill", "rb") as f:
+            return dill.load(f)
     else:
         raise ValueError

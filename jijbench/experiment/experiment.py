@@ -1,17 +1,17 @@
 from __future__ import annotations
 
-import dill
 import pandas as pd
 import typing as tp
 import pathlib
+import uuid
 
 from dataclasses import dataclass, field
 from jijbench.consts.path import DEFAULT_RESULT_DIR
-from jijbench.mappings.mappings import Artifact, Mapping, Table
 from jijbench.elements.base import Callable
-from jijbench.elements.id import ID
 from jijbench.functions.concat import Concat
 from jijbench.functions.factory import ArtifactFactory, TableFactory
+from jijbench.io.io import save
+from jijbench.mappings.mappings import Artifact, Mapping, Table
 from jijbench.solver.solver import Parameter, Return
 from jijbench.typing import ExperimentDataType
 
@@ -23,14 +23,11 @@ if tp.TYPE_CHECKING:
 @dataclass
 class Experiment(Mapping[ExperimentDataType]):
     data: tuple[Artifact, Table] = field(default_factory=lambda: (Artifact(), Table()))
-    name: str | None = None
+    name: str = field(default_factory=lambda: str(uuid.uuid4()))
     autosave: bool = field(default=True, repr=False)
     savedir: str | pathlib.Path = field(default=DEFAULT_RESULT_DIR, repr=False)
 
     def __post_init__(self):
-        if self.name is None:
-            self.name = ID().data
-
         if self.data[0].name is None:
             self.data[0].name = self.name
 
@@ -46,9 +43,7 @@ class Experiment(Mapping[ExperimentDataType]):
             if isinstance(self.savedir, pathlib.Path)
             else pathlib.Path(self.savedir)
         )
-        p = savedir / str(self.name)
-        (p / "table").mkdir(parents=True, exist_ok=True)
-        (p / "artifact").mkdir(parents=True, exist_ok=True)
+        savedir.mkdir(parents=True, exist_ok=True)
         return self
 
     def __exit__(self, exception_type, exception_value, traceback) -> None:
@@ -121,38 +116,4 @@ class Experiment(Mapping[ExperimentDataType]):
         self.__init__(**node.__dict__)
 
     def save(self):
-        def is_dillable(obj: tp.Any) -> bool:
-            try:
-                dill.dumps(obj)
-                return True
-            except Exception:
-                return False
-
-        savedir = (
-            self.savedir
-            if isinstance(self.savedir, pathlib.Path)
-            else pathlib.Path(self.savedir)
-        )
-        p = savedir / str(self.name) / "table" / "table.csv"
-
-        self.table.to_csv(p)
-
-        p = savedir / str(self.name) / "artifact" / "artifact.dill"
-        record_name = list(self.artifact.keys())[-1]
-        if p.exists():
-            with open(p, "rb") as f:
-                artifact = dill.load(f)
-                artifact[self.name][record_name] = {}
-        else:
-            artifact = {self.name: {record_name: {}}}
-
-        record = {}
-        for k, v in self.artifact[record_name].items():
-            if is_dillable(v):
-                record[k] = v
-            else:
-                record[k] = str(v)
-        artifact[self.name][record_name].update(record)
-
-        with open(p, "wb") as f:
-            dill.dump(artifact, f)
+        save(self, savedir=self.savedir, mode="a")

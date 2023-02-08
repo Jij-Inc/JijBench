@@ -18,11 +18,11 @@ from jijbench.solver.solver import Parameter, Solver
 class Benchmark(FunctionNode[Experiment, Experiment]):
     """Executes the benchmark.
 
-        Args:
-            params (dict[str, tp.Iterable[tp.Any]]): Parameters to be swept in the benchmark. key is parameter name. list is list of value of a parameter.
-            solver (tp.Callable | list[tp.Callable]): Callable solver or list of the solves.
-            name (str | None, optional): Becnhmark name.
-        """
+    Args:
+        params (dict[str, tp.Iterable[tp.Any]]): Parameters to be swept in the benchmark. key is parameter name. list is list of value of a parameter.
+        solver (tp.Callable | list[tp.Callable]): Callable solver or list of the solves.
+        name (str | None, optional): Becnhmark name.
+    """
 
     def __init__(
         self,
@@ -30,7 +30,9 @@ class Benchmark(FunctionNode[Experiment, Experiment]):
         solver: tp.Callable | list[tp.Callable],
         name: str | None = None,
     ) -> None:
-        super().__init__()
+        if name is None:
+            name = ID().data
+        super().__init__(name)
 
         self.params = [
             [Parameter(v, k) for k, v in zip(params.keys(), r)]
@@ -41,10 +43,6 @@ class Benchmark(FunctionNode[Experiment, Experiment]):
             self.solver = [Solver(solver)]
         else:
             self.solver = [Solver(f) for f in solver]
-
-        if name is None:
-            name = ID().data
-        self._name = name
 
     def __call__(
         self,
@@ -66,8 +64,13 @@ class Benchmark(FunctionNode[Experiment, Experiment]):
         Returns:
             Experiment: _description_
         """
+        savedir = savedir if isinstance(savedir, pathlib.Path) else pathlib.Path(savedir)
+        savedir /= self.name
+        e = Experiment(autosave=autosave, savedir=savedir)
         if inputs is None:
-            inputs = [Experiment(autosave=autosave, savedir=savedir)]
+            inputs = [e]
+        else:
+            inputs = [e] + inputs
 
         return super().__call__(
             inputs,
@@ -76,6 +79,16 @@ class Benchmark(FunctionNode[Experiment, Experiment]):
             autosave=autosave,
             savedir=savedir,
         )
+
+    @property
+    def name(self) -> str:
+        return str(self._name)
+
+    @name.setter
+    def name(self, name: str) -> None:
+        if not isinstance(name, str):
+            raise TypeError("Becnhmark name must be string.")
+        self._name = name
 
     def operate(
         self,
@@ -98,15 +111,12 @@ class Benchmark(FunctionNode[Experiment, Experiment]):
             Experiment: _description_
         """
         concat: Concat[Experiment] = Concat()
-        experiment = concat(inputs, autosave=autosave, savedir=savedir)
+        name = inputs[0].name
+        experiment = concat(inputs, name=name, autosave=autosave, savedir=savedir)
         if concurrent:
             return self._co()
         else:
             return self._seq(experiment, is_parsed_sampleset)
-
-    @property
-    def name(self) -> str:
-        return self._name
 
     def _co(self) -> Experiment:
         raise NotImplementedError
@@ -122,9 +132,8 @@ class Benchmark(FunctionNode[Experiment, Experiment]):
                     name = (self.name, experiment.name, ID().data)
                     fdata = [Callable(f.function, str(f.name))]
                     record = f(params, is_parsed_sampleset=is_parsed_sampleset)
-                    record = Concat()(
-                        [RecordFactory()(params + fdata), record], name=name
-                    )
+                    record = Concat()([RecordFactory()(params + fdata), record], name=name)
                     experiment.append(record)
+            experiment.name = ID().data
         experiment.data[1].index.names = ["benchmark_id", "experiment_id", "run_id"]
         return experiment
