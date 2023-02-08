@@ -18,18 +18,18 @@ class Schedule(Figure):
         fig_ax (tuple[matplotlib.figure.Figure, matplotlib.axes.Subplot]): Figure and Axes of matplotlib. Available after show method is called.
     Example:
         The code below plots a work shift schedule,
-        where worker1 works on task1 for 3 unit time from time1
-        and worker2 works on task1 for 4 unit time from time2.
-        The style of the graph (e.g. color) can be changed by arguments of the show method.
+        where worker1 works on task0 for 5 unit time from time 3
+        and worker2 works on task0 for 6 unit time from time 4.
+        The style of the graph (e.g. color) can be changed by arguments of the `.show` method.
 
         ```python
         >>> from jijbench.figure.schedule import Schedule
 
         >>> schedule = Schedule()
-        >>> schedule.add_data(task_label="task1",
+        >>> schedule.add_data(task_label="task0",
         >>>     workers=[1, 2],
-        >>>     start_times=[1, 2],
-        >>>     time_lengths=[3, 4],
+        >>>     start_times=[3, 4],
+        >>>     time_lengths=[5, 6],
         >>> )
 
         >>> schedule.show(color_list=["red"])
@@ -41,6 +41,7 @@ class Schedule(Figure):
     ) -> None:
         self.data = OrderedDict()
         self._fig_ax = None
+        self._workers_set = set()
 
     def add_data(
         self,
@@ -69,6 +70,7 @@ class Schedule(Figure):
         if len(workers) != len(time_lengths):
             raise ValueError("workers and time_lengths must be the same length.")
         self.data.update([(task_label, (workers, start_times, time_lengths))])
+        self._workers_set |= set(workers)
 
     def show(
         self,
@@ -114,6 +116,15 @@ class Schedule(Figure):
         elif len(alpha_list) != len(data):
             raise ValueError("alpha_list and data must be same length.")
 
+        if xlabel is None:
+            xlabel = "time"
+
+        if ylabel is None:
+            ylabel = "worker"
+
+        if yticks is None:
+            yticks = self.workers
+
         fig, ax = plt.subplots(figsize=figsize)
         fig.suptitle(title)
 
@@ -140,14 +151,11 @@ class Schedule(Figure):
                     va="center",
                 )
 
-        if xlabel is not None:
-            ax.set_xlabel(xlabel)
-        if ylabel is not None:
-            ax.set_ylabel(ylabel)
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel(ylabel)
         if xticks is not None:
             ax.set_xticks(xticks)
-        if yticks is not None:
-            ax.set_yticks(yticks)
+        ax.set_yticks(yticks)
 
         ax.legend(
             ncol=len(data),
@@ -165,3 +173,7 @@ class Schedule(Figure):
             )
         else:
             return self._fig_ax
+
+    @property
+    def workers(self):
+        return sorted(self._workers_set)

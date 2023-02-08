@@ -7,7 +7,7 @@ from json import load
 import dimod
 import jijmodeling as jm
 import numpy as np
-import openjij as oj
+import pandas as pd
 import pytest
 
 import jijbench as jb

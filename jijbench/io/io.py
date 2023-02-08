@@ -51,22 +51,19 @@ def save(
     mode: tp.Literal["w", "a"] = "w",
     index_col: int | list[int] | None = None,
 ) -> None:
-    """Saves the given `Artifact`, `Experiment`, or `Table` object.
+    """Save the given `Artifact`, `Experiment`, or `Table` object.
 
     Args:
         obj (Artifact | Experiment | Table): The object to be saved.
         savedir (str | pathlib.Path, optional): The directory where the object will be saved. Defaults to DEFAULT_RESULT_DIR.
-        mode (tp.Literal[&quot;w&quot;, &quot;a&quot;], optional): _description_. Defaults to "w".
-        index_col (int | list[int] | None, optional): _description_. Defaults to None.
+        mode (tp.Literal[&quot;w&quot;, &quot;a&quot;], optional): The write mode for the file. Must be 'w' or 'a'. Defaults to "w".
+        index_col (int | list[int] | None, optional): Index column(s) to set as index while saving the table. Defaults to None. Defaults to None.
 
     Raises:
-        ValueError: _description_
-        FileNotFoundError: _description_
-        IOError: _description_
-        TypeError: _description_
-
-    Returns:
-        _type_: _description_
+        ValueError: If the mode is not 'w' or 'a'.
+        FileNotFoundError: If the savedir does not exist.
+        IOError: If the object is not dillable.
+        TypeError: If the object is not an `Artifact`, `Experiment`, or `Table`.
     """
     from jijbench.experiment.experiment import Experiment
 
@@ -205,11 +202,11 @@ def load(
         index_col (int | list[int] | None, optional): The column(s) to set as the index(MultiIndex) of the returned Table.. Defaults to None.
 
     Raises:
-        FileNotFoundError: _description_
-        ValueError: _description_
+        FileNotFoundError: If `name_or_dir` is not found in the `savedir` directory.
+        ValueError: If `return_type` is not one of "Artifact", "Experiment", or "Table".
 
     Returns:
-        Experiment | Artifact | Table: _description_
+        Experiment | Artifact | Table: The loaded artifact, experiment, or table.
     """
     from jijbench.experiment.experiment import Experiment
 
@@ -247,4 +244,4 @@ def load(
         with open(f"{savedir}/table.dill", "rb") as f:
             return dill.load(f)
     else:
-        raise ValueError
+        raise ValueError("Argument return type must be Artifact, Experiment or Table.")

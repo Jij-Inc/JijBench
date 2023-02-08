@@ -17,8 +17,8 @@ def pre_post_process():
     yield
     # postprocess
     p = pathlib.Path(SAVEDIR)
-    # if p.exists():
-    #    shutil.rmtree(p)
+    if p.exists():
+       shutil.rmtree(p)
 
 
 def test_save_artifact_with_mode_w():
