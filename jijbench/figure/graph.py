@@ -1,8 +1,9 @@
+from __future__ import annotations
+
 from enum import Enum, auto
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy.typing as npt
-from typing import Dict, List, Optional, Tuple, Union
 
 from jijbench.figure.interface import Figure
 
@@ -46,26 +47,26 @@ class Graph(Figure):
 
     def show(
         self,
-        figsize: Optional[Tuple[Union[int, float]]] = None,
-        title: Optional[str] = None,
-        node_pos: Optional[Dict] = None,
-        node_color: Optional[Union[str, List[str]]] = None,
-        edge_color: Optional[Union[str, List[str]]] = None,
-        node_labels: Optional[Dict] = None,
-        edge_labels: Optional[Dict] = None,
+        figsize: tuple[int | float] | None = None,
+        title: str | None = None,
+        node_pos: dict | None = None,
+        node_color: (str | list[str]) | None = None,
+        edge_color: (str | list[str]) | None = None,
+        node_labels: dict | None = None,
+        edge_labels: dict | None = None,
     ):
         """Visualize graph.
 
         The arguments of the show method are passed to the plot of matplotlib, networkx.
 
         Args:
-            figsize (Optional[Tuple[Union[int, float]]]): the size of figure. The default uses matplotlib's default value.
-            title (Optional[str]): the title of figure. Defaults to "graph".
-            node_pos (Optional[Dict]): dict where the key is node and the value is position (np,array([x, y])). The default uses the return of networkx.spring_layout(self.G, seed=1).
-            node_color (Optional[Union[str, List[str]]]): string or list of node color. Defaults to "#1f78b4".
-            edge_color (Optional[Union[str, List[str]]]): string or list of edge color. Defaults to "k".
-            node_labels (Optional[Dict]): dict where the key is node and the value is label. The default is {node: str(node) for node in self.G.nodes}.
-            edge_labels (Optional[Dict]): dict where the key is node and the value is label. The default is {}, or weights for weighted graphs.
+            figsize (tuple[int | float] | None): the size of figure. The default uses matplotlib's default value.
+            title (str | None): the title of figure. Defaults to "graph".
+            node_pos (dict | None): dict where the key is node and the value is position (np,array([x, y])). The default uses the return of networkx.spring_layout(self.G, seed=1).
+            node_color ((str | list[str]) | None): string or list of node color. Defaults to "#1f78b4".
+            edge_color ((str | list[str]) | None): string or list of edge color. Defaults to "k".
+            node_labels (dict | None): dict where the key is node and the value is label. The default is {node: str(node) for node in self.G.nodes}.
+            edge_labels (dict | None): dict where the key is node and the value is label. The default is {}, or weights for weighted graphs.
         """
         G = self.G
 
@@ -130,13 +131,13 @@ class Graph(Figure):
     @classmethod
     def from_edge_list(
         cls,
-        edge_list: List[List[int]],
+        edge_list: list[list[int]],
         graphtype: GraphType,
     ):
         """To Graph instance from edge list.
 
         Args:
-            edge_list (List[List[int]]): list of edges.
+            edge_list (list[list[int]]): list of edges.
             graphtype (GraphType): GraphType instance of jijbench.
         Example:
             ```python
@@ -155,13 +156,13 @@ class Graph(Figure):
     @classmethod
     def from_distance_matrix(
         cls,
-        distance_matrix: Union[List[List], npt.NDArray],
+        distance_matrix: list[list[int | float]] | npt.NDArray,
         graphtype: GraphType,
     ):
         """To Graph instance from distance matrix.
 
         Args:
-            distance_matrix (Union[List[List], npt.NDArray]): distance matrix. No self-loop is added, so the diagonal can be any number.
+            distance_matrix (list[list[int | float]] | npt.NDArray): distance matrix. No self-loop is added, so the diagonal can be any number.
             graphtype (GraphType): GraphType instance of jijbench.
         Example:
             ```python

@@ -1,9 +1,10 @@
+from __future__ import annotations
+
 from collections import OrderedDict
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import numpy.typing as npt
-from typing import List, Optional, Tuple, Union
 
 from jijbench.figure.interface import Figure
 
@@ -44,15 +45,15 @@ class TimeSeries(Figure):
     def add_data(
         self,
         label: str,
-        plot_x: Union[List[Union[int, float]], npt.NDArray],
-        plot_y: Union[List[Union[int, float]], npt.NDArray],
+        plot_x: list[int | float] | npt.NDArray,
+        plot_y: list[int | float] | npt.NDArray,
     ) -> None:
         """Add time series data to data attribute for plot.
 
         Args:
             label (str): the label of the time series.
-            plot_x (Union[List[Union[int, float]], npt.NDArray]): the 1D list of horizontal axis value (the list of time).
-            plot_y (Union[List[Union[int, float]], npt.NDArray]): the 1D list of vertical axis value.
+            plot_x (list[int | float] | npt.NDArray): the 1D list of horizontal axis value (the list of time).
+            plot_y (list[int | float] | npt.NDArray): the 1D list of vertical axis value.
         """
         plot_x = plot_x.tolist() if type(plot_x) == np.ndarray else plot_x
         plot_y = plot_y.tolist() if type(plot_y) == np.ndarray else plot_y
@@ -63,32 +64,32 @@ class TimeSeries(Figure):
 
     def show(
         self,
-        figsize: Optional[Tuple[Union[int, float]]] = None,
-        title: Optional[str] = None,
-        color_list: Optional[List] = None,
-        alpha_list: Optional[List[float]] = None,
-        linestyle_list: Optional[List[str]] = None,
-        marker_list: Optional[List[str]] = None,
-        xlabel: Optional[str] = None,
-        ylabel: Optional[str] = None,
-        xticks: Optional[List[Union[int, float]]] = None,
-        yticks: Optional[List[Union[int, float]]] = None,
+        figsize: tuple[int | float] | None = None,
+        title: str | None = None,
+        color_list: list | None = None,
+        alpha_list: list[float] | None = None,
+        linestyle_list: list[str] | None = None,
+        marker_list: list[str] | None = None,
+        xlabel: str | None = None,
+        ylabel: str | None = None,
+        xticks: list[int | float] | None = None,
+        yticks: list[int | float] | None = None,
     ):
         """Plot time series data which you passed to the add_data method.
 
         The arguments of the show method are passed to the plot of matplotlib.
 
         Args:
-            figsize (Optional[Tuple[Union[int, float]]]): the size of figure. The default uses matplotlib's default value.
-            title (Optional[str]): the title of figure. Defaults to "time series".
-            color_list (Optional[List]): the list of plot line color. The default uses matplotlib's default value.
-            alpha_list (Optional[List[float]]): the list of plot line transparency. The default is 1.0 for each plot line.
-            linestyle_list (Optional[List[str]]): the list of plot line linestyle. The default is "solid" for each plot line.
-            marker_list (Optional[List[str]]): the list of plot line marker. The default is "o" for each plot line.
-            xlabel (Optional[str]): the xlabel of figure. Defaults to None.
-            ylabel (Optional[str]): the ylabel of figure. Defaults to None.
-            xticks (Optional[List[Union[int, float]]]): the xticks of figure. The default uses matplotlib's default.
-            yticks (Optional[List[Union[int, float]]]): the yticks of figure. The default uses matplotlib's default.
+            figsize (tuple[int | float] | None): the size of figure. The default uses matplotlib's default value.
+            title (str | None): the title of figure. Defaults to "time series".
+            color_list (list | None): the list of plot line color. The default uses matplotlib's default value.
+            alpha_list (list[float] | None): the list of plot line transparency. The default is 1.0 for each plot line.
+            linestyle_list (list[str] | None): the list of plot line linestyle. The default is "solid" for each plot line.
+            marker_list (list[str] | None): the list of plot line marker. The default is "o" for each plot line.
+            xlabel (str | None): the xlabel of figure. Defaults to None.
+            ylabel (str | None): the ylabel of figure. Defaults to None.
+            xticks (list[int | float] | None): the xticks of figure. The default uses matplotlib's default.
+            yticks (list[int | float] | None): the yticks of figure. The default uses matplotlib's default.
         """
         data = self.data
 
