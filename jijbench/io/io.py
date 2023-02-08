@@ -205,11 +205,11 @@ def load(
         index_col (int | list[int] | None, optional): The column(s) to set as the index(MultiIndex) of the returned Table.. Defaults to None.
 
     Raises:
-        FileNotFoundError: _description_
-        ValueError: _description_
+        FileNotFoundError: If `name_or_dir` is not found in the `savedir` directory.
+        ValueError: If `return_type` is not one of "Artifact", "Experiment", or "Table".
 
     Returns:
-        Experiment | Artifact | Table: _description_
+        Experiment | Artifact | Table: The loaded artifact, experiment, or table.
     """
     from jijbench.experiment.experiment import Experiment
 
