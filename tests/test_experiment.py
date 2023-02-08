@@ -91,7 +91,7 @@ def test_simple_experiment():
     e = jb.Experiment(name="test")
     for _ in range(3):
         with e:
-            solver = jb.functions.Solver(sample_model)
+            solver = jb.Solver(sample_model)
             record = solver([])
             record.name = jb.ID().data
             e.append(record)

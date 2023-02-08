@@ -8,12 +8,12 @@ import typing as tp
 import warnings
 
 from jijbench.node.base import DataNode, FunctionNode
-from jijbench.data.elements.array import Array
-from jijbench.data.elements.base import Number
+from jijbench.elements.array import Array
+from jijbench.elements.base import Number
 from jijbench.typing import DataNodeT, DataNodeT2
 
 if tp.TYPE_CHECKING:
-    from jijbench.data.mapping import Artifact, Record, Table
+    from jijbench.mappings.mappings import Artifact, Record, Table
 
 
 class Factory(FunctionNode[DataNodeT, DataNodeT2]):
@@ -34,7 +34,7 @@ class RecordFactory(Factory[DataNodeT, "Record"]):
         name: str = "",
         is_parsed_sampleset: bool = True,
     ) -> Record:
-        from jijbench.data.mapping import Record
+        from jijbench.mappings.mappings import Record
 
         data = {}
         for node in inputs:
@@ -87,7 +87,7 @@ class RecordFactory(Factory[DataNodeT, "Record"]):
 
 class ArtifactFactory(Factory["Record", "Artifact"]):
     def create(self, inputs: list[Record], name: str = "") -> Artifact:
-        from jijbench.data.mapping import Artifact
+        from jijbench.mappings.mappings import Artifact
 
         data = {
             node.name
@@ -105,7 +105,7 @@ class TableFactory(Factory["Record", "Table"]):
         name: str = "",
         index_name: str | None = None,
     ) -> Table:
-        from jijbench.data.mapping import Table
+        from jijbench.mappings.mappings import Table
 
         data = pd.DataFrame({node.name: node.data for node in inputs}).T
         data.index.name = index_name

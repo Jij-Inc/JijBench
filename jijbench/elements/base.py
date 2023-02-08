@@ -1,8 +1,11 @@
+from __future__ import annotations
+
+
 import typing as tp
 
 from dataclasses import dataclass
 from jijbench.node.base import DataNode
-from jijbench.typing import T, NumberTypes
+from jijbench.typing import NumberTypes, T
 
 
 @dataclass
@@ -29,17 +32,3 @@ class Callable(Element[tp.Callable]):
     @classmethod
     def validate_data(cls, data: tp.Callable) -> tp.Callable:
         return cls._validate_dtype(data, (tp.Callable,))
-
-
-@dataclass
-class Parameter(Element[tp.Any]):
-    @classmethod
-    def validate_data(cls, data: tp.Any) -> tp.Any:
-        return data
-
-
-@dataclass
-class Return(Element[tp.Any]):
-    @classmethod
-    def validate_data(cls, data: tp.Any) -> tp.Any:
-        return data
