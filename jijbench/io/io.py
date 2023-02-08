@@ -110,8 +110,6 @@ def save(
         p_dill = savedir / "table.dill"
         p_meta = savedir / "meta.dill"
         concat_t: Concat[Table] = Concat()
-        print(savedir)
-        print("llllll")
         if mode == "a":
             if p.exists() and p_meta.exists():
                 obj = concat_t(

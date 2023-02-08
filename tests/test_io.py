@@ -130,7 +130,7 @@ def test_load_experiment():
     e1 = jb.Experiment((a1, t1), name=experiment_name)
     jb.save(e1, savedir=SAVEDIR, mode="a")
 
-    res = jb.load(SAVEDIR)
+    res = jb.load(SAVEDIR, experiment_names=[experiment_name])
 
     artifact, table = res.data
     assert artifact.data[0] == a0.data[0]
@@ -148,5 +148,3 @@ def test_load_benchmark_results():
     res = bench(savedir=SAVEDIR)
 
     res_l = jb.load(benchmark_name, savedir=SAVEDIR)
-
-    print(res_l)

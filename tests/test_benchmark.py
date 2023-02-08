@@ -9,8 +9,6 @@ import pytest
 import jijbench as jb
 from jijbench.exceptions.exceptions import SolverFailedError, ConcurrentFailedError
 
-from icecream import ic
-
 
 # @pytest.fixture(scope="function", autouse=True)
 # def pre_post_process():
@@ -231,9 +229,9 @@ def test_simple_benchmark():
 
     res = bench()
     columns = res.table.columns
-    
-    ic()
-    ic(res.data[1].data)
+
+    # ic()
+    # ic(res.data[1].data)
     # ic(res.data[0].data)
 
     assert isinstance(res, jb.Experiment)
@@ -267,6 +265,8 @@ def test_apply_benchmark():
     assert "func_return[0]" in columns
 
     op1 = res.operator
+    #ic()
+    #ic(op1.inputs)
     assert op1 is not None
     assert isinstance(op1, jb.Benchmark)
     assert isinstance(op1.inputs[0], jb.Experiment)

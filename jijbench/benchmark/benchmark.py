@@ -66,11 +66,8 @@ class Benchmark(FunctionNode[Experiment, Experiment]):
         """
         savedir = savedir if isinstance(savedir, pathlib.Path) else pathlib.Path(savedir)
         savedir /= self.name
-        e = Experiment(autosave=autosave, savedir=savedir)
         if inputs is None:
-            inputs = [e]
-        else:
-            inputs = [e] + inputs
+            inputs = [Experiment(autosave=autosave, savedir=savedir)]
 
         return super().__call__(
             inputs,
