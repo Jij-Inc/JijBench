@@ -60,24 +60,30 @@ def test_timeseries_show_no_plot_data():
         timeseries.show()
 
 
-def test_timeseries_show_title():
-    title = "title"
+params = {
+    "give argument": ("title", "title"),
+    "default": (None, "time series"),
+}
 
+
+@pytest.mark.parametrize(
+    "title, expect",
+    list(params.values()),
+    ids=list(params.keys()),
+)
+def test_timeseries_show_arg_title(title, expect):
     timeseries = TimeSeries()
     timeseries.add_data("data", [1, 2], [3, 4])
     timeseries.show(title=title)
     fig, ax = timeseries.fig_ax
 
-    assert fig.texts[0].get_text() == "title"
+    success_show_title = False
+    for obj in fig.texts:
+        actual_title = obj.get_text()
+        if actual_title == expect:
+            success_show_title = True
 
-
-def test_timeseries_show_title_default():
-    timeseries = TimeSeries()
-    timeseries.add_data("data", [1, 2], [3, 4])
-    timeseries.show()
-    fig, ax = timeseries.fig_ax
-
-    assert fig.texts[0].get_text() == "time series"
+    assert success_show_title
 
 
 def test_timeseries_show_x_and_y():
@@ -132,28 +138,26 @@ def test_timeseries_show_arg_color_list_invalid_length():
         timeseries.show(color_list=color_list)
 
 
-def test_timeseries_show_arg_alpha_list():
-    alpha_list = [0.5, 0.7]
+params = {
+    "give argument": ([0.5, 0.7], 0.5, 0.7),
+    "default": (None, 1.0, 1.0),
+}
 
+
+@pytest.mark.parametrize(
+    "alpha_list, expect_alpha_1, expect_alpha_2",
+    list(params.values()),
+    ids=list(params.keys()),
+)
+def test_timeseries_show_arg_alpha_list(alpha_list, expect_alpha_1, expect_alpha_2):
     timeseries = TimeSeries()
     timeseries.add_data("data0", [1, 2], [3, 4])
     timeseries.add_data("data1", [1, 2], [3, 4])
     timeseries.show(alpha_list=alpha_list)
     fig, ax = timeseries.fig_ax
 
-    assert ax.get_lines()[0].get_alpha() == 0.5
-    assert ax.get_lines()[1].get_alpha() == 0.7
-
-
-def test_timeseries_show_arg_alpha_list_default():
-    timeseries = TimeSeries()
-    timeseries.add_data("data0", [1, 2], [3, 4])
-    timeseries.add_data("data1", [1, 2], [3, 4])
-    timeseries.show()
-    fig, ax = timeseries.fig_ax
-
-    assert ax.get_lines()[0].get_alpha() == 1.0
-    assert ax.get_lines()[1].get_alpha() == 1.0
+    assert ax.get_lines()[0].get_alpha() == expect_alpha_1
+    assert ax.get_lines()[1].get_alpha() == expect_alpha_2
 
 
 def test_timeseries_show_arg_alpha_list_invalid_length():
@@ -167,28 +171,28 @@ def test_timeseries_show_arg_alpha_list_invalid_length():
         timeseries.show(alpha_list=alpha_list)
 
 
-def test_timeseries_show_arg_linestyle_list():
-    linestyle_list = ["-", "--"]
+params = {
+    "give argument": (["-", "--"], "-", "--"),
+    "default": (None, "-", "-"),
+}
 
+
+@pytest.mark.parametrize(
+    "linestyle_list, expect_linestyle_1, expect_linestyle_2",
+    list(params.values()),
+    ids=list(params.keys()),
+)
+def test_timeseries_show_arg_linestyle_list(
+    linestyle_list, expect_linestyle_1, expect_linestyle_2
+):
     timeseries = TimeSeries()
     timeseries.add_data("data0", [1, 2], [3, 4])
     timeseries.add_data("data1", [1, 2], [3, 4])
     timeseries.show(linestyle_list=linestyle_list)
     fig, ax = timeseries.fig_ax
 
-    assert ax.get_lines()[0].get_linestyle() == "-"
-    assert ax.get_lines()[1].get_linestyle() == "--"
-
-
-def test_timeseries_show_arg_linestyle_list_default():
-    timeseries = TimeSeries()
-    timeseries.add_data("data0", [1, 2], [3, 4])
-    timeseries.add_data("data1", [1, 2], [3, 4])
-    timeseries.show()
-    fig, ax = timeseries.fig_ax
-
-    assert ax.get_lines()[0].get_linestyle() == "-"
-    assert ax.get_lines()[1].get_linestyle() == "-"
+    assert ax.get_lines()[0].get_linestyle() == expect_linestyle_1
+    assert ax.get_lines()[1].get_linestyle() == expect_linestyle_2
 
 
 def test_timeseries_show_arg_linestyle_list_invalid_length():
@@ -202,28 +206,26 @@ def test_timeseries_show_arg_linestyle_list_invalid_length():
         timeseries.show(linestyle_list=linestyle_list)
 
 
-def test_timeseries_show_arg_marker_list():
-    marker_list = ["v", "d"]
+params = {
+    "give argument": (["v", "d"], "v", "d"),
+    "default": (None, "o", "o"),
+}
 
+
+@pytest.mark.parametrize(
+    "marker_list, expect_marker_1, expect_marker_2",
+    list(params.values()),
+    ids=list(params.keys()),
+)
+def test_timeseries_show_arg_marker_list(marker_list, expect_marker_1, expect_marker_2):
     timeseries = TimeSeries()
     timeseries.add_data("data0", [1, 2], [3, 4])
     timeseries.add_data("data1", [1, 2], [3, 4])
     timeseries.show(marker_list=marker_list)
     fig, ax = timeseries.fig_ax
 
-    assert ax.get_lines()[0].get_marker() == "v"
-    assert ax.get_lines()[1].get_marker() == "d"
-
-
-def test_timeseries_show_arg_marker_list_default():
-    timeseries = TimeSeries()
-    timeseries.add_data("data0", [1, 2], [3, 4])
-    timeseries.add_data("data1", [1, 2], [3, 4])
-    timeseries.show()
-    fig, ax = timeseries.fig_ax
-
-    assert ax.get_lines()[0].get_marker() == "o"
-    assert ax.get_lines()[1].get_marker() == "o"
+    assert ax.get_lines()[0].get_marker() == expect_marker_1
+    assert ax.get_lines()[1].get_marker() == expect_marker_2
 
 
 def test_timeseries_show_arg_marker_list_invalid_length():
@@ -357,24 +359,30 @@ def test_schedule_show_no_plot_data():
         schedule.show()
 
 
-def test_schedule_show_title():
-    title = "title"
+params = {
+    "give argument": ("title", "title"),
+    "default": (None, "schedule"),
+}
 
+
+@pytest.mark.parametrize(
+    "title, expect",
+    list(params.values()),
+    ids=list(params.keys()),
+)
+def test_schedule_show_arg_title(title, expect):
     schedule = Schedule()
     schedule.add_data("data", [1, 2], [3, 4], [5, 6])
     schedule.show(title=title)
     fig, ax = schedule.fig_ax
 
-    assert fig.texts[0].get_text() == "title"
+    success_show_title = False
+    for obj in fig.texts:
+        actual_title = obj.get_text()
+        if actual_title == expect:
+            success_show_title = True
 
-
-def test_schedule_show_title_default():
-    schedule = Schedule()
-    schedule.add_data("data", [1, 2], [3, 4], [5, 6])
-    schedule.show()
-    fig, ax = schedule.fig_ax
-
-    assert fig.texts[0].get_text() == "schedule"
+    assert success_show_title
 
 
 def test_schedule_show_bar():
@@ -384,13 +392,43 @@ def test_schedule_show_bar():
     schedule = Schedule()
     schedule.add_data("data1", workers1, start_times1, time_lengths1)
     schedule.add_data("data2", workers2, start_times2, time_lengths2)
+
     schedule.show()
     fig, ax = schedule.fig_ax
 
-    # get the instance of matplotlib.patches.Rectangle by ax.containers[i].get_children()[j]
-    assert (ax.containers[0].get_children()[0].get_center() == np.array([2.5, 1])).all()
-    assert (ax.containers[0].get_children()[1].get_center() == np.array([4, 2])).all()
-    assert (ax.containers[1].get_children()[0].get_center() == np.array([1.5, 2])).all()
+    # Check that the children of ax contain the expected bar information
+    expect_center_1 = np.array(
+        [2.5, 1]
+    )  # np.array([start_times1[0] + (time_length1[0] / 2), workers1[0]])
+    success_show_bar_1 = False
+    for obj in ax.get_children():
+        if type(obj) == matplotlib.patches.Rectangle:
+            actual_center_1 = obj.get_center()
+            if (np.abs(actual_center_1 - expect_center_1) < 0.0001).all():
+                success_show_bar_1 = True
+    assert success_show_bar_1
+
+    expect_center_2 = np.array(
+        [4, 2]
+    )  # np.array([start_times1[1] + (time_length1[1] / 2), workers1[1]])
+    success_show_bar_2 = False
+    for obj in ax.get_children():
+        if type(obj) == matplotlib.patches.Rectangle:
+            actual_center_2 = obj.get_center()
+            if (np.abs(actual_center_2 - expect_center_2) < 0.0001).all():
+                success_show_bar_2 = True
+    assert success_show_bar_2
+
+    expect_center_3 = np.array(
+        [1.5, 2]
+    )  # np.array([start_times2[0] + (time_length2[0] / 2), workers2[0]])
+    success_show_bar_3 = False
+    for obj in ax.get_children():
+        if type(obj) == matplotlib.patches.Rectangle:
+            actual_center_3 = obj.get_center()
+            if (np.abs(actual_center_3 - expect_center_3) < 0.0001).all():
+                success_show_bar_3 = True
+    assert success_show_bar_3
 
 
 def test_schedule_show_text():
@@ -401,10 +439,32 @@ def test_schedule_show_text():
     schedule.show()
     fig, ax = schedule.fig_ax
 
-    assert ax.texts[0].get_position() == (2.5, 1)
-    assert ax.texts[0].get_text() == "3"
-    assert ax.texts[1].get_position() == (4, 2)
-    assert ax.texts[1].get_text() == "4"
+    # Check that the ax.texts contain the expected text information
+    expect_text_1 = "3"  # time_length[0]
+    expect_center_1 = (2.5, 1)  # (start_times[0] + (time_length[0] / 2), workers[0])
+    success_text_1 = False
+    for obj in ax.texts:
+        actual_text_1 = obj.get_text()
+        actual_center_1 = obj.get_position()
+        if not (actual_text_1 == expect_text_1):
+            continue
+        if not (actual_center_1 == expect_center_1):
+            continue
+        success_text_1 = True
+    assert success_text_1
+
+    expect_text_2 = "4"  # time_length[1]
+    expect_center_2 = (4, 2)  # (start_times[1] + (time_length[1] / 2), workers[1])
+    success_text_2 = False
+    for obj in ax.texts:
+        actual_text_2 = obj.get_text()
+        actual_center_2 = obj.get_position()
+        if not (actual_text_2 == expect_text_2):
+            continue
+        if not (actual_center_2 == expect_center_2):
+            continue
+        success_text_2 = True
+    assert success_text_2
 
 
 def test_schedule_show_arg_figsize():
@@ -420,17 +480,48 @@ def test_schedule_show_arg_figsize():
 
 
 def test_schedule_show_arg_color_list():
-    color_list = ["r", "b"]
+    color_list = ["red", "blue"]
+    workers1, start_times1, time_lengths1 = [1], [1], [3]
+    workers2, start_times2, time_lengths2 = [2], [2], [4]
 
     schedule = Schedule()
-    schedule.add_data("data0", [1, 2], [1, 2], [3, 4])
-    schedule.add_data("data1", [1, 2], [1, 2], [3, 4])
+    schedule.add_data("data1", workers1, start_times1, time_lengths1)
+    schedule.add_data("data2", workers2, start_times2, time_lengths2)
     schedule.show(color_list=color_list)
     fig, ax = schedule.fig_ax
 
-    # get the instance of matplotlib.patches.Rectangle by ax.containers[i].get_children()[j]
-    assert ax.containers[0].get_children()[0].get_facecolor()[0] == 1.0
-    assert ax.containers[1].get_children()[0].get_facecolor()[2] == 1.0
+    # Check that the children of ax contain the expected color information
+    expect_color_1 = np.array([1.0, 0.0, 0.0])  # red
+    expect_center_1 = np.array(
+        [2.5, 1]
+    )  # np.array([start_times1[0] + (time_length1[0] / 2), workers1[0]])
+    success_coloring_1 = False
+    for obj in ax.get_children():
+        if type(obj) == matplotlib.patches.Rectangle:
+            actual_color_1 = obj.get_facecolor()[:-1]
+            actual_center_1 = obj.get_center()
+            if not (actual_color_1 == expect_color_1).all():
+                continue
+            if not (np.abs(actual_center_1 - expect_center_1) < 0.0001).all():
+                continue
+            success_coloring_1 = True
+    assert success_coloring_1
+
+    expect_color_2 = np.array([0.0, 0.0, 1.0])  # blue
+    expect_center_2 = np.array(
+        [4, 2]
+    )  # np.array([start_times2[0] + (time_length2[0] / 2), workers2[0]])
+    success_coloring_2 = False
+    for obj in ax.get_children():
+        if type(obj) == matplotlib.patches.Rectangle:
+            actual_color_2 = obj.get_facecolor()[:-1]
+            actual_center_2 = obj.get_center()
+            if not (actual_color_2 == expect_color_2).all():
+                continue
+            if not (np.abs(actual_center_2 - expect_center_2) < 0.0001).all():
+                continue
+            success_coloring_2 = True
+    assert success_coloring_2
 
 
 def test_schedule_show_arg_color_list_invalid_length():
@@ -444,30 +535,57 @@ def test_schedule_show_arg_color_list_invalid_length():
         schedule.show(color_list=color_list)
 
 
-def test_schedule_show_arg_alpha_list():
-    alpha_list = [0.5, 0.7]
+params = {
+    "give argument": ([0.3, 0.7], 0.3, 0.7),
+    "default": (None, 0.5, 0.5),
+}
+
+
+@pytest.mark.parametrize(
+    "alpha_list, expect_alpha_1, expect_alpha_2",
+    list(params.values()),
+    ids=list(params.keys()),
+)
+def test_schedule_show_arg_alpha_list(alpha_list, expect_alpha_1, expect_alpha_2):
+    workers1, start_times1, time_lengths1 = [1], [1], [3]
+    workers2, start_times2, time_lengths2 = [2], [2], [4]
 
     schedule = Schedule()
-    schedule.add_data("data0", [1, 2], [1, 2], [3, 4])
-    schedule.add_data("data1", [1, 2], [1, 2], [3, 4])
+    schedule.add_data("data1", workers1, start_times1, time_lengths1)
+    schedule.add_data("data2", workers2, start_times2, time_lengths2)
     schedule.show(alpha_list=alpha_list)
     fig, ax = schedule.fig_ax
 
-    # get the instance of matplotlib.patches.Rectangle by ax.containers[i].get_children()[j]
-    assert ax.containers[0].get_children()[0].get_alpha() == 0.5
-    assert ax.containers[1].get_children()[0].get_alpha() == 0.7
+    # Check that the children of ax contain the expected alpha information
+    expect_center_1 = np.array(
+        [2.5, 1]
+    )  # np.array([start_times1[0] + (time_length1[0] / 2), workers1[0]])
+    success_alpha_1 = False
+    for obj in ax.get_children():
+        if type(obj) == matplotlib.patches.Rectangle:
+            actual_alpha_1 = obj.get_alpha()
+            actual_center_1 = obj.get_center()
+            if not actual_alpha_1 == expect_alpha_1:
+                continue
+            if not (np.abs(actual_center_1 - expect_center_1) < 0.0001).all():
+                continue
+            success_alpha_1 = True
+    assert success_alpha_1
 
-
-def test_schedule_show_arg_alpha_list_default():
-    schedule = Schedule()
-    schedule.add_data("data0", [1, 2], [1, 2], [3, 4])
-    schedule.add_data("data1", [1, 2], [1, 2], [3, 4])
-    schedule.show()
-    fig, ax = schedule.fig_ax
-
-    # get the instance of matplotlib.patches.Rectangle by ax.containers[i].get_children()[j]
-    assert ax.containers[0].get_children()[0].get_alpha() == 0.5
-    assert ax.containers[1].get_children()[0].get_alpha() == 0.5
+    expect_center_2 = np.array(
+        [4, 2]
+    )  # np.array([start_times1[0] + (time_length1[0] / 2), workers1[0]])
+    success_alpha_2 = False
+    for obj in ax.get_children():
+        if type(obj) == matplotlib.patches.Rectangle:
+            actual_alpha_2 = obj.get_alpha()
+            actual_center_2 = obj.get_center()
+            if not actual_alpha_2 == expect_alpha_2:
+                continue
+            if not (np.abs(actual_center_2 - expect_center_2) < 0.0001).all():
+                continue
+            success_alpha_2 = True
+    assert success_alpha_2
 
 
 def test_schedule_show_arg_alpha_list_invalid_length():
@@ -582,37 +700,27 @@ def test_graph_fig_ax_attribute_before_show():
         graph.fig_ax
 
 
-def test_graph_show_title():
-    title = "title"
+params = {
+    "give argument": ("title", "title"),
+    "default": (None, "graph"),
+}
 
+
+@pytest.mark.parametrize(
+    "title, expect",
+    list(params.values()),
+    ids=list(params.keys()),
+)
+def test_graph_show_arg_title(title, expect):
     graph = Graph.from_edge_list([[1, 2]], GraphType.UNDIRECTED)
     graph.show(title=title)
     fig, ax = graph.fig_ax
 
     # Check that the ax.texts contain the expected node label information
-    expect_title = "title"
     success_show_title = False
     for obj in fig.texts:
         actual_title = obj.get_text()
-        print(actual_title)
-        if actual_title == expect_title:
-            success_show_title = True
-
-    assert success_show_title
-
-
-def test_graph_show_title_default():
-    graph = Graph.from_edge_list([[1, 2]], GraphType.UNDIRECTED)
-    graph.show()
-    fig, ax = graph.fig_ax
-
-    # Check that the ax.texts contain the expected node label information
-    expect_title = "graph"
-    success_show_title = False
-    for obj in fig.texts:
-        actual_title = obj.get_text()
-        print(actual_title)
-        if actual_title == expect_title:
+        if actual_title == expect:
             success_show_title = True
 
     assert success_show_title
@@ -645,7 +753,7 @@ def test_graph_show_node():
     assert success_show_node
 
 
-def test_graph_show_node_pos():
+def test_graph_show_arg_node_pos():
     pos1 = np.array([1, 1])
     pos2 = np.array([-1, -1])
     node_pos = {1: pos1, 2: pos2}
@@ -665,7 +773,7 @@ def test_graph_show_node_pos():
     assert success_set_pos
 
 
-def test_graph_show_node_pos_default():
+def test_graph_show_arg_node_pos_default():
     graph = Graph.from_edge_list([[1, 2]], GraphType.UNDIRECTED)
     graph.show()
     fig, ax = graph.fig_ax
@@ -682,7 +790,7 @@ def test_graph_show_node_pos_default():
     assert success_set_pos
 
 
-def test_graph_show_node_color():
+def test_graph_show_arg_node_color():
     node_color = ["r", "b"]
 
     graph = Graph.from_edge_list([[1, 2]], GraphType.UNDIRECTED)
@@ -709,7 +817,7 @@ def test_graph_show_node_color():
     assert success_coloring_node2
 
 
-def test_graph_show_node_color_default():
+def test_graph_show_arg_node_color_default():
     default_color = "#1f78b4"
 
     graph = Graph.from_edge_list([[1, 2]], GraphType.UNDIRECTED)
@@ -728,7 +836,7 @@ def test_graph_show_node_color_default():
     assert success_coloring
 
 
-def test_graph_show_node_labels():
+def test_graph_show_arg_node_labels():
     node1, node2 = 1, 2
     node_labels = {node1: "node1", node2: "node2"}
     node_pos = {node1: np.array([1, 1]), node2: np.array([-1, -1])}
@@ -755,7 +863,7 @@ def test_graph_show_node_labels():
     assert success_show_node2_label
 
 
-def test_graph_show_node_labels_default():
+def test_graph_show_arg_node_labels_default():
     node1, node2 = 1, 2
     node_pos = {node1: np.array([1, 1]), node2: np.array([-1, -1])}
 
@@ -781,7 +889,7 @@ def test_graph_show_node_labels_default():
     assert success_show_node2_label
 
 
-def test_graph_show_edge():
+def test_graph_show_arg_edge():
     edge_list = [[1, 2], [2, 3]]
 
     graph = Graph.from_edge_list(edge_list, GraphType.UNDIRECTED)
@@ -800,7 +908,7 @@ def test_graph_show_edge():
     assert success_show_edge
 
 
-def test_graph_show_edge_color():
+def test_graph_show_arg_edge_color():
     edge_color = ["r"]
 
     graph = Graph.from_edge_list([[1, 2]], GraphType.UNDIRECTED)
@@ -819,12 +927,12 @@ def test_graph_show_edge_color():
     assert success_coloring
 
 
-def test_graph_show_edge_color_default():
-    graph = Graph.from_edge_list([[1, 2], [2, 3]], GraphType.UNDIRECTED)
+def test_graph_show_arg_edge_color_default():
+    graph = Graph.from_edge_list([[1, 2]], GraphType.UNDIRECTED)
     graph.show()
     fig, ax = graph.fig_ax
 
-    expect_color = np.array([0.0, 0.0, 0.0])
+    expect_color = np.array([0.0, 0.0, 0.0])  # "black"
 
     # Check that the children of ax contain the expected edge color information
     success_coloring = False
@@ -836,7 +944,7 @@ def test_graph_show_edge_color_default():
     assert success_coloring
 
 
-def test_graph_show_edge_labels():
+def test_graph_show_arg_edge_labels():
     node_pos = {
         0: np.array([-1, -1]),
         1: np.array([1, 1]),
@@ -861,7 +969,7 @@ def test_graph_show_edge_labels():
     assert success_show_edge_label
 
 
-def test_graph_show_edge_labels_default_weighted_edge_case():
+def test_graph_show_arg_edge_labels_default_weighted_edge_case():
     node_pos = {0: np.array([1, 1]), 1: np.array([-1, -1])}
     weight = 5
 
