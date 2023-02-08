@@ -137,7 +137,7 @@ class Evaluator:
         Args:
             opt_value (float, optional): Optimal value for instance_data.
             pr (float, optional): Probability of obtaining optimal value. Defaults to 0.99.
-            column (str, optional): Column name for metircs table that is pandas.Dataframe. Defaults to "TTS(optimal)".
+            column (str, optional): Column name for metrics table that is pandas.Dataframe. Defaults to "TTS(optimal)".
             expand (bool, optional): Whether to expand table with evaluation results. Defaults to True.
 
         Returns:

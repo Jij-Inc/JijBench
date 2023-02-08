@@ -43,7 +43,7 @@ class Scorer:
         return self._score_func(x, **self._kwargs)
 
 
-def make_scorer(score_func: Callable, is_warning=False, **kwargs):
+def make_scorer(score_func: Callable, is_warning=False, **kwargs) -> Scorer:
     return Scorer(score_func, kwargs, is_warning)
 
 
@@ -52,9 +52,14 @@ def optimal_time_to_solution(
     opt_value: Union[int, float],
     pr: float,
 ):
+    if x.num_reads == 1:
+        warnings.warn("num_reads = 1; should be increased to measure optimal TTS")
+
     ps = success_probability(x, opt_value)
 
-    if ps:
+    if ps == 1:
+        return np.nan
+    elif ps:
         return np.log(1 - pr) / np.log(1 - ps) * x.execution_time
     else:
         return np.inf
@@ -64,9 +69,14 @@ def feasible_time_to_solution(
     x,
     pr: float,
 ):
+    if x.num_reads == 1:
+        warnings.warn("num_reads = 1; should be increased to measure feasible TTS")
+
     ps = feasible_rate(x)
 
-    if ps:
+    if ps == 1:
+        return np.nan
+    elif ps:
         return np.log(1 - pr) / np.log(1 - ps) * x.execution_time
     else:
         return np.inf
@@ -76,6 +86,9 @@ def derived_time_to_solution(
     x,
     pr: float,
 ):
+    if x.num_reads == 1:
+        warnings.warn("num_reads = 1; should be increased to measure derived TTS")
+
     feas = _to_bool_values_for_feasible(x)
     if feas.any():
         opt_value = x.objective[feas].min()
@@ -83,7 +96,9 @@ def derived_time_to_solution(
     else:
         ps = 0.0
 
-    if ps:
+    if ps == 1:
+        return np.nan
+    elif ps:
         return np.log(1 - pr) / np.log(1 - ps) * x.execution_time
     else:
         return np.inf
