@@ -4,6 +4,7 @@ from enum import Enum, auto
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy.typing as npt
+from typing import cast
 
 from jijbench.figure.interface import Figure
 
@@ -25,7 +26,7 @@ class Graph(Figure):
     """Visualize graph.
 
     You can also instantiate from edge_list, distance matrix by class method.
-
+    fig_ax (tuple[matplotlib.figure.Figure, matplotlib.axes.Subplot]): Figure and Axes of matplotlib. Available after show method is called.
     Attributes:
         G (nx.Graph): the networkX Graph instance.
     Example:
@@ -92,12 +93,17 @@ class Graph(Figure):
         fig, ax = plt.subplots(figsize=figsize)
         fig.suptitle(title)
 
+        # execute typing.cast to the avoid type checking error caused by the networkx interface.
+        node_color = cast("str", node_color)
         nx.draw_networkx_nodes(
             G=G,
             pos=node_pos,
             node_color=node_color,
             ax=ax,
         )
+
+        # execute typing.cast to the avoid type checking error caused by the networkx interface.
+        edge_color = cast("str", edge_color)
         nx.draw_networkx_edges(
             G=G,
             pos=node_pos,

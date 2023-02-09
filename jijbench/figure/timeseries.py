@@ -14,7 +14,7 @@ class TimeSeries(Figure):
 
     Attributes:
         data (OrderedDict):the dict of time series. the key is label, and the value is tuple of x and y.
-        fig_ax (Tuple[matplotlib.figure.Figure, matplotlib.axes.Subplot]): Figure and Axes of matplotlib. Available after show method is called.
+        fig_ax (tuple[matplotlib.figure.Figure, matplotlib.axes.Subplot]): Figure and Axes of matplotlib. Available after show method is called.
     Example:
         The code below plots a linear function and a quadratic function.
         The style of the graph (e.g. color) can be changed by arguments of the show method.
@@ -55,8 +55,10 @@ class TimeSeries(Figure):
             plot_x (list[int | float] | npt.NDArray): the 1D list of horizontal axis value (the list of time).
             plot_y (list[int | float] | npt.NDArray): the 1D list of vertical axis value.
         """
-        plot_x = plot_x.tolist() if type(plot_x) == np.ndarray else plot_x
-        plot_y = plot_y.tolist() if type(plot_y) == np.ndarray else plot_y
+        if isinstance(plot_x, np.ndarray):
+            plot_x = plot_x.tolist()
+        if isinstance(plot_y, np.ndarray):
+            plot_y = plot_y.tolist()
 
         if len(plot_x) != len(plot_y):
             raise ValueError("plot_x and plot_y must be the same length.")
