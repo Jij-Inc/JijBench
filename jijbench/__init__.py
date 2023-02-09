@@ -16,7 +16,8 @@ from jijbench.evaluation.evaluation import Evaluator
 from jijbench.experiment.experiment import Experiment
 from jijbench.io.io import load, save
 from jijbench.mappings.mappings import Artifact, Record, Table
-from jijbench.solver.solver import Parameter, Return, Solver
+from jijbench.solver.base import Parameter, Return, Solver
+from jijbench.solver.jijzept import InstanceData, UserDefinedModel
 
 
 __all__ = [
@@ -34,6 +35,8 @@ __all__ = [
     "Evaluator",
     "Experiment",
     "ID",
+    "InstanceData",
+    "UserDefinedModel",
     "Number",
     "Parameter",
     "Record",

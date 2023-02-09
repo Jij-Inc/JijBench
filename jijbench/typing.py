@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import datetime
+import jijmodeling as jm
+import numpy as np
 import pandas as pd
 import typing as tp
 
@@ -20,9 +22,13 @@ DataNodeT2_co = tp.TypeVar("DataNodeT2_co", bound="DataNode", covariant=True)
 
 ArtifactDataType: TypeAlias = tp.Dict[tp.Hashable, tp.Dict[tp.Hashable, "DataNode"]]
 ExperimentDataType: TypeAlias = tp.Tuple["Artifact", "Table"]
-
 DateTypes: TypeAlias = tp.Union[str, datetime.datetime, pd.Timestamp]
 NumberTypes: TypeAlias = tp.Union[int, float]
+
+InstanceDataType: TypeAlias = tp.Dict[
+    str, tp.Union[int, float, tp.List, np.ndarray[tp.Tuple, np.dtype]]
+]
+ModelType: TypeAlias = tp.Tuple[jm.Problem, InstanceDataType]
 
 MappingT = tp.TypeVar("MappingT", "Artifact", "Experiment", "Record", "Table")
 MappingTypes: TypeAlias = tp.Union["Artifact", "Experiment", "Record", "Table"]

@@ -12,7 +12,7 @@ from jijbench.elements.id import ID
 from jijbench.experiment.experiment import Experiment
 from jijbench.functions.concat import Concat
 from jijbench.functions.factory import RecordFactory
-from jijbench.solver.solver import Parameter, Solver
+from jijbench.solver.base import Parameter, Solver
 
 
 class Benchmark(FunctionNode[Experiment, Experiment]):
