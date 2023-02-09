@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from typing import Callable, Union, Optional, TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
+import typing as tp
+
 
 from jijbench.evaluation._metrics import (
     make_scorer,
@@ -14,13 +15,11 @@ from jijbench.evaluation._metrics import (
     feasible_rate,
     residual_energy,
 )
-
-if TYPE_CHECKING:
-    from jijbench.benchmark.benchmark import Benchmark
-    from jijbench.experiment.experiment import Experiment
+from jijbench.experiment.experiment import Experiment
+from jijbench.node.base import FunctionNode
 
 
-class Evaluator:
+class Evaluator(FunctionNode[Experiment, Experiment]):
     """Evaluate benchmark results.
 
     Args:
@@ -30,8 +29,11 @@ class Evaluator:
         artifact (dict): Dict that store experiment results.
     """
 
-    def __init__(self, experiment: Union[Benchmark, Experiment]):
-        self.experiment = experiment
+    def __init__(self, name: str | None = None):
+        super().__init__(name)
+
+    def __call__(self, inputs: list[Experiment], **kwargs: tp.Any) -> Experiment:
+        return super().__call__(inputs, **kwargs)
 
     @property
     def table(self):
@@ -42,7 +44,7 @@ class Evaluator:
         return self.experiment.artifact
 
     def calc_typical_metrics(
-        self, opt_value: Optional[float] = None, pr: float = 0.99, expand: bool = True
+        self, opt_value: float | None = None, pr: float = 0.99, expand: bool = True
     ):
         """Calculate typincal metrics for benchmark
 

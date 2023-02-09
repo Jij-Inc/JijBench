@@ -4,11 +4,26 @@ from __future__ import annotations
 import typing as tp
 import inspect
 
+from dataclasses import dataclass
+from jijbench.elements.base import Element
 from jijbench.exceptions.exceptions import SolverFailedError
 from jijbench.node.base import FunctionNode
-from jijbench.data.mapping import Record
-from jijbench.data.elements.base import Parameter, Return
+from jijbench.mappings.mappings import Record
 from jijbench.functions.factory import RecordFactory
+
+
+@dataclass
+class Parameter(Element[tp.Any]):
+    @classmethod
+    def validate_data(cls, data: tp.Any) -> tp.Any:
+        return data
+
+
+@dataclass
+class Return(Element[tp.Any]):
+    @classmethod
+    def validate_data(cls, data: tp.Any) -> tp.Any:
+        return data
 
 
 class Solver(FunctionNode[Parameter, Record]):

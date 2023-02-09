@@ -13,7 +13,7 @@ def custom_solver_failed():
 
 
 def test_simple_solver():
-    solver = jb.functions.Solver(func1)
+    solver = jb.Solver(func1)
 
     param = jb.Parameter(1, "x")
     record = solver([param])
@@ -24,6 +24,6 @@ def test_simple_solver():
 
 
 def test_CallebleSolver_solver_failed_error():
-    solver = jb.functions.Solver(custom_solver_failed)
+    solver = jb.Solver(custom_solver_failed)
     with pytest.raises(SolverFailedError):
         solver([])

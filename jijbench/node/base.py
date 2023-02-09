@@ -72,6 +72,12 @@ class FunctionNode(tp.Generic[DataNodeT, DataNodeT2], metaclass=abc.ABCMeta):
     def name(self) -> tp.Hashable:
         return self._name
 
+    @name.setter
+    def name(self, name: tp.Hashable) -> None:
+        if not isinstance(name, tp.Hashable):
+            raise TypeError(f"{self.__class__.__name__} name must be hashable.")
+        self._name = name
+
     @abc.abstractmethod
     def operate(self, inputs: list[DataNodeT], **kwargs: tp.Any) -> DataNodeT2:
         pass
