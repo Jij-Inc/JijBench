@@ -1,6 +1,6 @@
 import jijbench.functions as functions
 
-from jijbench.benchmark.benchmark import Benchmark
+from jijbench.benchmark.benchmark import Benchmark, construct_benchmark_for
 from jijbench.datasets.instance_data import get_instance_data
 from jijbench.datasets.problem import get_problem
 from jijbench.elements.array import Array
@@ -11,10 +11,12 @@ from jijbench.evaluation.evaluation import Evaluator
 from jijbench.experiment.experiment import Experiment
 from jijbench.io.io import load, save
 from jijbench.mappings.mappings import Artifact, Record, Table
-from jijbench.solver.solver import Parameter, Return, Solver
+from jijbench.solver.base import Parameter, Return, Solver
+from jijbench.solver.jijzept import InstanceData, UserDefinedModel
 
 
 __all__ = [
+    "construct_benchmark_for",
     "functions",
     "get_instance_data",
     "get_problem",
@@ -28,6 +30,8 @@ __all__ = [
     "Evaluator",
     "Experiment",
     "ID",
+    "InstanceData",
+    "UserDefinedModel",
     "Number",
     "Record",
     "Return",

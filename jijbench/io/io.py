@@ -56,7 +56,7 @@ def save(
     Args:
         obj (Artifact | Experiment | Table): The object to be saved.
         savedir (str | pathlib.Path, optional): The directory where the object will be saved. Defaults to DEFAULT_RESULT_DIR.
-        mode (tp.Literal[&quot;w&quot;, &quot;a&quot;], optional): The write mode for the file. Must be 'w' or 'a'. Defaults to "w".
+        mode (Literal[&quot;w&quot;, &quot;a&quot;], optional): The write mode for the file. Must be 'w' or 'a'. Defaults to "w".
         index_col (int | list[int] | None, optional): Index column(s) to set as index while saving the table. Defaults to None. Defaults to None.
 
     Raises:

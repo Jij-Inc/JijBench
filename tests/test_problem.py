@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import jijbench as jb
 import jijmodeling as jm
-import openjij as oj
 
 from jijbench.datasets import TSP, TSPTW, Knapsack
 

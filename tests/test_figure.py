@@ -4,9 +4,9 @@ import networkx as nx
 import numpy as np
 import pytest
 
-from jijbench.figure.graph import Graph, GraphType
-from jijbench.figure.schedule import Schedule
-from jijbench.figure.timeseries import TimeSeries
+from jijbench.visualize.figure.graph import Graph, GraphType
+from jijbench.visualize.figure.schedule import Schedule
+from jijbench.visualize.figure.timeseries import TimeSeries
 
 # TODO: colorについて、strだけじゃなくてrgb tupleにも対応させる（テストの追記と型アノテーションでいけると想定）
 # 参考: rgb tupleについての言及 https://networkx.org/documentation/stable/reference/generated/networkx.drawing.nx_pylab.draw_networkx_nodes.html
