@@ -38,6 +38,7 @@ class Experiment(Mapping[ExperimentDataType]):
             self.savedir = pathlib.Path(self.savedir)
 
     def __enter__(self) -> Experiment:
+        """Makes a directory for saving the experiment, if it doesn't exist. Returns the experiment object."""
         savedir = (
             self.savedir
             if isinstance(self.savedir, pathlib.Path)
@@ -47,34 +48,52 @@ class Experiment(Mapping[ExperimentDataType]):
         return self
 
     def __exit__(self, exception_type, exception_value, traceback) -> None:
+        """Saves the experiment if autosave is True."""
         if self.autosave:
             self.save()
 
     @property
     def artifact(self) -> dict:
-        return self.view("artifact")
+        """Return the artifact of the experiment as a dictionary."""
+        return self.data[0].view()
 
     @property
     def table(self) -> pd.DataFrame:
-        return self.view("table")
+        """Return the table of the experiment as a pandas dataframe."""
+        return self.data[1].view()
 
     @property
     def params_table(self) -> pd.DataFrame:
+        """Return the parameters table of the experiment as a pandas dataframe."""
         bools = self.data[1].data.applymap(lambda x: isinstance(x, Parameter))
         return self.table[bools].dropna(axis=1)
 
     @property
     def solver_table(self) -> pd.DataFrame:
+        """Return the solver table of the experiment as a pandas dataframe."""
+
         bools = self.data[1].data.applymap(lambda x: isinstance(x, Callable))
         return self.table[bools].dropna(axis=1)
 
     @property
     def returns_table(self) -> pd.DataFrame:
+        """Return the returns table of the experiment as a pandas dataframe."""
         bools = self.data[1].data.applymap(lambda x: isinstance(x, Return))
         return self.table[bools].dropna(axis=1)
 
     @classmethod
     def validate_data(cls, data: ExperimentDataType) -> ExperimentDataType:
+        """Validate the data of the experiment.
+
+        Args:
+            data (ExperimentDataType): The data to validate.
+
+        Raises:
+            TypeError: If data is not an instance of ExperimentDataType or if the first element of data is not an instance of Artifact or if the second element of data is not an instance of Table.
+
+        Returns:
+            ExperimentDataType: The validated data.
+        """
         artifact, table = data
         if not isinstance(artifact, Artifact):
             raise TypeError(
@@ -86,21 +105,16 @@ class Experiment(Mapping[ExperimentDataType]):
             )
         return data
 
-    @tp.overload
-    def view(self, kind: tp.Literal["artifact"]) -> dict:
-        ...
-
-    @tp.overload
-    def view(self, kind: tp.Literal["table"]) -> pd.DataFrame:
-        ...
-
-    def view(self, kind: tp.Literal["artifact", "table"]) -> dict | pd.DataFrame:
-        if kind == "artifact":
-            return self.data[0].view()
-        else:
-            return self.data[1].view()
+    def view(self) -> tuple[dict, pd.DataFrame]:
+        """Return a tuple of the artifact dictionary and table dataframe."""
+        return (self.data[0].view(), self.data[1].view())
 
     def append(self, record: Record) -> None:
+        """Append a new record to the experiment.
+
+        Args:
+            record (Record): The record to be appended to the experiment.
+        """
         concat: Concat[Experiment] = Concat()
         data = (ArtifactFactory()([record]), TableFactory()([record]))
         other = type(self)(
@@ -116,4 +130,5 @@ class Experiment(Mapping[ExperimentDataType]):
         self.__init__(**node.__dict__)
 
     def save(self):
+        """Save the experiment."""
         save(self, savedir=self.savedir, mode="a")

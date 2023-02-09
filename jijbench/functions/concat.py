@@ -45,6 +45,10 @@ def _is_mapping_list(inputs: MappingListTypes) -> TypeGuard[list[MappingT]]:
 
 
 class Concat(FunctionNode[MappingT, MappingT]):
+    """Concat class for concatenating multiple mapping data.
+    This class can be apply to `Artifact`, `Experiment`, `Record`, `Table`.
+    """
+
     @tp.overload
     def __call__(self, inputs: list[Artifact], name: tp.Hashable = None) -> Artifact:
         ...
@@ -85,6 +89,22 @@ class Concat(FunctionNode[MappingT, MappingT]):
         axis: tp.Literal[0, 1] = 0,
         index_name: str | None = None,
     ) -> MappingTypes:
+        """Concatenates the given list of mapping type objects.
+
+        Args:
+            inputs (MappingListTypes): A list of artifacts, experiments, records, or tables. The type of elements in 'inputs' must be unified either 'Artifact', 'Experiment', 'Record' or 'Table'.
+            name (tp.Hashable, optional): A name for the resulting data. Defaults to None.
+            autosave (bool, optional): A flag indicating whether to save the result to disk. Defaults to True.
+            savedir (str | pathlib.Path, optional): The directory to save the result in. Defaults to DEFAULT_RESULT_DIR.
+            axis (tp.Literal[0, 1], optional): The axis to concatenate the inputs along. Defaults to 0.
+            index_name (str | None, optional): The name of the index after concatenation. Defaults to None.
+
+        Raises:
+            TypeError: If the type of elements in 'inputs' is not unified either 'Artifact', 'Experiment', 'Record' or 'Table'.
+
+        Returns:
+            MappingTypes: The resulting artifact, experiment, record, or table object.
+        """
         if _is_mapping_list(inputs):
             return super().__call__(
                 inputs,
@@ -139,6 +159,24 @@ class Concat(FunctionNode[MappingT, MappingT]):
         axis: tp.Literal[0, 1] = 0,
         index_name: str | None = None,
     ) -> MappingTypes:
+        """This method operates the concatenation of the given 'inputs' either 'Artifact', 'Experiment', 'Record' or 'Table'
+        objects into a single object of the same type as 'inputs'.
+
+        Args:
+            inputs (MappingListTypes): A list of 'Artifact', 'Experiment', 'Record' or 'Table' objects to concatenate.
+            name (tp.Hashable, optional): The name of the resulting object. Defaults to None. Defaults to None.
+            autosave (bool, optional): If True, the resulting object will be saved to disk. Defaults to True.
+            savedir (str | pathlib.Path, optional): The directory where the resulting object will be saved. Defaults to DEFAULT_RESULT_DIR.
+            axis (tp.Literal[0, 1], optional): The axis along which to concatenate the input 'Table' objects. Defaults to 0.
+            index_name (str | None, optional): The name of the resulting object's index. Defaults to None.
+
+        Raises:
+            TypeError: If the type of elements in 'inputs' are not unified or if the 'name' attribute is not a string.
+
+        Returns:
+            MappingTypes: The resulting 'Artifact', 'Experiment', 'Record' or 'Table' object.
+        
+        """
         if _is_artifact_list(inputs):
             data = {}
             for node in inputs:
