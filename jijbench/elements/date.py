@@ -3,8 +3,9 @@ from __future__ import annotations
 import datetime
 import pandas as pd
 
+
 from dataclasses import dataclass, field
-from jijbench.data.elements.base import Element
+from jijbench.elements.base import Element
 from jijbench.typing import DateTypes
 
 

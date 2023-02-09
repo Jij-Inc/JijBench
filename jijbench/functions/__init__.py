@@ -6,7 +6,6 @@ __path__ = extend_path(__path__, __name__)
 from jijbench.functions.concat import Concat
 from jijbench.functions.factory import ArtifactFactory, RecordFactory, TableFactory
 from jijbench.functions.math import Max, Mean, Min, Std
-from jijbench.functions.solver import Solver
 
 __all__ = [
     "Concat",
@@ -17,5 +16,4 @@ __all__ = [
     "Mean",
     "Min",
     "Std",
-    "Solver",
 ]

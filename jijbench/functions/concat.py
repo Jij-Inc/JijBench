@@ -5,12 +5,13 @@ import pathlib
 import typing as tp
 
 from jijbench.consts.path import DEFAULT_RESULT_DIR
+from jijbench.elements.id import ID
 from jijbench.node.base import FunctionNode
 from jijbench.typing import MappingT, MappingTypes, MappingListTypes
 from typing_extensions import TypeGuard
 
 if tp.TYPE_CHECKING:
-    from jijbench.data.mapping import Artifact, Record, Table
+    from jijbench.mappings.mappings import Artifact, Record, Table
     from jijbench.experiment.experiment import Experiment
 
 
@@ -52,7 +53,7 @@ class Concat(FunctionNode[MappingT, MappingT]):
     def __call__(
         self,
         inputs: list[Experiment],
-        name: tp.Hashable = None,
+        name: str | None = None,
         *,
         autosave: bool = True,
         savedir: str | pathlib.Path = DEFAULT_RESULT_DIR,
@@ -106,7 +107,7 @@ class Concat(FunctionNode[MappingT, MappingT]):
     def operate(
         self,
         inputs: list[Experiment],
-        name: tp.Hashable = None,
+        name: str | None = None,
         *,
         autosave: bool = True,
         savedir: str | pathlib.Path = DEFAULT_RESULT_DIR,
@@ -151,8 +152,11 @@ class Concat(FunctionNode[MappingT, MappingT]):
             artifact = inputs_a[0].apply(concat_a, inputs_a[1:])
             table = inputs_t[0].apply(concat_t, inputs_t[1:])
 
-            if not (isinstance(name, str) or name is None):
-                raise TypeError("Attirbute name of Experiment must be string or None.")
+            if name is None:
+                name = ID().data
+
+            if not isinstance(name, str):
+                raise TypeError("Attirbute name of Experiment must be string.")
 
             return type(inputs[0])(
                 (artifact, table),

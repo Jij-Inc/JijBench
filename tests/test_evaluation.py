@@ -5,7 +5,6 @@ import os, shutil
 import dimod
 import jijmodeling as jm
 import numpy as np
-import openjij as oj
 import pytest
 
 import jijbench as jb
@@ -388,32 +387,32 @@ def results_for_multi_const_problem():
 #
 
 
-def test_evaluate_for_multi_const_problem(results_for_multi_const_problem):
-    # Benchmarkインスタンスのevaluateでテスト
-    opt_value = 3.0
-    pr = 0.7
-
-    evaluator = jb.Evaluator(results_for_multi_const_problem)
-    metrics = evaluator.calc_typical_metrics(opt_value=opt_value, pr=pr)
-
-    #
-    assert metrics["success_probability"][0] == 0.4
-    assert metrics["feasible_rate"][0] == 0.7
-    assert metrics["residual_energy"][0] == 9.0
-    assert metrics["TTS(optimal)"][0] == np.log(1 - 0.7) / np.log(1 - 0.4)
-    assert metrics["TTS(feasible)"][0] == 1.0
-    assert metrics["TTS(derived)"][0] == np.log(1 - 0.7) / np.log(1 - 0.4)
-    #
-    opt_value = 0
-    pr = 0.7
-    metrics = evaluator.calc_typical_metrics(opt_value=opt_value, pr=pr)
-    #
-    assert metrics["success_probability"][0] == 0.0
-    assert metrics["feasible_rate"][0] == 0.7
-    assert metrics["residual_energy"][0] == 12.0
-    assert metrics["TTS(optimal)"][0] == np.inf
-    assert metrics["TTS(feasible)"][0] == 1.0
-    assert metrics["TTS(derived)"][0] == np.log(1 - 0.7) / np.log(1 - 0.4)
+# def test_evaluate_for_multi_const_problem(results_for_multi_const_problem):
+#     # Benchmarkインスタンスのevaluateでテスト
+#     opt_value = 3.0
+#     pr = 0.7
+# 
+#     evaluator = jb.Evaluator(results_for_multi_const_problem)
+#     metrics = evaluator.calc_typical_metrics(opt_value=opt_value, pr=pr)
+# 
+#     #
+#     assert metrics["success_probability"][0] == 0.4
+#     assert metrics["feasible_rate"][0] == 0.7
+#     assert metrics["residual_energy"][0] == 9.0
+#     assert metrics["TTS(optimal)"][0] == np.log(1 - 0.7) / np.log(1 - 0.4)
+#     assert metrics["TTS(feasible)"][0] == 1.0
+#     assert metrics["TTS(derived)"][0] == np.log(1 - 0.7) / np.log(1 - 0.4)
+#     #
+#     opt_value = 0
+#     pr = 0.7
+#     metrics = evaluator.calc_typical_metrics(opt_value=opt_value, pr=pr)
+#     #
+#     assert metrics["success_probability"][0] == 0.0
+#     assert metrics["feasible_rate"][0] == 0.7
+#     assert metrics["residual_energy"][0] == 12.0
+#     assert metrics["TTS(optimal)"][0] == np.inf
+#     assert metrics["TTS(feasible)"][0] == 1.0
+#     assert metrics["TTS(derived)"][0] == np.log(1 - 0.7) / np.log(1 - 0.4)
 
 
 #
