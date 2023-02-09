@@ -391,10 +391,10 @@ def results_for_multi_const_problem():
 #     # Benchmarkインスタンスのevaluateでテスト
 #     opt_value = 3.0
 #     pr = 0.7
-# 
+#
 #     evaluator = jb.Evaluator(results_for_multi_const_problem)
 #     metrics = evaluator.calc_typical_metrics(opt_value=opt_value, pr=pr)
-# 
+#
 #     #
 #     assert metrics["success_probability"][0] == 0.4
 #     assert metrics["feasible_rate"][0] == 0.7
