@@ -121,6 +121,9 @@ class TimeSeries(Figure):
         elif len(marker_list) != len(data):
             raise ValueError("marker_list and data must be same length.")
 
+        if xlabel is None:
+            xlabel = "time"
+
         fig, ax = plt.subplots(figsize=figsize)
         fig.suptitle(title)
 
@@ -137,8 +140,7 @@ class TimeSeries(Figure):
                 marker=marker_list[i],
             )
 
-        if xlabel is not None:
-            ax.set_xlabel(xlabel)
+        ax.set_xlabel(xlabel)
         if ylabel is not None:
             ax.set_ylabel(ylabel)
         if xticks is not None:
