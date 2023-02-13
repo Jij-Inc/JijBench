@@ -11,7 +11,7 @@ import pandas as pd
 import pytest
 
 import jijbench as jb
-from jijbench.exceptions import StoreResultFailedError
+from jijbench.consts.path import DEFAULT_RESULT_DIR
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -24,74 +24,13 @@ def pre_post_process():
         shutil.rmtree(norm_path)
 
 
-def sample_qubo():
-    dimod_sampleset = dimod.SampleSet.from_samples(
-        samples_like=[
-            {"x[0][0]": 1, "x[0][1]": 0, "x[1][0]": 0, "x[1][1]": 1},  # 最適解
-            {
-                "x[0][0]": 0,
-                "x[0][1]": 1,
-                "x[1][0]": 1,
-                "x[1][1]": 0,
-            },  # 実行可能解だけど最適解ではない
-            {
-                "x[0][0]": 0,
-                "x[0][1]": 0,
-                "x[1][0]": 0,
-                "x[1][1]": 0,
-            },  # 実行不可能解、目的関数値 < 最適値
-            {
-                "x[0][0]": 1,
-                "x[0][1]": 0,
-                "x[1][0]": 1,
-                "x[1][1]": 0,
-            },  # 制約onehot1だけ満たす
-        ],
-        vartype="BINARY",
-        energy=[3, 24, 0, 20],
-        num_occurrences=[4, 3, 2, 1],
-    )
-    dimod_sampleset.info["execution_time"] = 1.0
-    return dimod_sampleset
-
-
-def decode():
-    jm_sampleset_dict = {
-        "record": {
-            "solution": {
-                "x": [
-                    (([0, 1], [0, 1]), [1, 1], (2, 2)),
-                    (([0, 1], [1, 0]), [1, 1], (2, 2)),
-                    (([], []), [], (2, 2)),
-                    (([0, 1], [0, 0]), [1, 1], (2, 2)),
-                ]
-            },
-            "num_occurrences": [4, 3, 2, 1],
-        },
-        "evaluation": {
-            "energy": [3.0, 24.0, 0.0, 20.0],
-            "objective": [3.0, 24.0, 0.0, 17.0],
-            "constraint_violations": {
-                "onehot1": [0.0, 0.0, 2.0, 0.0],
-                "onehot2": [0.0, 0.0, 2.0, 2.0],
-            },
-            "penalty": {},
-        },
-        "measuring_time": {"solve": None, "system": None, "total": None},
-    }
-    jm_sampleset = jm.SampleSet.from_serializable(jm_sampleset_dict)
-    solving_time = jm.SolvingTime(
-        **{"preprocess": 1.0, "solve": 1.0, "postprocess": 1.0}
-    )
-    jm_sampleset.measuring_time.solve = solving_time
-    return jm_sampleset
-
-
 def test_simple_experiment():
     e = jb.Experiment(name="test")
+    def func():
+        return 1
     for _ in range(3):
         with e:
-            solver = jb.Solver(sample_model)
+            solver = jb.Solver(func)
             record = solver([])
             record.name = jb.ID().data
             e.append(record)
@@ -165,46 +104,68 @@ def test_construct_experiment():
 #     cols = droped_table.columns
 #     "energy" in cols
 #     "energy_min" in # #
-# def test_jijmodeling():
-#     experiment = jb.Experiment(autosave=#
-#     with experiment:
-#         jm_sampleset = decode()
-#         experiment.store({"result": jm_sampleset#
-#     droped_table = experiment.table.dropna(axis="columns#
-#     cols = droped_table.columns
-#     "energy" in cols
-#     "energy_min" in cols
-#     "num_feasible" in # #
-# def test_jijmodeling_iteration():
-#     experiment = jb.Experiment(autosave=#
-#     for _ in range(3):
-#         with experiment:
-#             jm_sampleset = decode()
-#             experiment.store({"result": jm_sampleset#
-#     droped_table = experiment.table.dropna(axis="columns#
-#     cols = droped_table.columns
-#     "energy" in cols
-#     "energy_min" in cols
-#     "num_feasible" in # #
-# def test_file_save_load():
-#     experiment = jb.Experiment(autosave=#
-#     for _ in range(3):
-#         with experiment:
-#             jm_sampleset = decode()
-#             experiment.store({"result": jm_sampleset#
-#     experiment.save#
-#     load_experiment = jb.Experiment.load(
-#         experiment_id=experiment.experiment_id, benchmark_id=experiment.benchmark_id
-#     #
-#     original_cols = experiment.table.columns
-#     load_cols = load_experiment.table.columns
-#     for c in original_cols:
-#         c in #
-#     assert len(experiment.table.index) == len(load_experiment.table.index)
-#     assert len(experiment.artifact) == len(load_experiment.artifact)
-#     for artifact in load_experiment.artifact.values():
-#         assert isinstance(artifact["result"], jm.#
-#     assert experiment._artifact.timestamp == load_experiment._artifact.# #
+def test_jijmodeling(sample_model):
+    experiment = jb.Experiment(autosave=False)
+    
+    with experiment:
+        solver = jb.Solver(sample_model)
+        record = solver([])
+        record.name = jb.ID().data
+        experiment.append(record)
+        
+    droped_table = experiment.table.dropna(axis="columns")
+
+    cols = droped_table.columns
+    assert "energy" in cols
+    assert "num_feasible" in cols
+
+
+def test_jijmodeling_iteration(sample_model):
+    experiment = jb.Experiment(autosave=False)
+    for _ in range(3):
+        with experiment:
+            solver = jb.Solver(sample_model)
+            record = solver([])
+            record.name = jb.ID().data
+            experiment.append(record)
+
+    droped_table = experiment.table.dropna(axis="columns")
+
+    cols = droped_table.columns
+    assert "energy" in cols
+    assert "num_feasible" in cols
+
+
+def test_file_save_load(sample_model, knapsack_problem, knapsack_instance_data):
+    experiment = jb.Experiment(autosave=False)
+    for _ in range(3):
+        with experiment:
+            solver = jb.Solver(sample_model)
+            # x1 = jb.Parameter(knapsack_problem, name="")
+            # x2 = jb.Parameter(knapsack_instance_data)
+            record = solver([])
+            record.name = jb.ID().data
+            experiment.append(record)
+
+    experiment.save()
+    print("listdir of DEFAULT_RESULT_DIR: ")
+    print(os.listdir(DEFAULT_RESULT_DIR))
+    load_experiment = jb.load(DEFAULT_RESULT_DIR)  # ここでエラー出る
+
+    original_cols = experiment.table.columns
+    load_cols = load_experiment.table.columns
+    for c in original_cols:
+        assert (c in load_cols)
+    assert len(experiment.table.index) == len(load_experiment.table.index)
+    assert len(experiment.artifact) == len(load_experiment.artifact)
+    print(load_experiment.operator)
+    for artifact in load_experiment.artifact.values():
+        # assert isinstance(artifact["record"], jm.SampleSet)  # あとで対応
+        print(artifact)  #あとで消す
+
+    # assert experiment.artifact.timestamp == load_experiment.artifact.timestamp  # あとで対応
+
+
 # def test_auto_save():
 #     experiment = jb.Experiment(autosave=True)
 #     num_rows = 3
