@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import jijmodeling as jm
 import typing as tp
+import inspect
 import itertools
 import pathlib
 
@@ -13,6 +15,8 @@ from jijbench.experiment.experiment import Experiment
 from jijbench.functions.concat import Concat
 from jijbench.functions.factory import RecordFactory
 from jijbench.solver.base import Parameter, Solver
+from jijbench.solver.jijzept import InstanceData, UserDefinedModel
+from jijzept.sampler.base_sampler import JijZeptBaseSampler
 
 
 class Benchmark(FunctionNode[Experiment, Experiment]):
@@ -22,7 +26,7 @@ class Benchmark(FunctionNode[Experiment, Experiment]):
     over a set of parameters and solvers. The benchmark will be run sequentially
     or concurrently and the results of each experiment will be concatenated and
     returned as a single experiment.
-    
+
     Attributes:
         params (dict[str, Iterable[Any]]): List of lists of parameters for the benchmark.
         solver (Callable | list[Callable]): List of solvers to be used in the benchmark.
@@ -53,7 +57,10 @@ class Benchmark(FunctionNode[Experiment, Experiment]):
         super().__init__(name)
 
         self.params = [
-            [Parameter(v, k) for k, v in zip(params.keys(), r)]
+            [
+                v if isinstance(v, Parameter) else Parameter(v, k)
+                for k, v in zip(params.keys(), r)
+            ]
             for r in itertools.product(*params.values())
         ]
 
@@ -76,8 +83,8 @@ class Benchmark(FunctionNode[Experiment, Experiment]):
             inputs (list[Experiment] | None, optional): A list of input experiments to be used by the benchmark. Defaults to None.
             concurrent (bool, optional): Whether to run the experiments concurrently or not. Defaults to False.
             is_parsed_sampleset (bool, optional): Whether the sampleset is parsed or not. Defaults to True.
-            autosave (bool, optional): _description_. Whether to automatically save the Experiment object after each run. Defaults to True.
-            savedir (str | pathlib.Path, optional): _description_. The directory to save the Experiment object. Defaults to DEFAULT_RESULT_DIR.
+            autosave (bool, optional): Whether to automatically save the Experiment object after each run. Defaults to True.
+            savedir (str | pathlib.Path, optional): The directory to save the Experiment object. Defaults to DEFAULT_RESULT_DIR.
 
         Returns:
             Experiment: _description_
@@ -165,3 +172,21 @@ class Benchmark(FunctionNode[Experiment, Experiment]):
             experiment.name = ID().data
         experiment.data[1].index.names = ["benchmark_id", "experiment_id", "run_id"]
         return experiment
+
+
+def construct_benchmark_for_jijzept_sampler(
+    params: dict[str, tp.Iterable],
+    sampler: JijZeptBaseSampler,
+    problem: jm.Problem,
+    instance_data: jm.PH_VALUES_INTERFACE,
+) -> Benchmark:
+    """_summary_
+
+    Args:
+        problem (_type_): _description_
+        instance_data (_type_): _description_
+    """
+    sampler_parameters = inspect.signature(getattr(sampler, "sample_model"))
+    print(sampler_parameters)
+    instance_data = InstanceData(instance_data)
+    model = UserDefinedModel((data, instance_data))

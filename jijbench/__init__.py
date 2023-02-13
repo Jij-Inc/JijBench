@@ -5,7 +5,7 @@ __path__ = extend_path(__path__, __name__)
 import jijbench.functions as functions
 import jijbench.node as node
 
-from jijbench.benchmark.benchmark import Benchmark
+from jijbench.benchmark.benchmark import Benchmark, construct_benchmark_for_jijzept_sampler
 from jijbench.datasets.instance_data import get_instance_data
 from jijbench.datasets.problem import get_problem
 from jijbench.elements.array import Array
@@ -21,6 +21,7 @@ from jijbench.solver.jijzept import InstanceData, UserDefinedModel
 
 
 __all__ = [
+    "construct_benchmark_for_jijzept_sampler",
     "functions",
     "node",
     "get_instance_data",

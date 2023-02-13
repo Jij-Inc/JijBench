@@ -121,7 +121,6 @@ class FunctionNode(tp.Generic[DataNodeT, DataNodeT2], metaclass=abc.ABCMeta):
         """
         node = self.operate(inputs, **kwargs)
         self.inputs += inputs
-        # node.operator = self
         return node
 
     @property
