@@ -1,13 +1,14 @@
 import os, shutil, time
 
-import dimod
 import jijmodeling as jm
+import jijzept as jz
 import numpy as np
 import pandas as pd
 import pytest
 
 import jijbench as jb
 from jijbench.exceptions.exceptions import SolverFailedError, ConcurrentFailedError
+from pytest_mock import MockerFixture
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -20,52 +21,6 @@ def pre_post_process():
         shutil.rmtree(norm_path)
 
 
-@pytest.fixture
-def problem():
-    return jb.get_problem("Knapsack")
-
-
-@pytest.fixture
-def problem_list():
-    return [jb.get_problem("Knapsack"), jb.get_problem("TSP")]
-
-
-@pytest.fixture
-def instance_data():
-    return jb.get_instance_data("Knapsack")[0]
-
-
-@pytest.fixture
-def instance_data_list():
-    return jb.get_instance_data("Knapsack")
-
-
-@pytest.fixture
-def multi_instance_data_list():
-    return [jb.get_instance_data("Knapsack")[0:2], jb.get_instance_data("TSP")[0:1]]
-
-
-@pytest.fixture
-def ph_value():
-    return jb.get_instance_data("Knapsack")[0][1]
-
-
-@pytest.fixture
-def ph_value_list():
-    instance_data = jb.get_instance_data("Knapsack")
-    return [instance_data[0][1], instance_data[1][1]]
-
-
-@pytest.fixture
-def multi_ph_value_list():
-    knapsack_instance_data = jb.get_instance_data("Knapsack")
-    tsp_instance_data = jb.get_instance_data("TSP")
-    return [
-        [knapsack_instance_data[0][1], knapsack_instance_data[1][1]],
-        [tsp_instance_data[0][1]],
-    ]
-
-
 def generate_problem():
     d = jm.Placeholder("d", dim=1)
     x = jm.Binary("x", shape=(d.shape[0].set_latex("n")))
@@ -74,69 +29,6 @@ def generate_problem():
     problem += jm.Sum(i, d[i] * x[i])
     problem += jm.Constraint("onehot1", jm.Sum(i, x[i]) == 1)
     return problem
-
-
-def sample_qubo():
-    dimod_sampleset = dimod.SampleSet.from_samples(
-        samples_like=[
-            {"x[0][0]": 1, "x[0][1]": 0, "x[1][0]": 0, "x[1][1]": 1},  # 最適解
-            {
-                "x[0][0]": 0,
-                "x[0][1]": 1,
-                "x[1][0]": 1,
-                "x[1][1]": 0,
-            },  # 実行可能解だけど最適解ではない
-            {
-                "x[0][0]": 0,
-                "x[0][1]": 0,
-                "x[1][0]": 0,
-                "x[1][1]": 0,
-            },  # 実行不可能解、目的関数値 < 最適値
-            {
-                "x[0][0]": 1,
-                "x[0][1]": 0,
-                "x[1][0]": 1,
-                "x[1][1]": 0,
-            },  # 制約onehot1だけ満たす
-        ],
-        vartype="BINARY",
-        energy=[3, 24, 0, 20],
-        num_occurrences=[4, 3, 2, 1],
-    )
-    dimod_sampleset.info["execution_time"] = 1.0
-    return dimod_sampleset
-
-
-def sample_model():
-    jm_sampleset_dict = {
-        "record": {
-            "solution": {
-                "x": [
-                    (([0, 1], [0, 1]), [1, 1], (2, 2)),
-                    (([0, 1], [1, 0]), [1, 1], (2, 2)),
-                    (([], []), [], (2, 2)),
-                    (([0, 1], [0, 0]), [1, 1], (2, 2)),
-                ]
-            },
-            "num_occurrences": [4, 3, 2, 1],
-        },
-        "evaluation": {
-            "energy": [3.0, 24.0, 0.0, 20.0],
-            "objective": [3.0, 24.0, 0.0, 17.0],
-            "constraint_violations": {
-                "onehot1": [0.0, 0.0, 2.0, 0.0],
-                "onehot2": [0.0, 0.0, 2.0, 2.0],
-            },
-            "penalty": {},
-        },
-        "measuring_time": {"solve": None, "system": None, "total": None},
-    }
-    jm_sampleset = jm.SampleSet.from_serializable(jm_sampleset_dict)
-    solving_time = jm.SolvingTime(
-        **{"preprocess": 1.0, "solve": 1.0, "postprocess": 1.0}
-    )
-    jm_sampleset.measuring_time.solve = solving_time
-    return jm_sampleset
 
 
 # def test_set_problem_in_benchmark(problem, problem_list):
@@ -151,62 +43,12 @@ def sample_model():
 #     assert isinstance(bench.problem[0], jm.Problem)
 #
 #
-# def test_set_instance_data_in_benchmark(
-#     ph_value,
-#     ph_value_list,
-#     multi_ph_value_list,
-#     instance_data,
-#     instance_data_list,
-#     multi_instance_data_list,
-# ):
-#     # PH_VALUES_INTERFACE
-#     bench = jb.Benchmark({"dummy": [1]}, solver="JijSASampler", instance_data=ph_value)
-#     assert len(bench.instance_data) == 1
-#     assert isinstance(bench.instance_data[0], list)
-#     assert isinstance(bench.instance_data[0][0], tuple)
-#
-#     # List[PH_VALUES_INTERFACE]
-#     bench = jb.Benchmark(
-#         {"dummy": [1]}, solver="JijSASampler", instance_data=ph_value_list
-#     )
-#     assert len(bench.instance_data) == 1
-#     assert isinstance(bench.instance_data[0], list)
-#     assert isinstance(bench.instance_data[0][0], tuple)
-#
-#     # List[List[PH_VALUES_INTERFACE]]
-#     bench = jb.Benchmark(
-#         {"dummy": [1]}, solver="JijSASampler", instance_data=multi_ph_value_list
-#     )
-#     assert len(bench.instance_data) == 2
-#     assert isinstance(bench.instance_data[0], list)
-#     assert isinstance(bench.instance_data[0][0], tuple)
-#
-#     # Tuple[str, PH_VALUES_INTERFACE]
-#     bench = jb.Benchmark(
-#         {"dummy": [1]}, solver="JijSASampler", instance_data=instance_data
-#     )
-#     assert len(bench.instance_data) == 1
-#     assert isinstance(bench.instance_data[0], list)
-#     assert isinstance(bench.instance_data[0][0], tuple)
-#
-#     # List[Tuple[str, PH_VALUES_INTERFACE]]
-#     bench = jb.Benchmark(
-#         {"dummy": [1]}, solver="JijSASampler", instance_data=instance_data_list
-#     )
-#
-#     assert len(bench.instance_data) == 1
-#     assert isinstance(bench.instance_data[0], list)
-#     assert isinstance(bench.instance_data[0][0], tuple)
-#
-#     # List[List[Tuple[str, PH_VALUES_INTERFACE]]]
-#     bench = jb.Benchmark(
-#         {"dummy": [1]},
-#         solver="JijSASampler",
-#         instance_data=multi_instance_data_list,
-#     )
-#     assert len(bench.instance_data) == 2
-#     assert isinstance(bench.instance_data[0], list)
-#     assert isinstance(bench.instance_data[0][0], tuple)
+def test_set_instance_data_in_benchmark(ph_value):
+    # PH_VALUES_INTERFACE
+    instance_data = jb.InstanceData(ph_value, "instance_data")
+    bench = jb.Benchmark({"instance_data": [instance_data]}, solver=lambda: ())
+
+    assert instance_data in bench.params[0]
 
 
 def test_benchmark_params():
@@ -215,7 +57,7 @@ def test_benchmark_params():
             "num_reads": [1, 2],
             "num_sweeps": [10],
         },
-        solver=sample_qubo,
+        solver=sample_model,
     )
     print()
     print(bench.params)
@@ -246,6 +88,16 @@ def test_simple_benchmark():
 
     assert t1.iloc[0, 0] == 1
     assert t2.iloc[0, 0] == 2
+
+
+def test_benchmark_jijzept_sampler(problem, ph_value):
+    bench = jb.construct_benchmark_for_jijzept_sampler(
+        {"num_reads": [5]},
+    )
+
+    res = bench()
+
+    # print(res.params_table)
 
 
 def test_apply_benchmark():

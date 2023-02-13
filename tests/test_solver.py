@@ -41,13 +41,14 @@ def test_instance_data():
             "list": [1, 2.0],
             "ndarray": np.array([[1, 2], [3, 4]]),
         },
-        "sample"
+        "sample",
     )
-    
+
     assert instance_data.data["int"] == 1
     assert instance_data.data["float"] == 1.0
     assert instance_data.data["list"] == [1, 2.0]
     assert isinstance(instance_data.data["ndarray"], np.ndarray)
+
 
 def test_invalid_instance_data_keys():
     with pytest.raises(TypeError):
@@ -58,9 +59,10 @@ def test_invalid_instance_data_keys():
                 0: [1, 2.0],
                 1: np.array([[1, 2], [3, 4]]),
             },
-            "sample"
+            "sample",
         )
-    
+
+
 def test_invalid_instance_data_values():
     with pytest.raises(TypeError):
         instance_data = jb.InstanceData(
@@ -70,8 +72,9 @@ def test_invalid_instance_data_values():
                 "list": [1, 2.0],
                 "ndarray": np.array([[1, 2], [3, 4]]),
             },
-            "sample"
+            "sample",
         )
+
 
 def test_user_defined_model():
     problem = jm.Problem("sample")
@@ -80,10 +83,29 @@ def test_user_defined_model():
     c = jm.Placeholder("c", 1)
     i = jm.Element("i", 5)
     x = jm.DecisionVariable("x", 5)
-    
+
     problem = jm.Problem("sample")
-    problem += a + b + jm.Sum(i, c[i] * x[i])
-    problem
+    problem += a + jm.Sum(i, c[i] * x[i])
+    problem += jm.Constraint("const", x[:] == b)
+
+    instance_data = jb.InstanceData({"a": 1, "b": 2.0, "c": [1, 2]}, "sample")
+
+    model = jb.UserDefinedModel((problem, instance_data), "test")
+
+
+def test_invalid_user_defined_model():
+    problem = jm.Problem("sample")
+    a = jm.Placeholder("a")
+    b = jm.Placeholder("b")
+    c = jm.Placeholder("c", 1)
+    i = jm.Element("i", 5)
+    x = jm.DecisionVariable("x", 5)
+
+    problem = jm.Problem("sample")
+    problem += a + jm.Sum(i, c[i] * x[i])
+    problem += jm.Constraint("const", x[:] == b)
     
+    instance_data = jb.InstanceData({"a": 1, "c": [1, 2]}, "sample")
     
-    
+    with pytest.raises(KeyError):
+        model = jb.UserDefinedModel((problem, instance_data), "test")
