@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from collections import OrderedDict
-import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import numpy.typing as npt
