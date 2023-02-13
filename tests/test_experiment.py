@@ -181,17 +181,23 @@ def test_jijmodeling():
     assert "num_feasible" in cols
 
 
-# def test_jijmodeling_iteration():
-#     experiment = jb.Experiment(autosave=#
-#     for _ in range(3):
-#         with experiment:
-#             jm_sampleset = decode()
-#             experiment.store({"result": jm_sampleset#
-#     droped_table = experiment.table.dropna(axis="columns#
-#     cols = droped_table.columns
-#     "energy" in cols
-#     "energy_min" in cols
-#     "num_feasible" in # #
+def test_jijmodeling_iteration():
+    experiment = jb.Experiment(autosave=False)
+    for _ in range(3):
+        with experiment:
+            jm_sampleset = sample_model
+            solver = jb.Solver(jm_sampleset)
+            record = solver([])
+            record.name = jb.ID().data
+            experiment.append(record)
+
+    droped_table = experiment.table.dropna(axis="columns")
+
+    cols = droped_table.columns
+    assert "energy" in cols
+    assert "num_feasible" in cols
+
+
 # def test_file_save_load():
 #     experiment = jb.Experiment(autosave=#
 #     for _ in range(3):
