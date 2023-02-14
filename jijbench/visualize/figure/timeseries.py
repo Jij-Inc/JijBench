@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import numpy.typing as npt
 
-from jijbench.figure.interface import Figure
+from jijbench.visualize.figure.interface import Figure
 
 
 class TimeSeries(Figure):
