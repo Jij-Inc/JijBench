@@ -41,7 +41,7 @@ class Record(Mapping[pd.Series]):
 
     Attributes:
         data (pandas.Series): pandas series object.
-        name (str): hashable object that acts as the name of the record.
+        name (Hashable): The name of the record. Defaults to None.
     """
 
     data: pd.Series = field(default_factory=lambda: pd.Series(dtype="object"))
@@ -95,7 +95,7 @@ class Record(Mapping[pd.Series]):
         """
         concat: Concat[Record] = Concat()
         node = self.apply(concat, [record], name=self.name)
-        self.__init__(**node.__dict__)
+        self._init_attrs(node)
 
     def view(self) -> pd.Series:
         """Return the data of each DataNode in the Series as a new Series."""
@@ -108,7 +108,7 @@ class Artifact(Mapping[ArtifactDataType]):
 
     Attributes:
         data (ArtifactDataType): The data stored in the Artifact.
-        name (tp.Hashable, optional): The name of the Artifact. Defaults to None.
+        name (Hashable): The name of the Artifact. Defaults to None.
     """
 
     data: ArtifactDataType = field(default_factory=dict)
@@ -172,7 +172,7 @@ class Artifact(Mapping[ArtifactDataType]):
         concat: Concat[Artifact] = Concat()
         other = ArtifactFactory()([record])
         node = self.apply(concat, [other], name=self.name)
-        self.__init__(**node.__dict__)
+        self._init_attrs(node)
 
     def view(self) -> ArtifactDataType:
         """Return the data of each DataNode in the dict as a new dict."""
@@ -258,7 +258,7 @@ class Table(Mapping[pd.DataFrame]):
         concat: Concat[Table] = Concat()
         other = TableFactory()([record])
         node = self.apply(concat, [other], name=self.name, axis=0)
-        self.__init__(**node.__dict__)
+        self._init_attrs(node)
 
     def view(self) -> pd.DataFrame:
         """Return the data of each DataNode in the pandas.DataFrame as a new pandas.DataFrame."""
