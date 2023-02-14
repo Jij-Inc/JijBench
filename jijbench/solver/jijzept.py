@@ -11,8 +11,29 @@ from jijmodeling.expression.extract import extract_vars_from_problem
 
 @dataclass
 class InstanceData(Parameter[jm.PH_VALUES_INTERFACE]):
+    """Instance data for JijZept.
+
+    Attributes:
+        data (jijmodeling.PH_VALUES_INTERFACE): A dictionary where keys are the string labels of placeholders in the optimization problem,
+            and values are integer, float, list, or numpy.ndarray type data.
+        name (str): The name of instance_data.
+    """
+
     @classmethod
     def validate_data(cls, data: jm.PH_VALUES_INTERFACE) -> jm.PH_VALUES_INTERFACE:
+        """
+        Validate the instance data to ensure it has the correct format.
+
+        Args:
+            data (dict): The instance data to validate.
+
+        Raises:
+            TypeError: If any key in the data is not of type str.
+            TypeError: If any value in the data is not of type int, float, list, or numpy.ndarray.
+
+        Returns:
+            dict: The validated instance data.
+        """
         data = cls._validate_dtype(data, (dict,))
 
         is_instance_data_keys = [isinstance(k, str) for k in data]
@@ -37,10 +58,29 @@ class InstanceData(Parameter[jm.PH_VALUES_INTERFACE]):
 
 @dataclass
 class UserDefinedModel(Parameter[ModelType]):
+    """User defined model for jijzept.
+
+    Attributes:
+        data: A tuple of `Problem` and `PH_VALUES_INTERFACE` which contains the
+            problem definition and the instance data.
+        name (str): The name of model.
+    """
+
     @classmethod
     def validate_data(cls, data: ModelType) -> ModelType:
+        """Validate the instance data in user-defined model.
+
+        Args:
+            data: A tuple of `Problem` and `PH_VALUES_INTERFACE` which contains the problem and the instance data.
+
+        Raises:
+            KeyError: If any label in the `Problem` is missing from the instance data.
+
+        Returns:
+            ModelType: The validated data.
+        """
         problem, instance_data = data
-        keys = list(instance_data.data.keys())
+        keys = list(instance_data.keys())
         ph_labels = [
             v.label
             for v in extract_vars_from_problem(problem)
@@ -54,3 +94,13 @@ class UserDefinedModel(Parameter[ModelType]):
                 f"Instance data needs label(s) {missing_labels}, but are not included."
             )
         return data
+
+    @property
+    def problem(self) -> jm.Problem:
+        """Return the problem in the data of user defined model."""
+        return self.data[0]
+
+    @property
+    def instance_data(self) -> jm.PH_VALUES_INTERFACE:
+        """Return the instance data in the data of user defined model."""
+        return self.data[1]

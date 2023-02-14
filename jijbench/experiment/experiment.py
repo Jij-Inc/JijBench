@@ -129,7 +129,7 @@ class Experiment(Mapping[ExperimentDataType]):
             autosave=self.autosave,
             savedir=self.savedir,
         )
-        self.__init__(**node.__dict__)
+        self._init_attrs(node)
 
     def save(self):
         """Save the experiment."""

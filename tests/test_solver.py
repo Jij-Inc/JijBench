@@ -88,7 +88,7 @@ def test_user_defined_model():
     problem += a + jm.Sum(i, c[i] * x[i])
     problem += jm.Constraint("const", x[:] == b)
 
-    instance_data = jb.InstanceData({"a": 1, "b": 2.0, "c": [1, 2]}, "sample")
+    instance_data: jm.PH_VALUES_INTERFACE = {"a": 1, "b": 2.0, "c": [1, 2]}
 
     model = jb.UserDefinedModel((problem, instance_data), "test")
 
@@ -104,8 +104,7 @@ def test_invalid_user_defined_model():
     problem = jm.Problem("sample")
     problem += a + jm.Sum(i, c[i] * x[i])
     problem += jm.Constraint("const", x[:] == b)
-    
-    instance_data = jb.InstanceData({"a": 1, "c": [1, 2]}, "sample")
-    
+
+    instance_data: jm.PH_VALUES_INTERFACE = {"a": 1, "c": [1, 2]}
     with pytest.raises(KeyError):
         model = jb.UserDefinedModel((problem, instance_data), "test")

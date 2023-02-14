@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import jijmodeling as jm
 import typing as tp
 import inspect
 

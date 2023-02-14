@@ -16,7 +16,9 @@ from jijbench.functions.concat import Concat
 from jijbench.functions.factory import RecordFactory
 from jijbench.solver.base import Parameter, Solver
 from jijbench.solver.jijzept import InstanceData, UserDefinedModel
-from jijzept.sampler.base_sampler import JijZeptBaseSampler
+
+if tp.TYPE_CHECKING:
+    from jijzept.sampler.base_sampler import JijZeptBaseSampler
 
 
 class Benchmark(FunctionNode[Experiment, Experiment]):
@@ -77,7 +79,7 @@ class Benchmark(FunctionNode[Experiment, Experiment]):
         autosave: bool = True,
         savedir: str | pathlib.Path = DEFAULT_RESULT_DIR,
     ) -> Experiment:
-        """_summary_
+        """Executes the benchmark with the given parameters and solvers.
 
         Args:
             inputs (list[Experiment] | None, optional): A list of input experiments to be used by the benchmark. Defaults to None.
@@ -87,7 +89,7 @@ class Benchmark(FunctionNode[Experiment, Experiment]):
             savedir (str | pathlib.Path, optional): The directory to save the Experiment object. Defaults to DEFAULT_RESULT_DIR.
 
         Returns:
-            Experiment: _description_
+            Experiment: The result of the benchmark as an Experiment object.
         """
         savedir = (
             savedir if isinstance(savedir, pathlib.Path) else pathlib.Path(savedir)
@@ -174,19 +176,59 @@ class Benchmark(FunctionNode[Experiment, Experiment]):
         return experiment
 
 
-def construct_benchmark_for_jijzept_sampler(
-    params: dict[str, tp.Iterable],
+def construct_benchmark_for(
     sampler: JijZeptBaseSampler,
-    problem: jm.Problem,
-    instance_data: jm.PH_VALUES_INTERFACE,
+    models: list[tuple[jm.Problem, jm.PH_VALUES_INTERFACE]],
+    params: dict[str, tp.Iterable],
+    name: str | None = None,
 ) -> Benchmark:
-    """_summary_
+    """ Create a Benchmark object.
 
     Args:
-        problem (_type_): _description_
-        instance_data (_type_): _description_
+        sampler (JijZeptBaseSampler): The sampler to use for creating the benchmark.
+        models (list[tuple[jijmodeling.Problem, jijmodeling.PH_VALUES_INTERFACE]]): A list of tuples containing jijmodeling.Problem and jijmodeling.PH_VALUES_INTERFACE.
+        params (dict[str, Iterable]): The parameters to use for creating the benchmark.
+        name (str | None, optional): The name of the benchmark. Defaults to None.
+
+    Raises:
+        KeyError: If the argument corresponding to jijmodeling.Prolblem is missing in sample_model.
+        KeyError: If the argument corresponding to instance data is missing in sample_model.
+
+    Returns:
+        Benchmark: The constructed benchmark.
     """
-    sampler_parameters = inspect.signature(getattr(sampler, "sample_model"))
-    print(sampler_parameters)
-    instance_data = InstanceData(instance_data)
-    model = UserDefinedModel((data, instance_data))
+    sample_model = getattr(sampler, "sample_model")
+    sampler_parameters = inspect.signature(sample_model).parameters
+    if "problem" in sampler_parameters:
+        argname_problem = "problem"
+    elif "model" in sampler_parameters:
+        argname_problem = "model"
+    else:
+        raise KeyError(
+            f"The argument corresponding to jijmodeling.Prolblem is missing in sample_model of {sampler.__class__.__name__}."
+        )
+
+    if "instance_data" in sampler_parameters:
+        argname_instance_data = "instance_data"
+    elif "feed_dict" in sampler_parameters:
+        argname_instance_data = "feed_dict"
+    else:
+        raise KeyError(
+            f"The argument corresponding to instance data is missing in sample_model of {sampler.__class__.__name__}."
+        )
+
+    bench = Benchmark(params, sample_model, name)
+
+    additional_params = []
+    for problem, instance_data in models:
+        data = (problem, instance_data)
+        data = UserDefinedModel.validate_data(data)
+        additional_params.append(
+            [
+                Parameter(data[0], argname_problem),
+                InstanceData(data[1], argname_instance_data),
+            ]
+        )
+    bench.params = [p + ap for p in bench.params for ap in additional_params]
+
+    return bench

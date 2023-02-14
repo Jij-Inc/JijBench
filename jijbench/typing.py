@@ -11,7 +11,6 @@ if tp.TYPE_CHECKING:
     from jijbench.mappings.mappings import Artifact, Record, Table
     from jijbench.experiment.experiment import Experiment
     from jijbench.node.base import DataNode
-    from jijbench.solver.jijzept import InstanceData
 
 T = tp.TypeVar("T")
 
@@ -26,7 +25,7 @@ DateTypes: TypeAlias = tp.Union[str, datetime.datetime, pd.Timestamp]
 NumberTypes: TypeAlias = tp.Union[int, float]
 
 # solver
-ModelType: TypeAlias = tp.Tuple[jm.Problem, "InstanceData"]
+ModelType: TypeAlias = tp.Tuple[jm.Problem, jm.PH_VALUES_INTERFACE]
 
 
 # mapping

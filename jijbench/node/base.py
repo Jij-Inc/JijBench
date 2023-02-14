@@ -20,7 +20,9 @@ class DataNode(tp.Generic[T], metaclass=abc.ABCMeta):
 
     data: T
     name: tp.Hashable
-    operator: FunctionNode | None = field(default=None, repr=False)
+
+    def __post_init__(self) -> None:
+        self.operator: FunctionNode | None = None
 
     def __setattr__(self, name: str, value: tp.Any) -> None:
         """Set the value of an attribute.
@@ -67,6 +69,16 @@ class DataNode(tp.Generic[T], metaclass=abc.ABCMeta):
             raise TypeError(
                 f"Attribute data of class {cls.__name__} must be type {dtype_str}."
             )
+
+    def _init_attrs(self, node: DataNode) -> None:
+        """Refresh the attributes in DataNode object.
+
+        Args:
+            node (DataNode): DataNode object.
+        """
+        operator = node.__dict__.pop("operator")
+        self.__init__(**node.__dict__)
+        self.operator = operator
 
     def apply(
         self,

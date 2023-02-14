@@ -1,5 +1,6 @@
 import os, shutil, time
 
+import inspect
 import jijmodeling as jm
 import jijzept as jz
 import numpy as np
@@ -8,7 +9,7 @@ import pytest
 
 import jijbench as jb
 from jijbench.exceptions.exceptions import SolverFailedError, ConcurrentFailedError
-from pytest_mock import MockerFixture
+from unittest.mock import MagicMock
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -21,48 +22,6 @@ def pre_post_process():
         shutil.rmtree(norm_path)
 
 
-def generate_problem():
-    d = jm.Placeholder("d", dim=1)
-    x = jm.Binary("x", shape=(d.shape[0].set_latex("n")))
-    i = jm.Element("i", d.shape[0])
-    problem = jm.Problem("problem")
-    problem += jm.Sum(i, d[i] * x[i])
-    problem += jm.Constraint("onehot1", jm.Sum(i, x[i]) == 1)
-    return problem
-
-
-# def test_set_problem_in_benchmark(problem, problem_list):
-#     bench = jb.Benchmark({"dummy": [1]}, solver="JijSASampler", problem=problem)
-#
-#     assert isinstance(bench.problem, list)
-#     assert isinstance(bench.problem[0], jm.Problem)
-#
-#     bench = jb.Benchmark({"dummy": [1]}, solver="JijSASampler", problem=problem_list)
-#
-#     assert isinstance(bench.problem, list)
-#     assert isinstance(bench.problem[0], jm.Problem)
-#
-#
-def test_set_instance_data_in_benchmark(ph_value):
-    # PH_VALUES_INTERFACE
-    instance_data = jb.InstanceData(ph_value, "instance_data")
-    bench = jb.Benchmark({"instance_data": [instance_data]}, solver=lambda: ())
-
-    assert instance_data in bench.params[0]
-
-
-def test_benchmark_params():
-    bench = jb.Benchmark(
-        {
-            "num_reads": [1, 2],
-            "num_sweeps": [10],
-        },
-        solver=sample_model,
-    )
-    print()
-    print(bench.params)
-
-
 def test_simple_benchmark():
     def func(x):
         return x
@@ -71,10 +30,6 @@ def test_simple_benchmark():
 
     res = bench()
     columns = res.table.columns
-
-    # ic()
-    # ic(res.data[1].data)
-    # ic(res.data[0].data)
 
     assert isinstance(res, jb.Experiment)
     assert "func_return[0]" in columns
@@ -90,14 +45,97 @@ def test_simple_benchmark():
     assert t2.iloc[0, 0] == 2
 
 
-def test_benchmark_jijzept_sampler(problem, ph_value):
-    bench = jb.construct_benchmark_for_jijzept_sampler(
-        {"num_reads": [5]},
+def test_benchmark_for_jijzept_sampler(
+    sample_model: MagicMock,
+    sa_sampler: jz.JijSASampler,
+    knapsack_problem: jm.Problem,
+    knapsack_instance_data: jm.PH_VALUES_INTERFACE,
+):
+    bench = jb.construct_benchmark_for(
+        sa_sampler,
+        [(knapsack_problem, knapsack_instance_data)],
+        {"num_reads": [1, 2]},
     )
-
     res = bench()
 
-    # print(res.params_table)
+    assert sample_model.call_count == 2
+    assert len(sample_model.call_args_list) == 2
+    sample_model.assert_called_with(
+        model=knapsack_problem, feed_dict=knapsack_instance_data
+    )
+
+    table = res.table.reset_index()
+    assert table.loc[0, "num_samples"] == 10
+    assert table.loc[0, "num_feasible"] == 7
+
+
+def test_benchmark_for_jijzept_sampler_with_multi_models(
+    sample_model: MagicMock,
+    sa_sampler: jz.JijSASampler,
+    knapsack_problem: jm.Problem,
+    knapsack_instance_data: jm.PH_VALUES_INTERFACE,
+    tsp_problem: jm.Problem,
+    tsp_instance_data: jm.PH_VALUES_INTERFACE,
+):
+    models = [
+        (knapsack_problem, knapsack_instance_data),
+        (tsp_problem, tsp_instance_data),
+    ]
+    bench = jb.construct_benchmark_for(
+        sa_sampler,
+        models,
+        {
+            "search": [True, False],
+            "num_search": [5],
+        },
+    )
+    res = bench()
+
+    assert sample_model.call_count == 4
+    assert len(sample_model.call_args_list) == 4
+
+    sample_model.assert_any_call(
+        model=knapsack_problem,
+        feed_dict=knapsack_instance_data,
+        search=True,
+        num_search=5,
+    )
+    sample_model.assert_any_call(
+        model=tsp_problem,
+        feed_dict=tsp_instance_data,
+        search=False,
+        num_search=5,
+    )
+
+    table = res.table.reset_index()
+    assert table.loc[0, "num_samples"] == 10
+    assert table.loc[0, "num_feasible"] == 7
+
+
+def test_benchmark_for_jijzept_sampler_using_params(onehot_problem: jm.Problem, jm_sampleset: jm.SampleSet):
+    def f(problem, instance_data, **kwargs) -> jm.SampleSet:
+        if not isinstance(problem, jm.Problem):
+            raise TypeError
+        if not isinstance(instance_data, dict):
+            raise TypeError
+        return jm_sampleset
+
+    instance_data = {"d": [1 for _ in range(10)]}
+    instance_data["d"][0] = -1
+
+    bench = jb.Benchmark(
+        {
+            "num_reads": [1, 2],
+            "num_sweeps": [10],
+            "problem": [onehot_problem],
+            "instance_data": [instance_data],
+        },
+        solver=f,
+    )
+    res = bench()
+
+    # assert res.table["problem_name"][0] == "problem"
+    # assert res.table["instance_data_name"][0] == "Unnamed[0]"
 
 
 def test_apply_benchmark():
@@ -145,7 +183,7 @@ def test_benchmark_with_multi_return_solver():
     bench = jb.Benchmark({"num_reads": [1, 2], "num_sweeps": [10]}, solver=func)
     res = bench()
 
-    # assert res.table["solver"][0] == func.__name__
+    assert len(res.table) == 2
     assert res.table["func_return[0]"][0] == "a"
     assert res.table["func_return[1]"][0] == 1.0
 
@@ -159,98 +197,23 @@ def test_benchmark_with_multi_return_solver():
 #         bench.run(sync=False)
 
 
-def test_benchmark_with_custom_sample_model(
-    problem,
-    ph_value,
-    ph_value_list,
-    instance_data,
-    instance_data_list,
-):
-    for d in [ph_value, ph_value_list, instance_data, instance_data_list][:1]:
-        bench = jb.Benchmark(
-            {
-                "num_reads": [1, 2],
-                "num_sweeps": [10],
-                "multipliers": [{"knapsack_constraint": 1}],
-                "problem": [problem],
-                "instance_data": [d],
-            },
-            solver=sample_model,
-        )
-        res = bench()
-        columns = res.table.columns
-
-        print()
-        print(res.data[1])
-        print(res.table)
-        print(res.operator)
-
-        # assert res.table["solver"].iloc[0] == sample_model.__name__
-        assert "sample_molel_return[0]" not in columns
-        # assert res.table["problem_name"].iloc[0] == "knapsack"
-
-
-def test_benchmark_with_custom_sample_model_for_multi_problem(
-    problem_list, multi_ph_value_list, multi_instance_data_list
-):
-    for d in [multi_ph_value_list, multi_instance_data_list]:
-        bench = jb.Benchmark(
-            {
-                "num_reads": [1, 2],
-                "num_sweeps": [10],
-                "problem": [problem_list],
-                "instance_data": [d],
-            },
-            solver=sample_model,
-        )
-        res = bench()
-        columns = res.table.columns
-
-        # assert res.table["solver"].iloc[0] == sample_model.__name__
-        assert "sample_model_return[0]" not in columns
-        # assert res.table["problem_name"].iloc[0] == "knapsack"
-
-
-def test_benchmark_with_any_problem_and_instance_data():
-    problem = generate_problem()
-    instance_data = {"d": [1 for _ in range(10)]}
-    instance_data["d"][0] = -1
-
-    bench = jb.Benchmark(
-        {
-            "num_reads": [1, 2],
-            "num_sweeps": [10],
-            "problem": [problem],
-            "instance_data": [instance_data],
-        },
-        solver=sample_qubo,
-    )
-    res = bench()
-
-    # assert res.table["problem_name"][0] == "problem"
-    # assert res.table["instance_data_name"][0] == "Unnamed[0]"
-
-
 def test_benchmark_with_callable_args():
-    def rap_solver(N, sample_model):
-        d_p = [1 for _ in range(N)]
-        d_p[0] = -1
-        s = time.time()
-        dimod_sampleset = sample_qubo()
-        dimod_sampleset.info["total_time"] = time.time() - s
-        return dimod_sampleset, dimod_sampleset.info["total_time"]
+    def f(x):
+        return x**2
+
+    def rap_solver(x, f):
+        return f(x)
 
     bench = jb.Benchmark(
         {
-            "N": [10, 200],
-            "sample_model": [sample_model],
+            "x": [1, 2, 3],
+            "f": [f],
         },
         solver=rap_solver,
     )
 
     res = bench()
 
-    columns = res.table.columns
     # assert sample_model.__name__ in columns
     # assert isinstance(res.table[sample_model.__name__][0], str)
 
