@@ -57,6 +57,10 @@ def test_benchmark_for_jijzept_sampler(
         {"num_reads": [1, 2]},
     )
     res = bench()
+    
+    from icecream import ic
+    print()
+    ic(list(res.table["sampleset"][0].record.to_dense().solution.values())[0])
 
     assert sample_model.call_count == 2
     assert len(sample_model.call_args_list) == 2

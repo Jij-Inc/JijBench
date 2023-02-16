@@ -20,6 +20,57 @@ def pre_post_process():
         shutil.rmtree(norm_path)
 
 
+
+
+
+def test_success_probability(jm_sampleset: jm.SampleSet):
+    from jijbench.functions.metrics import SuccessProbability
+
+    sampleset = jb.SampleSet(jm_sampleset, "test_sampleset")
+
+    opt_value = 3.0
+    f = SuccessProbability()
+    ps = f([sampleset], opt_value=opt_value)
+
+    from icecream import ic
+
+    print()
+    ic(ps)
+
+    assert ps.data == 0.4
+
+
+def test_feasible_rate(jm_sampleset: jm.SampleSet):
+    from jijbench.functions.metrics import FeasibleRate
+    
+    sampleset = jb.SampleSet(jm_sampleset, "test_sampleset")
+    
+    f = FeasibleRate()
+    feas_rate = f([sampleset])
+    
+    from icecream import ic
+    
+    print()
+    ic(feas_rate)
+    
+    assert feas_rate.data == 0.7
+
+
+def test_time_to_solution(jm_sampleset: jm.SampleSet):
+    from jijbench.functions.metrics import TimeToSolution
+
+    sampleset = jb.SampleSet(jm_sampleset, "test_sampleset")
+
+    opt_value = 3.0
+    pr = 0.7
+    f = TimeToSolution()
+    tts = f([sampleset], opt_value=opt_value, pr=pr)
+
+    from icecream import ic
+
+    print()
+    ic(tts)
+
 #
 #
 # @pytest.fixture
@@ -147,52 +198,52 @@ def pre_post_process():
 #
 
 
-@pytest.fixture
-def results_for_multi_const_problem():
-    def solve():
-        d = jm.Placeholder("d", dim=2)
-        x = jm.Binary("x", shape=d.shape)
-        i = jm.Element("i", d.shape[0])
-        j = jm.Element("j", d.shape[1])
-        problem = jm.Problem("simple_problem")
-        problem += jm.Sum([i, j], d[i, j] * x[i, j])
-        problem += jm.Constraint("onehot1", x[i, :] == 1, forall=i)
-        problem += jm.Constraint("onehot2", x[:, j] == 1, forall=j)
-        jm_sampleset_dict = {
-            "record": {
-                "solution": {
-                    "x": [
-                        (([0, 1], [0, 1]), [1, 1], (2, 2)),
-                        (([0, 1], [1, 0]), [1, 1], (2, 2)),
-                        (([], []), [], (2, 2)),
-                        (([0, 1], [0, 0]), [1, 1], (2, 2)),
-                    ]
-                },
-                "num_occurrences": [4, 3, 2, 1],
-            },
-            "evaluation": {
-                "energy": [3.0, 24.0, 0.0, 20.0],
-                "objective": [3.0, 24.0, 0.0, 17.0],
-                "constraint_violations": {
-                    "onehot1": [0.0, 0.0, 2.0, 0.0],
-                    "onehot2": [0.0, 0.0, 2.0, 2.0],
-                },
-                "penalty": {},
-            },
-            "measuring_time": {"solve": None, "system": None, "total": None},
-        }
-        jm_sampleset = jm.SampleSet.from_serializable(jm_sampleset_dict)
-        solving_time = jm.SolvingTime(
-            **{"preprocess": 1.0, "solve": 1.0, "postprocess": 1.0}
-        )
-        jm_sampleset.measuring_time.solve = solving_time
-        return jm_sampleset
-
-    bench = jb.Benchmark(
-        params={"multipliers": [{"onehot": 1}, {"onehot": 2}, {"onehot": 3}]},
-        solver=solve,
-    )
-    return bench()
+# @pytest.fixture
+# def results_for_multi_const_problem():
+#     def solve():
+#         d = jm.Placeholder("d", dim=2)
+#         x = jm.Binary("x", shape=d.shape)
+#         i = jm.Element("i", d.shape[0])
+#         j = jm.Element("j", d.shape[1])
+#         problem = jm.Problem("simple_problem")
+#         problem += jm.Sum([i, j], d[i, j] * x[i, j])
+#         problem += jm.Constraint("onehot1", x[i, :] == 1, forall=i)
+#         problem += jm.Constraint("onehot2", x[:, j] == 1, forall=j)
+#         jm_sampleset_dict = {
+#             "record": {
+#                 "solution": {
+#                     "x": [
+#                         (([0, 1], [0, 1]), [1, 1], (2, 2)),
+#                         (([0, 1], [1, 0]), [1, 1], (2, 2)),
+#                         (([], []), [], (2, 2)),
+#                         (([0, 1], [0, 0]), [1, 1], (2, 2)),
+#                     ]
+#                 },
+#                 "num_occurrences": [4, 3, 2, 1],
+#             },
+#             "evaluation": {
+#                 "energy": [3.0, 24.0, 0.0, 20.0],
+#                 "objective": [3.0, 24.0, 0.0, 17.0],
+#                 "constraint_violations": {
+#                     "onehot1": [0.0, 0.0, 2.0, 0.0],
+#                     "onehot2": [0.0, 0.0, 2.0, 2.0],
+#                 },
+#                 "penalty": {},
+#             },
+#             "measuring_time": {"solve": None, "system": None, "total": None},
+#         }
+#         jm_sampleset = jm.SampleSet.from_serializable(jm_sampleset_dict)
+#         solving_time = jm.SolvingTime(
+#             **{"preprocess": 1.0, "solve": 1.0, "postprocess": 1.0}
+#         )
+#         jm_sampleset.measuring_time.solve = solving_time
+#         return jm_sampleset
+#
+#     bench = jb.Benchmark(
+#         params={"multipliers": [{"onehot": 1}, {"onehot": 2}, {"onehot": 3}]},
+#         solver=solve,
+#     )
+#     return bench()
 
 
 #

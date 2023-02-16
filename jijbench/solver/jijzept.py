@@ -4,7 +4,7 @@ import jijmodeling as jm
 import numpy as np
 
 from dataclasses import dataclass
-from jijbench.solver.base import Parameter
+from jijbench.solver.base import Parameter, Response
 from jijbench.typing import ModelType
 from jijmodeling.expression.extract import extract_vars_from_problem
 
@@ -104,3 +104,22 @@ class UserDefinedModel(Parameter[ModelType]):
     def instance_data(self) -> jm.PH_VALUES_INTERFACE:
         """Return the instance data in the data of user defined model."""
         return self.data[1]
+
+
+@dataclass
+class SampleSet(Response[jm.SampleSet]):
+    @classmethod
+    def validate_data(cls, data: jm.SampleSet) -> jm.SampleSet:
+        return cls._validate_dtype(data, (jm.SampleSet,))
+
+    @property
+    def record(self) -> jm.Record:
+        return self.data.record
+
+    @property
+    def evaluation(self) -> jm.Evaluation:
+        return self.data.evaluation
+
+    @property
+    def time(self) -> jm.MeasuringTime:
+        return self.data.measuring_time

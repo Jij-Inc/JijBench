@@ -14,7 +14,7 @@ from jijbench.typing import DataNodeT, DataNodeT2
 
 if tp.TYPE_CHECKING:
     from jijbench.mappings.mappings import Artifact, Record, Table
-    from jijbench.solver.base import Return
+    from jijbench.solver.base import Response
 
 
 class Factory(FunctionNode[DataNodeT, DataNodeT2]):
@@ -102,7 +102,7 @@ class RecordFactory(Factory[DataNodeT, "Record"]):
         data = pd.Series(data)
         return Record(data, name)
 
-    def _to_nodes_from_sampleset(self, sampleset: jm.SampleSet) -> list[Return]:
+    def _to_nodes_from_sampleset(self, sampleset: jm.SampleSet) -> list[Response]:
         """Extract relevant data from a jijmodeling SampleSet.
 
         This method extracts relevant data from a `jijmodeling.SampleSet`, such as the number of occurrences,
@@ -115,10 +115,15 @@ class RecordFactory(Factory[DataNodeT, "Record"]):
         Returns:
             list[DataNode]: A list of DataNode objects containing the extracted data from the SampleSet.
         """
-        from jijbench.solver.base import Return
+        from jijbench.solver.base import Response
 
         data = []
 
+        # TODO 後で修正
+        from jijbench.solver.jijzept import SampleSet
+        data.append(
+            SampleSet(sampleset, "sampleset")
+        )
         data.append(
             Array(np.array(sampleset.record.num_occurrences), "num_occurrences")
         )
@@ -151,7 +156,7 @@ class RecordFactory(Factory[DataNodeT, "Record"]):
             else:
                 execution_time = solving_time.solve
         data.append(Number(execution_time, "execution_time"))
-        data = [Return(node.data, node.name) for node in data]
+        data = [Response(node.data, node.name) for node in data]
         return data
 
 
