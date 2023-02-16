@@ -11,6 +11,7 @@ import pandas as pd
 import pytest
 
 import jijbench as jb
+from jijbench.consts.path import DEFAULT_RESULT_DIR
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -168,8 +169,7 @@ def test_jijmodeling():
     experiment = jb.Experiment(autosave=False)
     
     with experiment:
-        jm_sampleset = sample_model
-        solver = jb.Solver(jm_sampleset)
+        solver = jb.Solver(sample_model)
         record = solver([])
         record.name = jb.ID().data
         experiment.append(record)
@@ -185,8 +185,7 @@ def test_jijmodeling_iteration():
     experiment = jb.Experiment(autosave=False)
     for _ in range(3):
         with experiment:
-            jm_sampleset = sample_model
-            solver = jb.Solver(jm_sampleset)
+            solver = jb.Solver(sample_model)
             record = solver([])
             record.name = jb.ID().data
             experiment.append(record)
@@ -198,25 +197,32 @@ def test_jijmodeling_iteration():
     assert "num_feasible" in cols
 
 
-# def test_file_save_load():
-#     experiment = jb.Experiment(autosave=#
-#     for _ in range(3):
-#         with experiment:
-#             jm_sampleset = decode()
-#             experiment.store({"result": jm_sampleset#
-#     experiment.save#
-#     load_experiment = jb.Experiment.load(
-#         experiment_id=experiment.experiment_id, benchmark_id=experiment.benchmark_id
-#     #
-#     original_cols = experiment.table.columns
-#     load_cols = load_experiment.table.columns
-#     for c in original_cols:
-#         c in #
-#     assert len(experiment.table.index) == len(load_experiment.table.index)
-#     assert len(experiment.artifact) == len(load_experiment.artifact)
-#     for artifact in load_experiment.artifact.values():
-#         assert isinstance(artifact["result"], jm.#
-#     assert experiment._artifact.timestamp == load_experiment._artifact.# #
+def test_file_save_load():
+    experiment = jb.Experiment(autosave=False)
+    for _ in range(3):
+        with experiment:
+            solver = jb.Solver(sample_model)
+            record = solver([])
+            record.name = jb.ID().data
+            experiment.append(record)
+
+    experiment.save()
+    load_experiment = jb.load(DEFAULT_RESULT_DIR)
+
+    original_cols = experiment.table.columns
+    load_cols = load_experiment.table.columns
+    for c in original_cols:
+        assert (c in load_cols)
+    assert len(experiment.table.index) == len(load_experiment.table.index)
+    assert len(experiment.artifact) == len(load_experiment.artifact)
+    print(load_experiment.operator)
+    for artifact in load_experiment.artifact.values():
+        # assert isinstance(artifact["record"], jm.SampleSet)  # あとで対応
+        print(artifact)  #あとで消す
+
+    # assert experiment.artifact.timestamp == load_experiment.artifact.timestamp  # あとで対応
+
+
 # def test_auto_save():
 #     experiment = jb.Experiment(autosave=True)
 #     num_rows = 3
