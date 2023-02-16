@@ -52,6 +52,7 @@ def optimal_time_to_solution(
     opt_value: Union[int, float],
     pr: float,
 ):
+    
     ps = success_probability(x, opt_value)
 
     if ps:

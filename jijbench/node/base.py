@@ -4,7 +4,7 @@ import abc
 import copy
 import typing as tp
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from jijbench.typing import T, DataNodeT, DataNodeT2
 
 

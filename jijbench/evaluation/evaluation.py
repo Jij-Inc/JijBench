@@ -19,7 +19,7 @@ from jijbench.experiment.experiment import Experiment
 from jijbench.node.base import FunctionNode
 
 
-class Evaluator(FunctionNode[Experiment, Experiment]):
+class Evaluation(FunctionNode[Experiment, Experiment]):
     """Evaluate benchmark results.
 
     Args:
@@ -29,39 +29,41 @@ class Evaluator(FunctionNode[Experiment, Experiment]):
         artifact (dict): Dict that store experiment results.
     """
 
-    def __init__(self, name: str | None = None):
+    def __init__(self, name: str | None = None) -> None:
         super().__init__(name)
 
-    def __call__(self, inputs: list[Experiment], **kwargs: tp.Any) -> Experiment:
-        return super().__call__(inputs, **kwargs)
+    def __call__(
+        self,
+        inputs: list[Experiment],
+        opt_value: float | None = None,
+        pr: float = 0.99,
+    ) -> Experiment:
+        return super().__call__(inputs, opt_value=opt_value, pr=pr)
 
-    @property
-    def table(self):
-        return self.experiment.table
+    def operate(
+        self,
+        inputs: list[Experiment],
+        opt_value: float | None = None,
+        pr: float = 0.99,
+    ) -> Experiment:
+        """Calculate the typincal metrics of benchmark results.
 
-    @property
-    def artifact(self):
-        return self.experiment.artifact
-
-    def calc_typical_metrics(
-        self, opt_value: float | None = None, pr: float = 0.99, expand: bool = True
-    ):
-        """Calculate typincal metrics for benchmark
-
-        Args:
-            opt_value (float, optional): Optimal value for instance_data. Defaults to None.
-            pr (float, optional): Probability of obtaining optimal value. Defaults to 0.99.
-            expand (bool, optional): If True, expand table with evaluation results. Defaults to None.
-
-        Returns:
-            pandas.Dataframe: pandas.Dataframe object for evalution results.
-            columns: ["success_probability", "feasible_rate", "residual_energy", "TTS(optimal)", "TTS(feasible)", "TTS(derived)"]
+        The metrics are as follows:
             - success_probability: Solution that is feasible and less than or equal to opt_value is counted as success, which is NaN if `opt_value` is not given.
             - feasible_rate: Rate of feasible solutions out of all solutions.
             - residual_energy: Difference between average objective of feasible solutions and `opt_value`, which is NaN if `opt_value` is not given.
             - TTS(optimal): Time to obtain opt_value with probability `pr`, which is NaN if opt_value is not given.
             - TTS(feasible): Time to obtain feasible solutions with probability `pr`.
             - TTS(derived): Time to obtain minimum objective among feasible solutions with probability `pr`.
+
+        Args:
+            opt_value (float, optional): Optimal value for instance_data. Defaults to None.
+            pr (float, optional): Probability of obtaining optimal value. Defaults to 0.99.
+
+        Returns:
+            Experiment: Experiment object included evalution results.
+
+
         """
         opt_value = np.nan if opt_value is None else opt_value
 
@@ -78,6 +80,12 @@ class Evaluator(FunctionNode[Experiment, Experiment]):
         )
         metrics["TTS(feasible)"] = self.feasible_time_to_solution(pr=pr, expand=expand)
         metrics["TTS(derived)"] = self.derived_time_to_solution(pr=pr, expand=expand)
+        return super().operate(inputs, **kwargs)
+
+    def calc_typical_metrics(
+        self,
+    ):
+
         return metrics
 
     def apply(self, func: Callable, column: str, expand=True, axis=1, **kwargs):
