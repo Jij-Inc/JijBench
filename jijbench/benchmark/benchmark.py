@@ -363,6 +363,8 @@ class Benchmark:
             if experiment_id
             else get_experiment_id_list(benchmark_id, save_dir)
         )
+        if not isinstance(experiment_ids, list):
+            experiment_ids = [experiment_ids]
         for experiment_id in experiment_ids:
             experiment = Experiment.load(
                 benchmark_id=benchmark_id,
