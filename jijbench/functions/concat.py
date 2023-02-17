@@ -6,8 +6,8 @@ import typing as tp
 
 from jijbench.consts.path import DEFAULT_RESULT_DIR
 from jijbench.elements.id import ID
-from jijbench.node.base import FunctionNode
-from jijbench.typing import MappingT, MappingTypes, MappingListTypes
+from jijbench.node.base import DataNode, FunctionNode
+from jijbench.typing import MappingT, MappingTypes, MappingListTypes, DataNodeT
 from typing_extensions import TypeGuard
 
 if tp.TYPE_CHECKING:
@@ -44,7 +44,13 @@ def _is_mapping_list(inputs: MappingListTypes) -> TypeGuard[list[MappingT]]:
     return all([node.__class__.__name__ == cls_name for node in inputs])
 
 
-class Concat(FunctionNode[MappingT, MappingT]):
+def _is_datanode_list(inputs: list[DataNodeT]) -> TypeGuard[list[DataNodeT]]:
+    sample = inputs[0]
+    is_datanode = isinstance(sample, DataNode)
+    return all([isinstance(node, sample.__class__) for node in inputs]) & is_datanode
+
+
+class Concat(FunctionNode[DataNodeT, DataNodeT]):
     """Concat class for concatenating multiple mapping data.
     This class can be apply to `Artifact`, `Experiment`, `Record`, `Table`.
     """
@@ -88,7 +94,7 @@ class Concat(FunctionNode[MappingT, MappingT]):
         savedir: str | pathlib.Path = DEFAULT_RESULT_DIR,
         axis: tp.Literal[0, 1] = 0,
         index_name: str | None = None,
-    ) -> MappingTypes:
+    ) -> DataNode:
         """Concatenates the given list of mapping type objects.
 
         Args:
@@ -175,7 +181,7 @@ class Concat(FunctionNode[MappingT, MappingT]):
 
         Returns:
             MappingTypes: The resulting 'Artifact', 'Experiment', 'Record' or 'Table' object.
-        
+
         """
         if _is_artifact_list(inputs):
             data = {}
