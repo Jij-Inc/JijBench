@@ -5,12 +5,12 @@ import pandas as pd
 
 
 from dataclasses import dataclass, field
-from jijbench.elements.base import Element
+from jijbench.node.base import DataNode
 from jijbench.typing import DateTypes
 
 
 @dataclass
-class Date(Element[DateTypes]):
+class Date(DataNode[DateTypes]):
     """A class for date information.
 
     This class has date information in the `data` attribute.

@@ -4,22 +4,23 @@ import typing as tp
 import inspect
 
 from dataclasses import dataclass
-from jijbench.elements.base import Element
 from jijbench.exceptions.exceptions import SolverFailedError
-from jijbench.node.base import FunctionNode
+from jijbench.node.base import DataNode, FunctionNode
 from jijbench.mappings.mappings import Record
 from jijbench.functions.factory import RecordFactory
 from jijbench.typing import T
 
 
 @dataclass
-class Parameter(Element[T]):
+class Parameter(DataNode[T]):
     """A parameter for a solver function.
 
     Attributes:
         data (Any): The data in the node.
         name (str): The name of the parameter.
     """
+
+    name: str
 
     @classmethod
     def validate_data(cls, data: tp.Any) -> tp.Any:
@@ -35,13 +36,15 @@ class Parameter(Element[T]):
 
 
 @dataclass
-class Return(Element[T]):
+class Response(DataNode[T]):
     """A return value of a solver function.
 
     Attributes:
         data (Any): The data in the node.
         name (str): The name of the return value.
     """
+
+    name: str
 
     @classmethod
     def validate_data(cls, data: tp.Any) -> tp.Any:
@@ -107,6 +110,6 @@ class Solver(FunctionNode[Parameter, Record]):
 
         solver_return_names = [f"{self.name}_return[{i}]" for i in range(len(rets))]
 
-        rets = [Return(data, name) for data, name in zip(rets, solver_return_names)]
+        rets = [Response(data, name) for data, name in zip(rets, solver_return_names)]
         factory = RecordFactory()
         return factory(rets, is_parsed_sampleset=is_parsed_sampleset)

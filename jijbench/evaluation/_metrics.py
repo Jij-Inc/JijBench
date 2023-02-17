@@ -43,7 +43,7 @@ class Scorer:
         return self._score_func(x, **self._kwargs)
 
 
-def make_scorer(score_func: Callable, is_warning=False, **kwargs):
+def make_scorer(score_func: Callable, is_warning=False, **kwargs) -> Scorer:
     return Scorer(score_func, kwargs, is_warning)
 
 
@@ -52,10 +52,14 @@ def optimal_time_to_solution(
     opt_value: Union[int, float],
     pr: float,
 ):
-    
+    if x.num_reads == 1:
+        warnings.warn("num_reads = 1; should be increased to measure optimal TTS")
+
     ps = success_probability(x, opt_value)
 
-    if ps:
+    if ps == 1:
+        return np.nan
+    elif ps:
         return np.log(1 - pr) / np.log(1 - ps) * x.execution_time
     else:
         return np.inf
@@ -65,9 +69,14 @@ def feasible_time_to_solution(
     x,
     pr: float,
 ):
+    if x.num_reads == 1:
+        warnings.warn("num_reads = 1; should be increased to measure feasible TTS")
+
     ps = feasible_rate(x)
 
-    if ps:
+    if ps == 1:
+        return np.nan
+    elif ps:
         return np.log(1 - pr) / np.log(1 - ps) * x.execution_time
     else:
         return np.inf
@@ -77,21 +86,26 @@ def derived_time_to_solution(
     x,
     pr: float,
 ):
-    feas = _to_bools_for_feasible(x)
+    if x.num_reads == 1:
+        warnings.warn("num_reads = 1; should be increased to measure derived TTS")
+
+    feas = _to_bool_values_for_feasible(x)
     if feas.any():
         opt_value = x.objective[feas].min()
         ps = success_probability(x, opt_value)
     else:
         ps = 0.0
 
-    if ps:
+    if ps == 1:
+        return np.nan
+    elif ps:
         return np.log(1 - pr) / np.log(1 - ps) * x.execution_time
     else:
         return np.inf
 
 
 def success_probability(x, opt_value: Union[int, float]):
-    success = _to_bools_for_success(x, opt_value)
+    success = _to_bool_values_for_success(x, opt_value)
     num_success = (success * x.num_occurrences).sum()
 
     return num_success / x.num_occurrences.sum()
@@ -102,7 +116,7 @@ def feasible_rate(x):
 
 
 def residual_energy(x, opt_value: Union[int, float]):
-    feas = _to_bools_for_feasible(x)
+    feas = _to_bool_values_for_feasible(x)
     if np.all(~feas):
         return np.nan
     else:
@@ -111,11 +125,11 @@ def residual_energy(x, opt_value: Union[int, float]):
         return mean - opt_value
 
 
-def _to_bools_for_feasible(x):
+def _to_bool_values_for_feasible(x):
     constraint_violations = np.array([v for v in x[x.index.str.contains("violations")]])
     return constraint_violations.sum(axis=0) == 0
 
 
-def _to_bools_for_success(x, opt_value):
-    feas = _to_bools_for_feasible(x)
+def _to_bool_values_for_success(x, opt_value):
+    feas = _to_bool_values_for_feasible(x)
     return (x.objective <= opt_value) & feas

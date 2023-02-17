@@ -12,12 +12,12 @@ from jijbench.elements.array import Array
 from jijbench.elements.date import Date
 from jijbench.elements.id import ID
 from jijbench.elements.base import Callable, Number, String
-from jijbench.evaluation.evaluation import Evaluator
+from jijbench.evaluation.evaluation import Evaluation
 from jijbench.experiment.experiment import Experiment
 from jijbench.io.io import load, save
 from jijbench.mappings.mappings import Artifact, Record, Table
-from jijbench.solver.base import Parameter, Return, Solver
-from jijbench.solver.jijzept import InstanceData, UserDefinedModel
+from jijbench.solver.base import Parameter, Response, Solver
+from jijbench.solver.jijzept import InstanceData, UserDefinedModel, SampleSet
 
 
 __all__ = [
@@ -33,7 +33,7 @@ __all__ = [
     "Benchmark",
     "Callable",
     "Date",
-    "Evaluator",
+    "Evaluation",
     "Experiment",
     "ID",
     "InstanceData",
@@ -41,7 +41,8 @@ __all__ = [
     "Number",
     "Parameter",
     "Record",
-    "Return",
+    "Response",
+    "SampleSet",
     "Solver",
     "Table",
     "String",

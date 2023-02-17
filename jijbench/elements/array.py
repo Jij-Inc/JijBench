@@ -4,12 +4,13 @@ import numpy as np
 
 
 from dataclasses import dataclass
-from jijbench.elements.base import Element, Number
+from jijbench.elements.base import Number
 from jijbench.functions.math import Min, Max, Mean, Std
+from jijbench.node.base import DataNode
 
 
 @dataclass
-class Array(Element[np.ndarray]):
+class Array(DataNode[np.ndarray]):
     """A class representing numpy arrays.
     
     Attributes:

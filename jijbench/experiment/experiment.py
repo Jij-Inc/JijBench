@@ -12,7 +12,7 @@ from jijbench.functions.concat import Concat
 from jijbench.functions.factory import ArtifactFactory, TableFactory
 from jijbench.io.io import save
 from jijbench.mappings.mappings import Artifact, Mapping, Table
-from jijbench.solver.base import Parameter, Return
+from jijbench.solver.base import Parameter, Response
 from jijbench.typing import ExperimentDataType
 
 
@@ -78,7 +78,7 @@ class Experiment(Mapping[ExperimentDataType]):
     @property
     def returns_table(self) -> pd.DataFrame:
         """Return the returns table of the experiment as a pandas dataframe."""
-        bools = self.data[1].data.applymap(lambda x: isinstance(x, Return))
+        bools = self.data[1].data.applymap(lambda x: isinstance(x, Response))
         return self.table[bools].dropna(axis=1)
 
     @classmethod
