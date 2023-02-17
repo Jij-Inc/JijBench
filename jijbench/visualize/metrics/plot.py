@@ -63,7 +63,7 @@ class MetricsPlot:
 
         Example:
              Below is the code to boxplot the constraint violations.
-             Check the docstring of each method for details
+             Check the docstring of each method for details.
 
              ```python
              import jijbench as jb
@@ -112,8 +112,8 @@ class MetricsPlot:
     ):
         """Draw a box and whisker plot of the metrics based on `result` data using matplotlib.boxplot.
 
-        This method applies the function f to the result (i.e. `jb.Experiment`) to get the metrics (pd.Series).
-        The metrics series assumes the following structure.
+        This method applies the function f to the result (i.e. `jb.Experiment`) to get the metrics (pd.Series), and draw boxplot of this metrics.
+        This metrics series calculated as metrics = self.result.table.apply(f, axis=1) in this method assumes the following structure.
             The length is equal to the number of rows in `result.table`.
             the element is a dictionary where the key is the name of each boxplot and the value is the np.array of the boxplot data.
         This method returns a figure and axes, so you can post-process them to change the appearance of the plot.
@@ -130,6 +130,9 @@ class MetricsPlot:
             ylabel_size (float | None): the fontsize of the ylabel. The default uses matplotlib's default value.
             yticks (list[int | float] | None): the yticks of figure. Default to only integers by`MaxNLocator(integer=True)`.
             matplotlib_boxplot_kwargs: the parameter passed to matplotlib.boxplot.
+
+        Returns:
+            tuple[tuple[matplotlib.figure.Figure, matplotlib.axes.Subplot]]: A tuple of length equal to the number of rows in result. each element of is a tuple of figure and axes.
 
         Example:
             The code below draws a boxplot of violations of each constraint.
