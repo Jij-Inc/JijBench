@@ -239,15 +239,24 @@ def test_timeseries_show_arg_marker_list_invalid_length():
         timeseries.show(marker_list=marker_list)
 
 
-def test_timeseries_show_arg_xlabel():
-    xlabel = "xlabel"
+params = {
+    "give argument": ("xlabel", "xlabel"),
+    "default": (None, "time"),
+}
 
+
+@pytest.mark.parametrize(
+    "xlabel, expect",
+    list(params.values()),
+    ids=list(params.keys()),
+)
+def test_timeseries_show_arg_xlabel(xlabel, expect):
     timeseries = TimeSeries()
     timeseries.add_data("data", [1, 2], [3, 4])
     timeseries.show(xlabel=xlabel)
     fig, ax = timeseries.fig_ax
 
-    assert ax.get_xlabel() == "xlabel"
+    assert ax.get_xlabel() == expect
 
 
 def test_timeseries_show_arg_ylabel():
@@ -304,6 +313,14 @@ def test_schedule_add_data(task_label, workers, start_times, time_lengths):
     schedule.add_data(task_label, workers, start_times, time_lengths)
 
     assert schedule.data == OrderedDict([("data", ([1, 2], [3, 4], [5.5, 6.6]))])
+
+
+def test_schedule_add_data_attribute_workers():
+    schedule = Schedule()
+    schedule.add_data("data1", [1, 2], [3, 4], [2, 4])
+    schedule.add_data("data2", [2, 3], [7, 8], [9, 10])
+
+    assert schedule.workers == [1, 2, 3]
 
 
 params = {
@@ -599,26 +616,44 @@ def test_schedule_show_arg_alpha_list_invalid_length():
         schedule.show(alpha_list=alpha_list)
 
 
-def test_schedule_show_arg_xlabel():
-    xlabel = "xlabel"
+params = {
+    "give argument": ("xlabel", "xlabel"),
+    "default": (None, "time"),
+}
 
+
+@pytest.mark.parametrize(
+    "xlabel, expect",
+    list(params.values()),
+    ids=list(params.keys()),
+)
+def test_schedule_show_arg_xlabel(xlabel, expect):
     schedule = Schedule()
     schedule.add_data("data", [1, 2], [1, 2], [3, 4])
     schedule.show(xlabel=xlabel)
     fig, ax = schedule.fig_ax
 
-    assert ax.get_xlabel() == "xlabel"
+    assert ax.get_xlabel() == expect
 
 
-def test_schedule_show_arg_ylabel():
-    ylabel = "ylabel"
+params = {
+    "give argument": ("ylabel", "ylabel"),
+    "default": (None, "worker"),
+}
 
+
+@pytest.mark.parametrize(
+    "ylabel, expect",
+    list(params.values()),
+    ids=list(params.keys()),
+)
+def test_schedule_show_arg_ylabel(ylabel, expect):
     schedule = Schedule()
     schedule.add_data("data", [1, 2], [1, 2], [3, 4])
     schedule.show(ylabel=ylabel)
     fig, ax = schedule.fig_ax
 
-    assert ax.get_ylabel() == "ylabel"
+    assert ax.get_ylabel() == expect
 
 
 def test_schedule_show_arg_xticks():
@@ -632,15 +667,24 @@ def test_schedule_show_arg_xticks():
     assert (ax.get_xticks() == np.array([1, 2, 3, 4, 5, 6])).all()
 
 
-def test_schedule_show_arg_yticks():
-    yticks = [1, 2]
+params = {
+    "give argument": ([1, 2, 3], np.array([1, 2, 3])),
+    "default": (None, np.array([1, 2])),
+}
 
+
+@pytest.mark.parametrize(
+    "yticks, expect",
+    list(params.values()),
+    ids=list(params.keys()),
+)
+def test_schedule_show_arg_yticks(yticks, expect):
     schedule = Schedule()
     schedule.add_data("data", [1, 2], [1, 2], [3, 4])
     schedule.show(yticks=yticks)
     fig, ax = schedule.fig_ax
 
-    assert (ax.get_yticks() == np.array([1, 2])).all()
+    assert (ax.get_yticks() == expect).all()
 
 
 params = {
