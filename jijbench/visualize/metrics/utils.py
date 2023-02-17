@@ -9,6 +9,17 @@ from jijbench.functions.factory import RecordFactory
 
 
 def construct_experiment_from_sampleset(sampleset: jm.SampleSet) -> Experiment:
+    """Construct JijBenchmark Experiment instance from a `jm.SampleSet`.
+
+    The visualization function of JijBenchmark is implemented for `jb.Experiment`.
+    These function can be applied to the user's `jm.SampleSet` through this function.
+
+    Args:
+        sampleset (jm.SampleSet): a JijModeling SampleSet.
+
+    Returns:
+        Experiment: a JijBenchmark Experiment instance.
+    """
     experiment = Experiment(autosave=False)
     factory = RecordFactory()
     ret = [Return(data=sampleset, name="")]
@@ -20,7 +31,20 @@ def construct_experiment_from_sampleset(sampleset: jm.SampleSet) -> Experiment:
 def create_fig_title_list(
     metrics: pd.Series,
     title: str | list[str] | None,
-):
+) -> list[str]:
+    """Create figure title list for Visualization, each title is passed to `matplotlib.pyplot.suptitle`.
+
+    This function produces a title list of length equal to the number of rows in the metrics series.
+    JijBenchmark`s metrics plot draws a figure for each run (i.e. each row of `jb.Experiment.table`),
+    and each element of the returned list is expected to be the suptitle of each figure.
+
+    Args:
+        metrics (pd.Series): A `pd.Series` instance of the metrics for each run.
+        title (str | list[str] | None): A title, or a `list` of titles. If `None`, the title list is automatically generated from the metrics indices.
+
+    Returns:
+        list[str]: a list of the suptitle of the figure. Its length is equal to the number of rows in the metrics series.
+    """
     if isinstance(title, list):
         title_list = title
         return title_list
@@ -34,6 +58,7 @@ def create_fig_title_list(
             if indices is None:
                 title_list.append("")
             else:
+                # If user don't give title, the title list is automatically generated from the metrics indices.
                 title_list.append(
                     "\n".join(
                         [
