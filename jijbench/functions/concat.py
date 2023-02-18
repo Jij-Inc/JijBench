@@ -39,7 +39,7 @@ def _is_table_list(
     return all([node.__class__.__name__ == "Table" for node in inputs])
 
 
-def _is_mapping_list(inputs: MappingListTypes) -> TypeGuard[list[DataNode]]:
+def _is_mapping_list(inputs: list[DataNodeT]) -> TypeGuard[list[DataNodeT]]:
     cls_name = inputs[0].__class__.__name__
     return all([node.__class__.__name__ == cls_name for node in inputs])
 
