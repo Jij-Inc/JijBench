@@ -7,7 +7,7 @@ import typing as tp
 from jijbench.consts.path import DEFAULT_RESULT_DIR
 from jijbench.elements.id import ID
 from jijbench.node.base import DataNode, FunctionNode
-from jijbench.typing import MappingT, MappingTypes, MappingListTypes, DataNodeT
+from jijbench.typing import DataNodeT, MappingT, MappingListTypes
 from typing_extensions import TypeGuard
 
 if tp.TYPE_CHECKING:
@@ -39,20 +39,14 @@ def _is_table_list(
     return all([node.__class__.__name__ == "Table" for node in inputs])
 
 
-def _is_mapping_list(inputs: MappingListTypes) -> TypeGuard[list[MappingT]]:
+def _is_mapping_list(inputs: MappingListTypes) -> TypeGuard[list[DataNode]]:
     cls_name = inputs[0].__class__.__name__
     return all([node.__class__.__name__ == cls_name for node in inputs])
 
 
-def _is_datanode_list(inputs: list[DataNodeT]) -> TypeGuard[list[DataNodeT]]:
-    sample = inputs[0]
-    is_datanode = isinstance(sample, DataNode)
-    return all([isinstance(node, sample.__class__) for node in inputs]) & is_datanode
-
-
 class Concat(FunctionNode[DataNodeT, DataNodeT]):
-    """Concat class for concatenating multiple mapping data.
-    This class can be apply to `Artifact`, `Experiment`, `Record`, `Table`.
+    """Concat class for concatenating multiple data nodes.
+    This class can be apply to `Artifact`, `Experiment`, `Record`, `Table`, `SampleSet`.
     """
 
     @tp.overload
@@ -87,7 +81,7 @@ class Concat(FunctionNode[DataNodeT, DataNodeT]):
 
     def __call__(
         self,
-        inputs: MappingListTypes,
+        inputs: list[DataNodeT],
         name: tp.Hashable = None,
         *,
         autosave: bool = True,
@@ -112,6 +106,7 @@ class Concat(FunctionNode[DataNodeT, DataNodeT]):
             MappingTypes: The resulting artifact, experiment, record, or table object.
         """
         if _is_mapping_list(inputs):
+            
             return super().__call__(
                 inputs,
                 name=name,
@@ -164,7 +159,7 @@ class Concat(FunctionNode[DataNodeT, DataNodeT]):
         savedir: str | pathlib.Path = DEFAULT_RESULT_DIR,
         axis: tp.Literal[0, 1] = 0,
         index_name: str | None = None,
-    ) -> MappingTypes:
+    ) -> DataNode:
         """This method operates the concatenation of the given 'inputs' either 'Artifact', 'Experiment', 'Record' or 'Table'
         objects into a single object of the same type as 'inputs'.
 
