@@ -28,7 +28,7 @@ def test_simple_benchmark():
 
     bench = jb.Benchmark({"x": [1, 2]}, solver=func, name="test")
 
-    res = bench()
+    res = bench(autosave=True)
     columns = res.table.columns
 
     assert isinstance(res, jb.Experiment)
@@ -56,11 +56,14 @@ def test_benchmark_for_jijzept_sampler(
         [(knapsack_problem, knapsack_instance_data)],
         {"num_reads": [1, 2]},
     )
-    res = bench()
+    res = bench(autosave=False)
     
     from icecream import ic
     print()
-    ic(list(res.table["sampleset"][0].record.to_dense().solution.values())[0])
+    ic(res.data[1].columns)
+    ic(res.data[1])
+    ic(res.table)
+    # ic(res.artifact)
 
     assert sample_model.call_count == 2
     assert len(sample_model.call_args_list) == 2

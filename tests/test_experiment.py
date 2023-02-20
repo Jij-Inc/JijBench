@@ -12,6 +12,7 @@ import pytest
 
 import jijbench as jb
 from jijbench.consts.path import DEFAULT_RESULT_DIR
+from unittest.mock import MagicMock
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -20,14 +21,16 @@ def pre_post_process():
     yield
     # postprocess
     norm_path = os.path.normcase("./.jb_results")
-    if os.path.exists(norm_path):
-        shutil.rmtree(norm_path)
+    #if os.path.exists(norm_path):
+    #    shutil.rmtree(norm_path)
 
 
 def test_simple_experiment():
     e = jb.Experiment(name="test")
+
     def func():
         return 1
+
     for _ in range(3):
         with e:
             solver = jb.Solver(func)
@@ -104,28 +107,49 @@ def test_construct_experiment():
 #     cols = droped_table.columns
 #     "energy" in cols
 #     "energy_min" in # #
-def test_jijmodeling(sample_model):
+
+
+# 以下のテストコードが通るように修正してください。
+def test_jijmodeling(
+    sample_model: MagicMock,
+    knapsack_problem: jm.Problem,
+    knapsack_instance_data: jm.PH_VALUES_INTERFACE,
+):
     experiment = jb.Experiment(autosave=False)
-    
+
     with experiment:
         solver = jb.Solver(sample_model)
-        record = solver([])
+        x1 = jb.Parameter(knapsack_problem, name="")
+        x2 = jb.Parameter(knapsack_instance_data)
+        record = solver([x1, x2])
         record.name = jb.ID().data
         experiment.append(record)
-        
+
     droped_table = experiment.table.dropna(axis="columns")
 
     cols = droped_table.columns
     assert "energy" in cols
     assert "num_feasible" in cols
 
+    assert sample_model.call_count == 1
+    sample_model.assert_called_with(
+        model=knapsack_problem, feed_dict=knapsack_instance_data
+    )
 
-def test_jijmodeling_iteration(sample_model):
+
+# 以下のテストコードが通るように修正してください。
+def test_jijmodeling_iteration(
+    sample_model: MagicMock,
+    knapsack_problem: jm.Problem,
+    knapsack_instance_data: jm.PH_VALUES_INTERFACE,
+):
     experiment = jb.Experiment(autosave=False)
     for _ in range(3):
         with experiment:
             solver = jb.Solver(sample_model)
-            record = solver([])
+            x1 = jb.Parameter(knapsack_problem, name="")
+            x2 = jb.Parameter(knapsack_instance_data)
+            record = solver([x1, x2])
             record.name = jb.ID().data
             experiment.append(record)
 
@@ -135,33 +159,39 @@ def test_jijmodeling_iteration(sample_model):
     assert "energy" in cols
     assert "num_feasible" in cols
 
+    assert sample_model.call_count == 3
+    sample_model.assert_called_with(
+        model=knapsack_problem, feed_dict=knapsack_instance_data
+    )
 
+# ここはsample_modelを使わずに適当な関数を作ってsaveしたデータが呼び出せるか確認してください。
 def test_file_save_load(sample_model, knapsack_problem, knapsack_instance_data):
     experiment = jb.Experiment(autosave=False)
     for _ in range(3):
         with experiment:
             solver = jb.Solver(sample_model)
-            # x1 = jb.Parameter(knapsack_problem, name="")
-            # x2 = jb.Parameter(knapsack_instance_data)
+            #x1 = jb.Parameter(knapsack_problem, name="")
+            #x2 = jb.Parameter(knapsack_instance_data)
             record = solver([])
             record.name = jb.ID().data
             experiment.append(record)
-
+    
     experiment.save()
-    print("listdir of DEFAULT_RESULT_DIR: ")
-    print(os.listdir(DEFAULT_RESULT_DIR))
+    from icecream import ic
+    ic("listdir of DEFAULT_RESULT_DIR: ")
+    ic(os.listdir(DEFAULT_RESULT_DIR))
     load_experiment = jb.load(DEFAULT_RESULT_DIR)  # ここでエラー出る
 
     original_cols = experiment.table.columns
     load_cols = load_experiment.table.columns
     for c in original_cols:
-        assert (c in load_cols)
+        assert c in load_cols
     assert len(experiment.table.index) == len(load_experiment.table.index)
     assert len(experiment.artifact) == len(load_experiment.artifact)
     print(load_experiment.operator)
     for artifact in load_experiment.artifact.values():
         # assert isinstance(artifact["record"], jm.SampleSet)  # あとで対応
-        print(artifact)  #あとで消す
+        print(artifact)  # あとで消す
 
     # assert experiment.artifact.timestamp == load_experiment.artifact.timestamp  # あとで対応
 

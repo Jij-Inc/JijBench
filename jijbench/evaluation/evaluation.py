@@ -6,31 +6,23 @@ import pandas as pd
 import typing as tp
 
 
-from jijbench.evaluation._metrics import (
-    make_scorer,
-    optimal_time_to_solution,
-    feasible_time_to_solution,
-    derived_time_to_solution,
-    success_probability,
-    feasible_rate,
-    residual_energy,
-)
 from jijbench.experiment.experiment import Experiment
+from jijbench.functions.concat import Concat
+from jijbench.functions.factory import RecordFactory
+from jijbench.functions.metrics import (
+    TimeToSolution,
+    SuccessProbability,
+    FeasibleRate,
+    ResidualEnergy,
+)
 from jijbench.node.base import FunctionNode
+
+if tp.TYPE_CHECKING:
+    from jijbench.mappings.mappings import Record
 
 
 class Evaluation(FunctionNode[Experiment, Experiment]):
-    """Evaluate benchmark results.
-
-    Args:
-        experiment (Union[jijbench.Experiment, jijbench.Benchmark]): Experiment or Benchmark object.
-    Attibutes:
-        table (pandas.DataFrame): Table that store experiment and evaluation resutls.
-        artifact (dict): Dict that store experiment results.
-    """
-
-    def __init__(self, name: str | None = None) -> None:
-        super().__init__(name)
+    """Evaluate the benchmark results."""
 
     def __call__(
         self,
@@ -43,7 +35,7 @@ class Evaluation(FunctionNode[Experiment, Experiment]):
     def operate(
         self,
         inputs: list[Experiment],
-        opt_value: float | None = None,
+        opt_value: float,
         pr: float = 0.99,
     ) -> Experiment:
         """Calculate the typincal metrics of benchmark results.
@@ -57,36 +49,51 @@ class Evaluation(FunctionNode[Experiment, Experiment]):
             - TTS(derived): Time to obtain minimum objective among feasible solutions with probability `pr`.
 
         Args:
-            opt_value (float, optional): Optimal value for instance_data. Defaults to None.
+            opt_value (float, optional): Optimal value for instance_data.
             pr (float, optional): Probability of obtaining optimal value. Defaults to 0.99.
 
         Returns:
             Experiment: Experiment object included evalution results.
-
-
         """
-        opt_value = np.nan if opt_value is None else opt_value
+        from icecream import ic
+        from jijbench.solver.jijzept import SampleSet
+        from jijbench.mappings.mappings import Table
 
-        metrics = pd.DataFrame()
-        metrics["success_probability"] = self.success_probability(
-            opt_value=opt_value, expand=expand
-        )
-        metrics["feasible_rate"] = self.feasible_rate(expand=expand)
-        metrics["residual_energy"] = self.residual_energy(
-            opt_value=opt_value, expand=expand
-        )
-        metrics["TTS(optimal)"] = self.optimal_time_to_solution(
-            opt_value=opt_value, pr=pr, expand=expand
-        )
-        metrics["TTS(feasible)"] = self.feasible_time_to_solution(pr=pr, expand=expand)
-        metrics["TTS(derived)"] = self.derived_time_to_solution(pr=pr, expand=expand)
-        return super().operate(inputs, **kwargs)
+        def f(x: pd.Series, opt_value: float, pr: float) -> pd.Series:
+            inputs: list[SampleSet] = x.tolist()
+            node = Concat()(inputs)
+            metrics = [
+                SuccessProbability()([node], opt_value=opt_value),
+                FeasibleRate()([node]),
+                ResidualEnergy()([node], opt_value=opt_value),
+                TimeToSolution()([node], pr=pr, opt_value=opt_value, base="optimal"),
+                TimeToSolution()([node], pr=pr, base="feasible"),
+                TimeToSolution()([node], pr=pr, base="derived"),
+            ]
+            record = RecordFactory()(metrics)
+            return record.data
 
-    def calc_typical_metrics(
-        self,
-    ):
+        experiment = Concat()(inputs)
 
-        return metrics
+        artifact, table = experiment.data
+        
+        # TODO artifactの格納
+
+        sampleset_columns = [
+            c
+            for c in table.columns
+            if all(map(lambda x: isinstance(x, SampleSet), table.data[c]))
+        ]
+
+        data = table.data[sampleset_columns].apply(
+            f, opt_value=opt_value, pr=pr, axis=1
+        )
+        metrics_table = Table(data)
+
+        table = Concat()([table, metrics_table], axis=1)
+        ic(table.view())
+
+        return experiment
 
     def apply(self, func: Callable, column: str, expand=True, axis=1, **kwargs):
         """Apply evaluation function to table
