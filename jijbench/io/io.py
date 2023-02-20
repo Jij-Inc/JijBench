@@ -195,7 +195,7 @@ def load(
     """Load and return an artifact, experiment, or table from the given directory.
 
     Args:
-        name_or_dir (str | pathlib.Path): Name of the experiment or the directory of the experiment.
+        name_or_dir (str | pathlib.Path): Name or directory of the benchmark.
         experiment_names (list[str] | None, optional): List of names of experiments to be loaded, if None, all experiments in `savedir` will be loaded. Defaults to None.
         savedir (str | pathlib.Path, optional): Directory of the experiment. Defaults to DEFAULT_RESULT_DIR.
         return_type (tp.Literal[&quot;Artifact&quot;, &quot;Experiment&quot;, &quot;Table&quot;], optional): Type of the returned object. Defaults to "Experiment".

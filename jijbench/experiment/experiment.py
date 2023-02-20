@@ -38,7 +38,8 @@ class Experiment(Mapping[ExperimentDataType]):
             self.savedir = pathlib.Path(self.savedir)
 
     def __enter__(self) -> Experiment:
-        """Makes a directory for saving the experiment, if it doesn't exist. Returns the experiment object."""
+        """Set up Experiment.
+        Automatically makes a directory for saving the experiment, if it doesn't exist."""
         savedir = (
             self.savedir
             if isinstance(self.savedir, pathlib.Path)
@@ -50,7 +51,7 @@ class Experiment(Mapping[ExperimentDataType]):
     def __exit__(self, exception_type, exception_value, traceback) -> None:
         """Saves the experiment if autosave is True."""
         if self.autosave:
-            self.save()
+            save(self, savedir=self.savedir, mode="a")
 
     @property
     def artifact(self) -> dict:
@@ -133,4 +134,4 @@ class Experiment(Mapping[ExperimentDataType]):
 
     def save(self):
         """Save the experiment."""
-        save(self, savedir=self.savedir, mode="a")
+        save(self, savedir=self.savedir)
