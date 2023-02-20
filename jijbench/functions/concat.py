@@ -7,7 +7,8 @@ import typing as tp
 from jijbench.consts.path import DEFAULT_RESULT_DIR
 from jijbench.elements.id import ID
 from jijbench.node.base import DataNode, FunctionNode
-from jijbench.typing import DataNodeT, MappingT, MappingListTypes
+from jijbench.solver.jijzept import SampleSet
+from jijbench.typing import DataNodeT
 from typing_extensions import TypeGuard
 
 if tp.TYPE_CHECKING:
@@ -15,33 +16,30 @@ if tp.TYPE_CHECKING:
     from jijbench.experiment.experiment import Experiment
 
 
-def _is_artifact_list(
-    inputs: MappingListTypes,
-) -> TypeGuard[list[Artifact]]:
+def _is_artifact_list(inputs: list[DataNodeT]) -> TypeGuard[list[Artifact]]:
     return all([node.__class__.__name__ == "Artifact" for node in inputs])
 
 
-def _is_experiment_list(
-    inputs: MappingListTypes,
-) -> TypeGuard[list[Experiment]]:
+def _is_experiment_list(inputs: list[DataNodeT]) -> TypeGuard[list[Experiment]]:
     return all([node.__class__.__name__ == "Experiment" for node in inputs])
 
 
-def _is_record_list(
-    inputs: MappingListTypes,
-) -> TypeGuard[list[Record]]:
+def _is_record_list(inputs: list[DataNodeT]) -> TypeGuard[list[Record]]:
     return all([node.__class__.__name__ == "Record" for node in inputs])
 
 
-def _is_table_list(
-    inputs: MappingListTypes,
-) -> TypeGuard[list[Table]]:
+def _is_table_list(inputs: list[DataNodeT]) -> TypeGuard[list[Table]]:
     return all([node.__class__.__name__ == "Table" for node in inputs])
 
 
-def _is_mapping_list(inputs: list[DataNodeT]) -> TypeGuard[list[DataNodeT]]:
-    cls_name = inputs[0].__class__.__name__
-    return all([node.__class__.__name__ == cls_name for node in inputs])
+def _is_sampleset_list(inputs: list[SampleSet]) -> TypeGuard[list[SampleSet]]:
+    return all([isinstance(node, SampleSet) for node in inputs])
+
+
+def _is_datanode_list(inputs: list[DataNodeT]) -> bool:
+    sample = inputs[0]
+    is_datanode = isinstance(sample, DataNode)
+    return all([isinstance(node, sample.__class__) for node in inputs]) & is_datanode
 
 
 class Concat(FunctionNode[DataNodeT, DataNodeT]):
@@ -79,6 +77,10 @@ class Concat(FunctionNode[DataNodeT, DataNodeT]):
     ) -> Table:
         ...
 
+    @tp.overload
+    def __call__(self, inputs: list[SampleSet], name: str) -> SampleSet:
+        ...
+
     def __call__(
         self,
         inputs: list[DataNodeT],
@@ -105,8 +107,7 @@ class Concat(FunctionNode[DataNodeT, DataNodeT]):
         Returns:
             MappingTypes: The resulting artifact, experiment, record, or table object.
         """
-        if _is_mapping_list(inputs):
-            
+        if _is_datanode_list(inputs):
             return super().__call__(
                 inputs,
                 name=name,
@@ -152,7 +153,7 @@ class Concat(FunctionNode[DataNodeT, DataNodeT]):
 
     def operate(
         self,
-        inputs: MappingListTypes,
+        inputs: list[DataNodeT],
         name: tp.Hashable = None,
         *,
         autosave: bool = True,
