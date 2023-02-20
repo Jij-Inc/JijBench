@@ -65,35 +65,35 @@ class MetricsPlot:
              Below is the code to boxplot the constraint violations.
              Check the docstring of each method for details.
 
-             ```python
-             import jijbench as jb
-             import jijzept as jz
-             from jijzept.sampler.openjij.sa_cpu import JijSAParameters
-             from jijbench.visualize.metrics.plot import MetricsPlot
+            ```python
+            import jijbench as jb
+            import jijzept as jz
+            from jijzept.sampler.openjij.sa_cpu import JijSAParameters
+            from jijbench.visualize.metrics.plot import MetricsPlot
 
-             problem = jb.get_problem("TSP")
-             instance_data = jb.get_instance_data("TSP")[0][1]
-             multipliers1 = {"onehot_time": 0.003, "onehot_location": 0.003}
-             multipliers2 = {"onehot_time": 0.3, "onehot_location": 0.3}
+            problem = jb.get_problem("TSP")
+            instance_data = jb.get_instance_data("TSP")[0][1]
+            multipliers1 = {"onehot_time": 0.003, "onehot_location": 0.003}
+            multipliers2 = {"onehot_time": 0.3, "onehot_location": 0.3}
 
-             config_path = "XX"
-             sa_parameter = JijSAParameters(num_reads=15)
-             sa_sampler = jz.JijSASampler(config=config_path)
+            config_path = "XX"
+            sa_parameter = JijSAParameters(num_reads=15)
+            sa_sampler = jz.JijSASampler(config=config_path)
 
-             bench = jb.Benchmark(
-                 params = {
-                     "model": [problem],
-                     "feed_dict": [instance_data],
-                     "parameters": [sa_parameter],
-                     "multipliers": [multipliers1, multipliers2],
-                 },
-                 solver = [sa_sampler.sample_model],
-             )
-             result = bench()
+            bench = jb.Benchmark(
+                params = {
+                    "model": [problem],
+                    "feed_dict": [instance_data],
+                    "parameters": [sa_parameter],
+                    "multipliers": [multipliers1, multipliers2],
+                },
+                solver = [sa_sampler.sample_model],
+            )
+            result = bench()
 
-             mplot = MetricsPlot(result)
-             fig_ax_tuple = mplot.boxplot_violations()
-             ```
+            mplot = MetricsPlot(result)
+            fig_ax_tuple = mplot.boxplot_violations()
+        ```
         """
         self.result = result
 
