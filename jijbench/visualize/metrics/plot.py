@@ -1,13 +1,21 @@
 from __future__ import annotations
 
-import matplotlib
+from matplotlib import axes, figure
+
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
+import numpy as np
 import pandas as pd
-from typing import Callable
+import re
+
+import plotly.express as px
+from typing import Callable, cast
 
 import jijbench as jb
-from jijbench.visualize.metrics.utils import create_fig_title_list
+from jijbench.visualize.metrics.utils import (
+    create_fig_title_list,
+    is_multipliers_column_valid,
+)
 
 
 def get_violations_dict(x: pd.Series) -> dict:
@@ -41,7 +49,6 @@ def get_violations_dict(x: pd.Series) -> dict:
             params = {
                 "model": [problem],
                 "feed_dict": [instance_data],
-                "search": [False],
                 "multipliers": [multipliers1, multipliers2],
             },
             solver = [sa_sampler.sample_model],
@@ -52,6 +59,18 @@ def get_violations_dict(x: pd.Series) -> dict:
     """
     constraint_violations_indices = x.index[x.index.str.contains("violations")]
     return {index: x[index] for index in constraint_violations_indices}
+
+
+def calc_samplemean_from_array(x: pd.Series, column_name: str) -> float:
+    num_occ = x["num_occurrences"]
+    array = x[column_name]
+    mean = np.sum(num_occ * array) / np.sum(num_occ)
+    return mean
+
+
+def get_multiplier(x: pd.Series, constraint_name: str) -> float:
+    multipliers = x["multipliers"]
+    return multipliers[constraint_name]
 
 
 class MetricsPlot:
@@ -179,14 +198,14 @@ class MetricsPlot:
                 display(fig)
             ```
 
-            By using the `construct_experiment_from_sampleset function`,
+            By using the `construct_experiment_from_samplesets function`,
             `boxplot` can also be used for `jm.SampleSet` obtained without `JijBenchmark`.
 
             ```python
             import jijbench as jb
             import jijzept as jz
             from jijbench.visualize.metrics.plot import MetricsPlot
-            from jijbench.visualize.metrics.utils import construct_experiment_from_sampleset
+            from jijbench.visualize.metrics.utils import construct_experiment_from_samplesets
             import pandas as pd
 
             problem = jb.get_problem("TSP")
@@ -195,13 +214,13 @@ class MetricsPlot:
 
             config_path = "XX"
             sampler = jz.JijSASampler(config=config_path)
-            sampleset = sampler.sample_model(model=problem, feed_dict=instance_data, multipliers=multipliers, search=False, num_reads=100)
+            sampleset = sampler.sample_model(model=problem, feed_dict=instance_data, multipliers=multipliers, num_reads=100)
 
             def get_violations_dict(x: pd.Series) -> dict:
                 constraint_violations_indices = x.index[x.index.str.contains("violations")]
                 return {index: x[index] for index in constraint_violations_indices}
 
-            result = construct_experiment_from_sampleset(sampleset)
+            result = construct_experiment_from_samplesets(sampleset)
             mplot = MetricsPlot(result)
             fig_ax_tuple = mplot.boxplot(f=get_violations_dict)
             ```
@@ -217,6 +236,7 @@ class MetricsPlot:
             ax.set_xticklabels(
                 data.keys(), size=xticklabels_size, rotation=xticklabels_rotation
             )
+            ylabel = cast("str", ylabel)
             ax.set_ylabel(ylabel, size=ylabel_size)
             if yticks is None:
                 # make yticks integer only
@@ -238,7 +258,7 @@ class MetricsPlot:
         ylabel_size: float | None = None,
         yticks: list[int | float] | None = None,
         **matplotlib_boxplot_kwargs,
-    ) -> tuple[tuple[matplotlib.figure.Figure, matplotlib.axes.Subplot]]:
+    ) -> tuple[tuple[figure.Figure, axes.Subplot]]:
         """Draw a box and whisker plot of the constraint violations of `result` data using matplotlib.boxplot.
 
         The arguments are passed to matplotlib functions to change the appearance of the plot.
@@ -302,14 +322,14 @@ class MetricsPlot:
                 display(fig)
             ```
 
-            By using the `construct_experiment_from_sampleset function`,
+            By using the `construct_experiment_from_samplesets function`,
             `boxplot_violations` can also be used for `jm.SampleSet` obtained without `JijBenchmark`.
 
             ```python
             import jijbench as jb
             import jijzept as jz
             from jijbench.visualize.metrics.plot import MetricsPlot
-            from jijbench.visualize.metrics.utils import construct_experiment_from_sampleset
+            from jijbench.visualize.metrics.utils import construct_experiment_from_samplesets
 
             problem = jb.get_problem("TSP")
             instance_data = jb.get_instance_data("TSP")[0][1]
@@ -319,7 +339,7 @@ class MetricsPlot:
             sampler = jz.JijSASampler(config=config_path)
             sampleset = sampler.sample_model(model=problem, feed_dict=instance_data, multipliers=multipliers, search=False, num_reads=100)
 
-            result = construct_experiment_from_sampleset(sampleset)
+            result = construct_experiment_from_samplesets(sampleset)
             mplot = MetricsPlot(result)
             fig_ax_tuple = mplot.boxplot_violations()
             ```
@@ -350,3 +370,69 @@ class MetricsPlot:
             ax.axhline(0, xmin=0, xmax=1, color="gray", linestyle="dotted")
             fig_ax_list.append((fig, ax))
         return tuple(fig_ax_list)
+
+    def parallelplot_experiment(
+        self,
+        color_column_name: str | None = None,
+    ):
+        result_table = self.result.table
+
+        # The key is a column name (str), and the value is the data of each column (pd.Series).
+        data_to_create_df_parallelplot = {}
+
+        # multiplires (If self.result has a valid multipliers column)
+        if is_multipliers_column_valid(result_table):
+            for constraint_name in result_table["multipliers"].values[0].keys():
+                data_to_create_df_parallelplot[
+                    constraint_name + "_multiplier"
+                ] = result_table.apply(
+                    get_multiplier, axis=1, constraint_name=constraint_name
+                )
+
+        # objective
+        data_to_create_df_parallelplot["samplemean_objective"] = result_table.apply(
+            calc_samplemean_from_array, axis=1, column_name="objective"
+        )
+
+        # violations
+        for violation_column_name in result_table.columns[
+            result_table.columns.str.contains("violations")
+        ]:
+            data_to_create_df_parallelplot[
+                "samplemean_" + violation_column_name
+            ] = result_table.apply(
+                calc_samplemean_from_array, axis=1, column_name=violation_column_name
+            )
+
+        # Extract series about violations from data_to_create_df_parallelplot (key starts with 'samplemean_' and ends with '_violations') and calculates samplemean_total_violations by taking sum.
+        start, end = re.compile(r"^samplemean_"), re.compile(r"_violations$")
+
+        violation_series = [
+            series
+            for name, series in data_to_create_df_parallelplot.items()
+            if start.search(name) and end.search(name)
+        ]
+
+        if violation_series:
+            data_to_create_df_parallelplot["samplemean_total_violations"] = sum(
+                violation_series
+            )
+
+        self.df_parallelplot = df_parallelplot = pd.DataFrame(
+            data_to_create_df_parallelplot
+        )
+
+        """
+        if color_column_name is None:
+            if "samplemean_total_violations" in df_parallelplot.columns:
+                color_column_name = "samplemean_total_violations"
+            else:
+                color_column_name = "samplemean_objective"
+        """
+
+        fig = px.parallel_coordinates(
+            df_parallelplot.reset_index(),
+            color=color_column_name,
+        )
+
+        return fig

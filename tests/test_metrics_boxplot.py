@@ -1,6 +1,6 @@
 import jijmodeling as jm
-import matplotlib
-from matplotlib.ticker import MaxNLocator
+from matplotlib import axes, figure
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -8,10 +8,6 @@ import pytest
 import jijbench as jb
 
 from jijbench.visualize.metrics.plot import get_violations_dict, MetricsPlot
-from jijbench.visualize.metrics.utils import (
-    construct_experiment_from_sampleset,
-    create_fig_title_list,
-)
 
 
 def solve():
@@ -58,80 +54,6 @@ def simple_func_for_boxplot(x: pd.Series) -> dict:
     return {"data1": np.array([1, 2, 3, 4]), "data2": np.array([1, 2, 3, 4])}
 
 
-def test_utils_construct_experiment_from_sampleset():
-    sampleset = jm.SampleSet(
-        record=jm.Record(
-            solution={"x": [(([3],), [1], (6,))]},
-            num_occurrences=[4],
-        ),
-        evaluation=jm.Evaluation(
-            energy=[-8.0],
-            objective=[-8.0],
-            constraint_violations={"onehot": [0.0]},
-            penalty={},
-        ),
-        measuring_time=jm.MeasuringTime(),
-    )
-
-    experiment = construct_experiment_from_sampleset(sampleset)
-
-    assert isinstance(experiment, jb.Experiment)
-    assert experiment.table["num_occurrences"].values == [np.array([4])]
-
-
-params = {
-    "input is title list": (["title1", "title2"], ["title1", "title2"]),
-    "input is title string": ("title", ["title", "title"]),
-    "input is None": (None, ["i: 1", "i: 2"]),
-}
-
-
-@pytest.mark.parametrize(
-    "input_title, expect",
-    list(params.values()),
-    ids=list(params.keys()),
-)
-def test_utils_create_fig_title_list(input_title, expect):
-    series = pd.Series(
-        data=[1, 2],
-        index=["1", "2"],
-    )
-    series.index.names = ["i"]
-
-    title_list = create_fig_title_list(
-        metrics=series,
-        title=input_title,
-    )
-    assert title_list == expect
-
-
-def test_utils_create_fig_title_list_for_series_with_no_index():
-    series = pd.Series(
-        data=[1, 2],
-        index=[None, None],
-    )
-    title_list = create_fig_title_list(
-        metrics=series,
-        title=None,
-    )
-    assert title_list == ["", ""]
-
-
-def test_utils_create_fig_title_list_for_invalid_input():
-    invalid_input_title = 0
-
-    series = pd.Series(
-        data=[1, 2],
-        index=["1", "2"],
-    )
-    series.index.names = ["i"]
-    with pytest.raises(TypeError):
-        create_fig_title_list(
-            metrics=series,
-            title=invalid_input_title,
-        )
-
-
 def test_metrics_plot_get_violations_dict():
     series = pd.Series(
         data=[np.array([1, 1]), np.array([0, 2])],
@@ -158,8 +80,8 @@ def test_metrics_plot_boxplot_return_value():
     mplot = MetricsPlot(result)
     fig_ax_tuple = mplot.boxplot(f=simple_func_for_boxplot)
     assert len(fig_ax_tuple) == expect_num_fig
-    assert type(fig_ax_tuple[0][0]) == matplotlib.figure.Figure
-    assert type(fig_ax_tuple[0][1]) == matplotlib.axes.Subplot
+    assert type(fig_ax_tuple[0][0]) == figure.Figure
+    assert type(fig_ax_tuple[0][1]) == axes.Subplot
 
 
 def test_metrics_plot_boxplot_call_maplotlib_boxplot(mocker):
@@ -413,8 +335,8 @@ def test_metrics_plot_boxplot_violations_return_value():
     mplot = MetricsPlot(result)
     fig_ax_tuple = mplot.boxplot_violations()
     assert len(fig_ax_tuple) == expect_num_fig
-    assert type(fig_ax_tuple[0][0]) == matplotlib.figure.Figure
-    assert type(fig_ax_tuple[0][1]) == matplotlib.axes.Subplot
+    assert type(fig_ax_tuple[0][0]) == figure.Figure
+    assert type(fig_ax_tuple[0][1]) == axes.Subplot
 
 
 def test_metrics_plot_boxplot_violations_call_maplotlib_boxplot(mocker):
