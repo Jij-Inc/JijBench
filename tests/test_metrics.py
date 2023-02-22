@@ -120,8 +120,6 @@ def test_utils_construct_experiment_from_samplesets_give_raw_sampleset():
     assert len(experiment.table) == 1
     assert experiment.table["num_occurrences"].values[0] == np.array([1])
 
-    print(experiment.table)
-
 
 def test_utils_construct_experiment_from_samplesets_additional_data():
     additional_data = {
