@@ -2,13 +2,18 @@ from __future__ import annotations
 
 import jijmodeling as jm
 import pandas as pd
+import typing as tp
 
 from jijbench.experiment.experiment import Experiment
-from jijbench.solver.base import Return
+from jijbench.functions.concat import Concat
+from jijbench.solver.base import Parameter, Return
 from jijbench.functions.factory import RecordFactory
 
 
-def construct_experiment_from_sampleset(sampleset: jm.SampleSet) -> Experiment:
+def construct_experiment_from_samplesets(
+    samplesets: list[jm.SampleSet],
+    additional_data: dict[str, list[tp.Any]] | None = None,
+) -> Experiment:
     """Construct JijBenchmark Experiment instance from a `jm.SampleSet`.
 
     The visualization function of JijBenchmark is implemented for `jb.Experiment`.
@@ -20,11 +25,32 @@ def construct_experiment_from_sampleset(sampleset: jm.SampleSet) -> Experiment:
     Returns:
         Experiment: a JijBenchmark Experiment instance.
     """
+    if additional_data is None:
+        additional_data = {}
+    else:
+        # This list assigned to the value of additional_data must have the same length as the sampleset.
+        for v in additional_data.values():
+            if len(v) != len(samplesets):
+                raise TypeError
+
+    # Convert additional_data to JijBenchmark Parameters.
+    params = [
+        [
+            v if isinstance(v, Parameter) else Parameter(v, k)
+            for k, v in zip(additional_data.keys(), r)
+        ]
+        for r in zip(*additional_data.values())
+    ]
+
     experiment = Experiment(autosave=False)
-    factory = RecordFactory()
-    ret = [Return(data=sampleset, name="")]
-    record = factory(ret)
-    experiment.append(record)
+    for i, sampleset in enumerate(samplesets):
+        factory = RecordFactory()
+        ret = [Return(data=sampleset, name="")]
+        record = factory(ret)
+        # Concat additional_data if given.
+        if len(params) >= 1:
+            record = Concat()([RecordFactory()(params[i]), record])
+        experiment.append(record)
     return experiment
 
 
