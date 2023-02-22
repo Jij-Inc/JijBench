@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-import matplotlib
+from matplotlib import axes, figure
+
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 import pandas as pd
-from typing import Callable
+from typing import Callable, cast
 
 import jijbench as jb
 from jijbench.visualize.metrics.utils import create_fig_title_list
@@ -41,7 +42,6 @@ def get_violations_dict(x: pd.Series) -> dict:
             params = {
                 "model": [problem],
                 "feed_dict": [instance_data],
-                "search": [False],
                 "multipliers": [multipliers1, multipliers2],
             },
             solver = [sa_sampler.sample_model],
@@ -179,14 +179,14 @@ class MetricsPlot:
                 display(fig)
             ```
 
-            By using the `construct_experiment_from_sampleset function`,
+            By using the `construct_experiment_from_samplesets function`,
             `boxplot` can also be used for `jm.SampleSet` obtained without `JijBenchmark`.
 
             ```python
             import jijbench as jb
             import jijzept as jz
             from jijbench.visualize.metrics.plot import MetricsPlot
-            from jijbench.visualize.metrics.utils import construct_experiment_from_sampleset
+            from jijbench.visualize.metrics.utils import construct_experiment_from_samplesets
             import pandas as pd
 
             problem = jb.get_problem("TSP")
@@ -195,13 +195,13 @@ class MetricsPlot:
 
             config_path = "XX"
             sampler = jz.JijSASampler(config=config_path)
-            sampleset = sampler.sample_model(model=problem, feed_dict=instance_data, multipliers=multipliers, search=False, num_reads=100)
+            sampleset = sampler.sample_model(model=problem, feed_dict=instance_data, multipliers=multipliers, num_reads=100)
 
             def get_violations_dict(x: pd.Series) -> dict:
                 constraint_violations_indices = x.index[x.index.str.contains("violations")]
                 return {index: x[index] for index in constraint_violations_indices}
 
-            result = construct_experiment_from_sampleset(sampleset)
+            result = construct_experiment_from_samplesets(sampleset)
             mplot = MetricsPlot(result)
             fig_ax_tuple = mplot.boxplot(f=get_violations_dict)
             ```
@@ -217,6 +217,7 @@ class MetricsPlot:
             ax.set_xticklabels(
                 data.keys(), size=xticklabels_size, rotation=xticklabels_rotation
             )
+            ylabel = cast("str", ylabel)
             ax.set_ylabel(ylabel, size=ylabel_size)
             if yticks is None:
                 # make yticks integer only
@@ -238,7 +239,7 @@ class MetricsPlot:
         ylabel_size: float | None = None,
         yticks: list[int | float] | None = None,
         **matplotlib_boxplot_kwargs,
-    ) -> tuple[tuple[matplotlib.figure.Figure, matplotlib.axes.Subplot]]:
+    ) -> tuple[tuple[figure.Figure, axes.Subplot]]:
         """Draw a box and whisker plot of the constraint violations of `result` data using matplotlib.boxplot.
 
         The arguments are passed to matplotlib functions to change the appearance of the plot.
@@ -302,14 +303,14 @@ class MetricsPlot:
                 display(fig)
             ```
 
-            By using the `construct_experiment_from_sampleset function`,
+            By using the `construct_experiment_from_samplesets function`,
             `boxplot_violations` can also be used for `jm.SampleSet` obtained without `JijBenchmark`.
 
             ```python
             import jijbench as jb
             import jijzept as jz
             from jijbench.visualize.metrics.plot import MetricsPlot
-            from jijbench.visualize.metrics.utils import construct_experiment_from_sampleset
+            from jijbench.visualize.metrics.utils import construct_experiment_from_samplesets
 
             problem = jb.get_problem("TSP")
             instance_data = jb.get_instance_data("TSP")[0][1]
@@ -319,7 +320,7 @@ class MetricsPlot:
             sampler = jz.JijSASampler(config=config_path)
             sampleset = sampler.sample_model(model=problem, feed_dict=instance_data, multipliers=multipliers, search=False, num_reads=100)
 
-            result = construct_experiment_from_sampleset(sampleset)
+            result = construct_experiment_from_samplesets(sampleset)
             mplot = MetricsPlot(result)
             fig_ax_tuple = mplot.boxplot_violations()
             ```

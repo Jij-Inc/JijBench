@@ -1,6 +1,6 @@
 import jijmodeling as jm
-import matplotlib
-from matplotlib.ticker import MaxNLocator
+from matplotlib import axes, figure
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -97,6 +97,30 @@ def test_utils_construct_experiment_from_samplesets():
     assert len(experiment.table) == 2
     assert experiment.table["num_occurrences"].values[0] == np.array([num_occ1])
     assert experiment.table["num_occurrences"].values[1] == np.array([num_occ2])
+
+
+def test_utils_construct_experiment_from_samplesets_give_raw_sampleset():
+    sampleset = jm.SampleSet(
+        record=jm.Record(
+            solution={"x": [(([3],), [1], (6,))]},
+            num_occurrences=[1],
+        ),
+        evaluation=jm.Evaluation(
+            energy=[-8.0],
+            objective=[-8.0],
+            constraint_violations={"onehot": [0.0]},
+            penalty={},
+        ),
+        measuring_time=jm.MeasuringTime(),
+    )
+
+    experiment = construct_experiment_from_samplesets(sampleset)
+
+    assert isinstance(experiment, jb.Experiment)
+    assert len(experiment.table) == 1
+    assert experiment.table["num_occurrences"].values[0] == np.array([1])
+
+    print(experiment.table)
 
 
 def test_utils_construct_experiment_from_samplesets_additional_data():
@@ -261,8 +285,8 @@ def test_metrics_plot_boxplot_return_value():
     mplot = MetricsPlot(result)
     fig_ax_tuple = mplot.boxplot(f=simple_func_for_boxplot)
     assert len(fig_ax_tuple) == expect_num_fig
-    assert type(fig_ax_tuple[0][0]) == matplotlib.figure.Figure
-    assert type(fig_ax_tuple[0][1]) == matplotlib.axes.Subplot
+    assert type(fig_ax_tuple[0][0]) == figure.Figure
+    assert type(fig_ax_tuple[0][1]) == axes.Subplot
 
 
 def test_metrics_plot_boxplot_call_maplotlib_boxplot(mocker):
@@ -516,8 +540,8 @@ def test_metrics_plot_boxplot_violations_return_value():
     mplot = MetricsPlot(result)
     fig_ax_tuple = mplot.boxplot_violations()
     assert len(fig_ax_tuple) == expect_num_fig
-    assert type(fig_ax_tuple[0][0]) == matplotlib.figure.Figure
-    assert type(fig_ax_tuple[0][1]) == matplotlib.axes.Subplot
+    assert type(fig_ax_tuple[0][0]) == figure.Figure
+    assert type(fig_ax_tuple[0][1]) == axes.Subplot
 
 
 def test_metrics_plot_boxplot_violations_call_maplotlib_boxplot(mocker):

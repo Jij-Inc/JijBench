@@ -11,27 +11,73 @@ from jijbench.functions.factory import RecordFactory
 
 
 def construct_experiment_from_samplesets(
-    samplesets: list[jm.SampleSet],
+    samplesets: list[jm.SampleSet] | jm.SampleSet,
     additional_data: dict[str, list[tp.Any]] | None = None,
 ) -> Experiment:
-    """Construct JijBenchmark Experiment instance from a `jm.SampleSet`.
+    """Construct `jb.Experiment` instance from a list of `jm.SampleSet`.
 
     The visualization function of JijBenchmark is implemented for `jb.Experiment`.
     These function can be applied to the user's `jm.SampleSet` through this function.
 
     Args:
-        sampleset (jm.SampleSet): a JijModeling SampleSet.
+        samplesets (list[jm.SampleSet] | jm.SampleSet): a list of JijModeling SampleSet. You can also just give a single `jm.SampleSet`.
+        additional_data (dict[str, list[tp.Any]] | None):  a dictionary of data to store in the experiment.
+            The key will be the jb.Experiment.table column name and the value is the list of elements stored in the table.
+            The length of this list must equal the length of samplesets list.
+            Defaults to None.
 
     Returns:
-        Experiment: a JijBenchmark Experiment instance.
+        Experiment: a `jb.Experiment` instance. The number of rows in `jb.Experiment.table` is equal to the length of samplesets.
+
+    Example:
+        The code below solves the TSP problem and gets the jb.Experiment from that sampleset.
+
+        ```python
+        import jijbench as jb
+        import jijzept as jz
+        from jijbench.visualize.metrics.utils import construct_experiment_from_samplesets
+
+        problem = jb.get_problem("TSP")
+        instance_data = jb.get_instance_data("TSP")[0][1]
+
+        # config_path = "XX"
+        sampler = jz.JijSASampler(config=config_path)
+
+        samplesets = []
+        onehot_time_multipliers = []
+        onehot_location_multipliers = []
+
+        for onehot_time_multiplier in [0.01, 0.1]:
+            for onehot_location_multiplier in [0.01, 0.1]:
+                multipliers = {"onehot_time": onehot_time_multiplier, "onehot_location": onehot_location_multiplier}
+                sampleset = sampler.sample_model(
+                    model=problem,
+                    feed_dict=instance_data,
+                    multipliers=multipliers,
+                    num_reads=10,
+                )
+                samplesets.append(sampleset)
+                onehot_time_multipliers.append(onehot_time_multiplier)
+                onehot_location_multipliers.append(onehot_location_multiplier)
+
+        additional_data = {
+            "onehot_time_multiplier": onehot_time_multipliers,
+            "onehot_location_multiplier": onehot_location_multipliers,
+        }
+        experiment = construct_experiment_from_samplesets(samplesets, additional_data)
+        ```
     """
+    if isinstance(samplesets, jm.SampleSet):
+        samplesets = [samplesets]
+
     if additional_data is None:
         additional_data = {}
     else:
-        # This list assigned to the value of additional_data must have the same length as the sampleset.
         for v in additional_data.values():
             if len(v) != len(samplesets):
-                raise TypeError
+                raise TypeError(
+                    "The list assigned to the value of additional_data must have the same length as the sampleset."
+                )
 
     # Convert additional_data to JijBenchmark Parameters.
     params = [
@@ -41,7 +87,6 @@ def construct_experiment_from_samplesets(
         ]
         for r in zip(*additional_data.values())
     ]
-
     experiment = Experiment(autosave=False)
     for i, sampleset in enumerate(samplesets):
         factory = RecordFactory()
