@@ -1,5 +1,6 @@
 import jijmodeling as jm
 
+from itertools import product
 import numpy as np
 import pandas as pd
 import pytest
@@ -9,10 +10,11 @@ import jijbench as jb
 from jijbench.visualize.metrics.utils import (
     construct_experiment_from_samplesets,
     create_fig_title_list,
+    is_multipliers_column_valid,
 )
 
 
-def test_utils_construct_experiment_from_samplesets():
+def test_construct_experiment_from_samplesets():
     num_occ1, num_occ2 = 1, 2
 
     sampleset1 = jm.SampleSet(
@@ -53,7 +55,7 @@ def test_utils_construct_experiment_from_samplesets():
     assert experiment.table["num_occurrences"].values[1] == np.array([num_occ2])
 
 
-def test_utils_construct_experiment_from_samplesets_give_raw_sampleset():
+def test_construct_experiment_from_samplesets_give_raw_sampleset():
     sampleset = jm.SampleSet(
         record=jm.Record(
             solution={"x": [(([3],), [1], (6,))]},
@@ -75,7 +77,7 @@ def test_utils_construct_experiment_from_samplesets_give_raw_sampleset():
     assert experiment.table["num_occurrences"].values[0] == np.array([1])
 
 
-def test_utils_construct_experiment_from_samplesets_additional_data():
+def test_construct_experiment_from_samplesets_additional_data():
     additional_data = {
         "data1": [0, 1],
         "data2": [np.array([2, 3]), np.array([4, 5])],
@@ -120,7 +122,7 @@ def test_utils_construct_experiment_from_samplesets_additional_data():
     assert (experiment.table["data2"].values[1] == np.array([4, 5])).all()
 
 
-def test_utils_construct_experiment_from_samplesets_additional_data_invalid_length():
+def test_construct_experiment_from_samplesets_additional_data_invalid_length():
     additional_data = {
         "data1": [0],
     }
@@ -170,7 +172,7 @@ params = {
     list(params.values()),
     ids=list(params.keys()),
 )
-def test_utils_create_fig_title_list(input_title, expect):
+def test_create_fig_title_list(input_title, expect):
     series = pd.Series(
         data=[1, 2],
         index=["1", "2"],
@@ -184,7 +186,7 @@ def test_utils_create_fig_title_list(input_title, expect):
     assert title_list == expect
 
 
-def test_utils_create_fig_title_list_for_series_with_no_index():
+def test_create_fig_title_list_for_series_with_no_index():
     series = pd.Series(
         data=[1, 2],
         index=[None, None],
@@ -196,7 +198,7 @@ def test_utils_create_fig_title_list_for_series_with_no_index():
     assert title_list == ["", ""]
 
 
-def test_utils_create_fig_title_list_for_invalid_input():
+def test_create_fig_title_list_for_invalid_input():
     invalid_input_title = 0
 
     series = pd.Series(
@@ -209,3 +211,54 @@ def test_utils_create_fig_title_list_for_invalid_input():
             metrics=series,
             title=invalid_input_title,
         )
+
+
+params = {
+    "no_multipliers_columns": ([[0, 1], [2, 3]], ["col_0", "col_1"], False),
+    "first_multipliers_isnot_dict": ([[0]], ["multipliers"], False),
+    "second_multipliers_isnot_dict": ([[{"onehot": 1}], [0]], ["multipliers"], False),
+    "multipliers_key_isnot_str": ([[{0: 1}]], ["multipliers"], False),
+    "multipliers_value_isnot_number": ([[{"onehot": "1"}]], ["multipliers"], False),
+    "constraint_name_is_different": (
+        [[{"onehot1": 1}], [{"onehot2": 2}]],
+        ["multipliers"],
+        False,
+    ),
+    "valid_case": ([[{"onehot1": 1}], [{"onehot1": 2}]], ["multipliers"], True),
+}
+
+
+@pytest.mark.parametrize(
+    "data, columns, expect",
+    list(params.values()),
+    ids=list(params.keys()),
+)
+def test_is_multipliers_column_valid(data, columns, expect):
+    def create_df(data, columns):
+        df = pd.DataFrame(columns=columns)
+        for i, row in enumerate(data):
+            for j, element in enumerate(row):
+                df.at[i, columns[j]] = object
+                df.at[i, columns[j]] = element
+        return df
+
+    df = create_df(data, columns)
+    assert is_multipliers_column_valid(df) == expect
+
+
+def test_is_multipliers_column_valid_hoge():
+    data = [[{"onehot1": 1}], [{"onehot1": 2}]]
+    columns = ["multipliers"]
+    expect = True
+
+    def create_df(data, columns):
+        df = pd.DataFrame(columns=columns)
+        for i, row in enumerate(data):
+            for j, element in enumerate(row):
+                df.at[i, columns[j]] = object
+                df.at[i, columns[j]] = element
+        return df
+
+    df = create_df(data, columns)
+
+    assert is_multipliers_column_valid(df) == expect

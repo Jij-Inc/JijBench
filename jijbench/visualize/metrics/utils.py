@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import jijmodeling as jm
+from numbers import Number
 import pandas as pd
 import typing as tp
 
@@ -141,3 +142,32 @@ def create_fig_title_list(
         return title_list
     else:
         raise TypeError("title must be str or list[str].")
+
+
+def is_multipliers_column_valid(df: pd.DataFrame) -> bool:
+    if not "multipliers" in df.columns:
+        return False
+
+    def is_multiplier_valid(x: pd.Series, constraint_names: list[str]) -> bool:
+        multipliers = x["multipliers"]
+        if not isinstance(multipliers, dict):
+            return False
+        for key, value in multipliers.items():
+            if not isinstance(key, str):
+                return False
+            if not isinstance(value, Number):
+                return False
+        if list(multipliers.keys()) != constraint_names:
+            return False
+        return True
+
+    try:
+        constraint_names = list(df["multipliers"].values[0].keys())
+    except AttributeError:
+        return False
+    is_multiplier_valid_array = df.apply(
+        is_multiplier_valid,
+        axis=1,
+        constraint_names=constraint_names,
+    )
+    return is_multiplier_valid_array.values.all()
