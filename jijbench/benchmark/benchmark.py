@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import jijmodeling as jm
+import pandas as pd
 import typing as tp
 import inspect
 import itertools
@@ -10,6 +11,7 @@ import pathlib
 from jijbench.consts.path import DEFAULT_RESULT_DIR
 from jijbench.node.base import FunctionNode
 from jijbench.elements.base import Callable
+from jijbench.elements.date import Date
 from jijbench.elements.id import ID
 from jijbench.experiment.experiment import Experiment
 from jijbench.functions.concat import Concat
@@ -164,15 +166,24 @@ class Benchmark(FunctionNode[Experiment, Experiment]):
         for f in self.solver:
             for params in self.params:
                 with experiment:
-                    name = (self.name, experiment.name, ID().data)
-                    fdata = [Callable(f.function, str(f.name))]
-                    record = f(params, is_parsed_sampleset=is_parsed_sampleset)
-                    record = Concat()(
-                        [RecordFactory()(params + fdata), record], name=name
+                    info = RecordFactory()(
+                        [Date(), *params, Callable(f.function, str(f.name))]
                     )
+                    ret = f(params, is_parsed_sampleset=is_parsed_sampleset)
+                    record = Concat()([info, ret])
                     experiment.append(record)
-            experiment.name = ID().data
-        experiment.data[1].index.names = ["benchmark_id", "experiment_id", "run_id"]
+                    artifact, table = experiment.data
+                    
+                    table.data.set_index(
+                        pd.Series([self.name] * len(table), name="benchmark_id"),
+                        inplace=True,
+                        append=True,
+                    )
+                    print(list(experiment.data[1].index))
+                    print(list(experiment.table.index))
+                    print(list(table.index))
+                    print("fafafaf")
+                    # print(experiment.table)
         return experiment
 
 
@@ -182,7 +193,7 @@ def construct_benchmark_for(
     params: dict[str, tp.Iterable],
     name: str | None = None,
 ) -> Benchmark:
-    """ Create a Benchmark object.
+    """Create a Benchmark object.
 
     Args:
         sampler (JijZeptBaseSampler): The sampler to use for creating the benchmark.

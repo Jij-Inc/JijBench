@@ -1,13 +1,14 @@
 from __future__ import annotations
 
+import numpy as np
 import pandas as pd
 import pathlib
 import typing as tp
 
 from jijbench.consts.path import DEFAULT_RESULT_DIR
+from jijbench.elements.base import Number
 from jijbench.elements.id import ID
 from jijbench.node.base import DataNode, FunctionNode
-from jijbench.solver.jijzept import SampleSet
 from jijbench.typing import DataNodeT
 from typing_extensions import TypeGuard
 
@@ -33,7 +34,7 @@ def _is_table_list(inputs: list[DataNodeT]) -> TypeGuard[list[Table]]:
 
 
 def _is_sampleset_list(inputs: list[SampleSet]) -> TypeGuard[list[SampleSet]]:
-    return all([isinstance(node, SampleSet) for node in inputs])
+    return all([node.__class__.__name == "SampleSet" for node in inputs])
 
 
 def _is_datanode_list(inputs: list[DataNodeT]) -> bool:
@@ -59,6 +60,8 @@ class Concat(FunctionNode[DataNodeT, DataNodeT]):
         *,
         autosave: bool = True,
         savedir: str | pathlib.Path = DEFAULT_RESULT_DIR,
+        axis: tp.Literal[0, 1] = 0,
+        index_name: str | None = None,
     ) -> Experiment:
         ...
 
@@ -190,7 +193,9 @@ class Concat(FunctionNode[DataNodeT, DataNodeT]):
             inputs_a = [n.data[0] for n in inputs]
             inputs_t = [n.data[1] for n in inputs]
             artifact = inputs_a[0].apply(concat_a, inputs_a[1:])
-            table = inputs_t[0].apply(concat_t, inputs_t[1:])
+            table = inputs_t[0].apply(
+                concat_t, inputs_t[1:], axis=axis, index_name=index_name
+            )
 
             if name is None:
                 name = ID().data

@@ -18,8 +18,8 @@ def pre_post_process():
     yield
     # postprocess
     norm_path = os.path.normcase("./.jb_results")
-    if os.path.exists(norm_path):
-        shutil.rmtree(norm_path)
+    #if os.path.exists(norm_path):
+    #    shutil.rmtree(norm_path)
 
 
 def test_simple_benchmark():
@@ -29,6 +29,9 @@ def test_simple_benchmark():
     bench = jb.Benchmark({"x": [1, 2]}, solver=func, name="test")
 
     res = bench()
+    from icecream import ic
+    print()
+    ic(res.table)
     columns = res.table.columns
 
     assert isinstance(res, jb.Experiment)
@@ -41,8 +44,8 @@ def test_simple_benchmark():
     t1 = op1.inputs[0].table
     t2 = op1.inputs[1].table
 
-    assert t1.iloc[0, 0] == 1
-    assert t2.iloc[0, 0] == 2
+    assert t1.iloc[0, 1] == 1
+    assert t2.iloc[0, 1] == 2
 
 
 def test_benchmark_for_jijzept_sampler(
@@ -57,10 +60,6 @@ def test_benchmark_for_jijzept_sampler(
         {"num_reads": [1, 2]},
     )
     res = bench()
-    
-    from icecream import ic
-    print()
-    ic(list(res.table["sampleset"][0].record.to_dense().solution.values())[0])
 
     assert sample_model.call_count == 2
     assert len(sample_model.call_args_list) == 2
@@ -116,7 +115,9 @@ def test_benchmark_for_jijzept_sampler_with_multi_models(
     assert table.loc[0, "num_feasible"] == 7
 
 
-def test_benchmark_for_jijzept_sampler_using_params(onehot_problem: jm.Problem, jm_sampleset: jm.SampleSet):
+def test_benchmark_for_jijzept_sampler_using_params(
+    onehot_problem: jm.Problem, jm_sampleset: jm.SampleSet
+):
     def f(problem, instance_data, **kwargs) -> jm.SampleSet:
         if not isinstance(problem, jm.Problem):
             raise TypeError

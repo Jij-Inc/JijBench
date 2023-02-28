@@ -11,6 +11,8 @@ import pandas as pd
 import pytest
 
 import jijbench as jb
+from jijbench.consts.path import DEFAULT_RESULT_DIR
+from unittest.mock import MagicMock
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -19,81 +21,53 @@ def pre_post_process():
     yield
     # postprocess
     norm_path = os.path.normcase("./.jb_results")
-    if os.path.exists(norm_path):
-        shutil.rmtree(norm_path)
-
-
-def sample_qubo():
-    dimod_sampleset = dimod.SampleSet.from_samples(
-        samples_like=[
-            {"x[0][0]": 1, "x[0][1]": 0, "x[1][0]": 0, "x[1][1]": 1},  # 最適解
-            {
-                "x[0][0]": 0,
-                "x[0][1]": 1,
-                "x[1][0]": 1,
-                "x[1][1]": 0,
-            },  # 実行可能解だけど最適解ではない
-            {
-                "x[0][0]": 0,
-                "x[0][1]": 0,
-                "x[1][0]": 0,
-                "x[1][1]": 0,
-            },  # 実行不可能解、目的関数値 < 最適値
-            {
-                "x[0][0]": 1,
-                "x[0][1]": 0,
-                "x[1][0]": 1,
-                "x[1][1]": 0,
-            },  # 制約onehot1だけ満たす
-        ],
-        vartype="BINARY",
-        energy=[3, 24, 0, 20],
-        num_occurrences=[4, 3, 2, 1],
-    )
-    dimod_sampleset.info["execution_time"] = 1.0
-    return dimod_sampleset
-
-
-def sample_model():
-    jm_sampleset_dict = {
-        "record": {
-            "solution": {
-                "x": [
-                    (([0, 1], [0, 1]), [1, 1], (2, 2)),
-                    (([0, 1], [1, 0]), [1, 1], (2, 2)),
-                    (([], []), [], (2, 2)),
-                    (([0, 1], [0, 0]), [1, 1], (2, 2)),
-                ]
-            },
-            "num_occurrences": [4, 3, 2, 1],
-        },
-        "evaluation": {
-            "energy": [3.0, 24.0, 0.0, 20.0],
-            "objective": [3.0, 24.0, 0.0, 17.0],
-            "constraint_violations": {
-                "onehot1": [0.0, 0.0, 2.0, 0.0],
-                "onehot2": [0.0, 0.0, 2.0, 2.0],
-            },
-            "penalty": {},
-        },
-        "measuring_time": {"solve": None, "system": None, "total": None},
-    }
-    jm_sampleset = jm.SampleSet.from_serializable(jm_sampleset_dict)
-    solving_time = jm.SolvingTime(
-        **{"preprocess": 1.0, "solve": 1.0, "postprocess": 1.0}
-    )
-    jm_sampleset.measuring_time.solve = solving_time
-    return jm_sampleset
+    # if os.path.exists(norm_path):
+    #    shutil.rmtree(norm_path)
 
 
 def test_simple_experiment():
-    e = jb.Experiment(name="test")
-    for _ in range(3):
+    e = jb.Experiment(name="simple_experiment")
+
+    from icecream import ic
+
+    print()
+
+    def func(i):
+        return i**2
+
+    for i in range(3):
+        ic(e.table)
+        ic(e.state)
+        print()
+        # ic(e.artifact)
+        solver = jb.Solver(func)
+        record = solver([jb.Parameter(i, "i")])
+        e.append(record)
+    ic(e.table)
+    e.save()
+
+
+def test_simple_experiment_with_context_manager():
+    e = jb.Experiment(name="simple_experiment_with_context_manager", autosave=True)
+
+    from icecream import ic
+
+    print()
+
+    def func(i):
+        return i**2
+
+    for i in range(3):
         with e:
-            solver = jb.Solver(sample_model)
-            record = solver([])
-            record.name = jb.ID().data
+            ic(e.table)
+            ic(e.artifact)
+            print()
+            # ic(e.artifact)
+            solver = jb.Solver(func)
+            record = solver([jb.Parameter(i, "i")])
             e.append(record)
+    ic(e.data[0])
+    ic(e.table)
 
 
 def test_construct_experiment():
@@ -164,46 +138,96 @@ def test_construct_experiment():
 #     cols = droped_table.columns
 #     "energy" in cols
 #     "energy_min" in # #
-# def test_jijmodeling():
-#     experiment = jb.Experiment(autosave=#
-#     with experiment:
-#         jm_sampleset = decode()
-#         experiment.store({"result": jm_sampleset#
-#     droped_table = experiment.table.dropna(axis="columns#
-#     cols = droped_table.columns
-#     "energy" in cols
-#     "energy_min" in cols
-#     "num_feasible" in # #
-# def test_jijmodeling_iteration():
-#     experiment = jb.Experiment(autosave=#
-#     for _ in range(3):
-#         with experiment:
-#             jm_sampleset = decode()
-#             experiment.store({"result": jm_sampleset#
-#     droped_table = experiment.table.dropna(axis="columns#
-#     cols = droped_table.columns
-#     "energy" in cols
-#     "energy_min" in cols
-#     "num_feasible" in # #
-# def test_file_save_load():
-#     experiment = jb.Experiment(autosave=#
-#     for _ in range(3):
-#         with experiment:
-#             jm_sampleset = decode()
-#             experiment.store({"result": jm_sampleset#
-#     experiment.save#
-#     load_experiment = jb.Experiment.load(
-#         experiment_id=experiment.experiment_id, benchmark_id=experiment.benchmark_id
-#     #
-#     original_cols = experiment.table.columns
-#     load_cols = load_experiment.table.columns
-#     for c in original_cols:
-#         c in #
-#     assert len(experiment.table.index) == len(load_experiment.table.index)
-#     assert len(experiment.artifact) == len(load_experiment.artifact)
-#     for artifact in load_experiment.artifact.values():
-#         assert isinstance(artifact["result"], jm.#
-#     assert experiment._artifact.timestamp == load_experiment._artifact.# #
+
+# 以下のテストコードが通るように修正してください。
+def test_jijmodeling(
+    sample_model: MagicMock,
+    knapsack_problem: jm.Problem,
+    knapsack_instance_data: jm.PH_VALUES_INTERFACE,
+):
+    experiment = jb.Experiment(autosave=False)
+
+    with experiment:
+        solver = jb.Solver(sample_model)
+        x1 = jb.Parameter(knapsack_problem, name="model")
+        x2 = jb.Parameter(knapsack_instance_data, name="feed_dict")
+        record = solver([x1, x2])
+        record.name = jb.ID().data
+        experiment.append(record)
+
+    droped_table = experiment.table.dropna(axis="columns")
+
+    cols = droped_table.columns
+    assert "energy" in cols
+    assert "num_feasible" in cols
+
+    assert sample_model.call_count == 1
+    sample_model.assert_called_with(
+        model=knapsack_problem, feed_dict=knapsack_instance_data
+    )
+
+
+# 以下のテストコードが通るように修正してください。
+def test_jijmodeling_iteration(
+    sample_model: MagicMock,
+    knapsack_problem: jm.Problem,
+    knapsack_instance_data: jm.PH_VALUES_INTERFACE,
+):
+    experiment = jb.Experiment(autosave=False)
+    for _ in range(3):
+        with experiment:
+            solver = jb.Solver(sample_model)
+            x1 = jb.Parameter(knapsack_problem, name="")
+            x2 = jb.Parameter(knapsack_instance_data)
+            record = solver([x1, x2])
+            record.name = jb.ID().data
+            experiment.append(record)
+
+    droped_table = experiment.table.dropna(axis="columns")
+
+    cols = droped_table.columns
+    assert "energy" in cols
+    assert "num_feasible" in cols
+
+    assert sample_model.call_count == 3
+    sample_model.assert_called_with(
+        model=knapsack_problem, feed_dict=knapsack_instance_data
+    )
+
+
+# ここはsample_modelを使わずに適当な関数を作ってsaveしたデータが呼び出せるか確認してください。
+def test_file_save_load(sample_model, knapsack_problem, knapsack_instance_data):
+    experiment = jb.Experiment(autosave=False)
+    for _ in range(3):
+        with experiment:
+            solver = jb.Solver(sample_model)
+            # x1 = jb.Parameter(knapsack_problem, name="")
+            # x2 = jb.Parameter(knapsack_instance_data)
+            record = solver([])
+            record.name = jb.ID().data
+            experiment.append(record)
+
+    experiment.save()
+    from icecream import ic
+
+    ic("listdir of DEFAULT_RESULT_DIR: ")
+    ic(os.listdir(DEFAULT_RESULT_DIR))
+    load_experiment = jb.load(DEFAULT_RESULT_DIR)  # ここでエラー出る
+
+    original_cols = experiment.table.columns
+    load_cols = load_experiment.table.columns
+    for c in original_cols:
+        assert c in load_cols
+    assert len(experiment.table.index) == len(load_experiment.table.index)
+    assert len(experiment.artifact) == len(load_experiment.artifact)
+    print(load_experiment.operator)
+    for artifact in load_experiment.artifact.values():
+        # assert isinstance(artifact["record"], jm.SampleSet)  # あとで対応
+        print(artifact)  # あとで消す
+
+    # assert experiment.artifact.timestamp == load_experiment.artifact.timestamp  # あとで対応
+
+
 # def test_auto_save():
 #     experiment = jb.Experiment(autosave=True)
 #     num_rows = 3
