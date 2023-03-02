@@ -9,10 +9,10 @@ import jijbench as jb
 
 from jijbench.visualize.metrics.utils import (
     construct_experiment_from_samplesets,
-    create_fig_title_list,
-    df_has_valid_multipliers_column,
-    df_has_number_array_column_target_name,
-    df_has_number_column_target_name,
+    _create_fig_title_list,
+    _df_has_valid_multipliers_column,
+    _df_has_number_array_column_target_name,
+    _df_has_number_column_target_name,
 )
 
 
@@ -181,7 +181,7 @@ def test_create_fig_title_list(input_title, expect):
     )
     series.index.names = ["i"]
 
-    title_list = create_fig_title_list(
+    title_list = _create_fig_title_list(
         metrics=series,
         title=input_title,
     )
@@ -193,7 +193,7 @@ def test_create_fig_title_list_for_series_with_no_index():
         data=[1, 2],
         index=[None, None],
     )
-    title_list = create_fig_title_list(
+    title_list = _create_fig_title_list(
         metrics=series,
         title=None,
     )
@@ -209,7 +209,7 @@ def test_create_fig_title_list_for_invalid_input():
     )
     series.index.names = ["i"]
     with pytest.raises(TypeError):
-        create_fig_title_list(
+        _create_fig_title_list(
             metrics=series,
             title=invalid_input_title,
         )
@@ -245,7 +245,7 @@ def test_df_has_valid_multipliers_column(data, columns, expect):
         return df
 
     df = create_df(data, columns)
-    assert df_has_valid_multipliers_column(df) == expect
+    assert _df_has_valid_multipliers_column(df) == expect
 
 
 params = {
@@ -288,7 +288,7 @@ def test_df_has_number_array_column_target_name(target_column, data, columns, ex
 
     df = create_df(data, columns)
     assert (
-        df_has_number_array_column_target_name(df, column_name=target_column) == expect
+        _df_has_number_array_column_target_name(df, column_name=target_column) == expect
     )
 
 
@@ -320,4 +320,4 @@ def test_df_has_number_column_target_name(target_column, data, columns, expect):
         return df
 
     df = create_df(data, columns)
-    assert df_has_number_column_target_name(df, column_name=target_column) == expect
+    assert _df_has_number_column_target_name(df, column_name=target_column) == expect

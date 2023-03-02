@@ -11,11 +11,6 @@ repos:
     -   id: destroyed-symlinks
     -   id: check-symlinks
     -   id: detect-private-key
--   repo: https://github.com/pycqa/isort
-    rev: 5.5.2
-    hooks:
-    -   id: isort
-        args: ["--profile", "black"]
 -   repo: https://github.com/psf/black
     rev: stable
     hooks:

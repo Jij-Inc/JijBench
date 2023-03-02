@@ -7,7 +7,7 @@ import pytest
 
 import jijbench as jb
 
-from jijbench.visualize.metrics.plot import get_violations_dict, MetricsPlot
+from jijbench.visualize.metrics.plot import _get_violations_dict, MetricsPlot
 
 
 def solve():
@@ -59,7 +59,7 @@ def test_metrics_plot_get_violations_dict():
         data=[np.array([1, 1]), np.array([0, 2])],
         index=["num_occurrences", "onehot_violations"],
     )
-    violations_dict = get_violations_dict(series)
+    violations_dict = _get_violations_dict(series)
 
     assert len(violations_dict.keys()) == 1
     assert (violations_dict["onehot_violations"] == np.array([0, 2])).all()

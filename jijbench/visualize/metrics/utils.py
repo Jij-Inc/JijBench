@@ -102,7 +102,7 @@ def construct_experiment_from_samplesets(
     return experiment
 
 
-def create_fig_title_list(
+def _create_fig_title_list(
     metrics: pd.Series,
     title: str | list[str] | None,
 ) -> list[str]:
@@ -146,7 +146,10 @@ def create_fig_title_list(
         raise TypeError("title must be str or list[str].")
 
 
-def df_has_valid_multipliers_column(df: pd.DataFrame) -> bool:
+def _df_has_valid_multipliers_column(df: pd.DataFrame) -> bool:
+    """
+    Check that the `pd.DataFrame` instance has `multipliers` column in `JijBenchmark` format.
+    """
     if "multipliers" not in df.columns:
         return False
 
@@ -175,7 +178,10 @@ def df_has_valid_multipliers_column(df: pd.DataFrame) -> bool:
     return check_results.values.all()
 
 
-def df_has_number_array_column_target_name(df: pd.DataFrame, column_name: str) -> bool:
+def _df_has_number_array_column_target_name(df: pd.DataFrame, column_name: str) -> bool:
+    """
+    Check that the `pd.DataFrame` instance has a column named column_name and its element is number array.
+    """
     if column_name not in df.columns:
         return False
 
@@ -196,7 +202,10 @@ def df_has_number_array_column_target_name(df: pd.DataFrame, column_name: str) -
     return check_results.values.all()
 
 
-def df_has_number_column_target_name(df: pd.DataFrame, column_name: str) -> bool:
+def _df_has_number_column_target_name(df: pd.DataFrame, column_name: str) -> bool:
+    """
+    Check that the `pd.DataFrame` instance has a column named column_name and its element is number.
+    """
     if column_name not in df.columns:
         return False
 
