@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import jijmodeling as jm
 from numbers import Number
+import numpy as np
 import pandas as pd
 import typing as tp
 
@@ -90,6 +91,7 @@ def construct_experiment_from_samplesets(
     ]
     experiment = Experiment(autosave=False)
     for i, sampleset in enumerate(samplesets):
+        print(type(sampleset))
         factory = RecordFactory()
         ret = [Return(data=sampleset, name="")]
         record = factory(ret)
@@ -144,11 +146,11 @@ def create_fig_title_list(
         raise TypeError("title must be str or list[str].")
 
 
-def is_multipliers_column_valid(df: pd.DataFrame) -> bool:
-    if not "multipliers" in df.columns:
+def df_has_valid_multipliers_column(df: pd.DataFrame) -> bool:
+    if "multipliers" not in df.columns:
         return False
 
-    def is_multiplier_valid(x: pd.Series, constraint_names: list[str]) -> bool:
+    def element_is_valid(x: pd.Series, constraint_names: list[str]) -> bool:
         multipliers = x["multipliers"]
         if not isinstance(multipliers, dict):
             return False
@@ -165,9 +167,48 @@ def is_multipliers_column_valid(df: pd.DataFrame) -> bool:
         constraint_names = list(df["multipliers"].values[0].keys())
     except AttributeError:
         return False
-    is_multiplier_valid_array = df.apply(
-        is_multiplier_valid,
+    check_results = df.apply(
+        element_is_valid,
         axis=1,
         constraint_names=constraint_names,
     )
-    return is_multiplier_valid_array.values.all()
+    return check_results.values.all()
+
+
+def df_has_number_array_column_target_name(df: pd.DataFrame, column_name: str) -> bool:
+    if column_name not in df.columns:
+        return False
+
+    def element_is_number_array(x: pd.Series, column_name: str) -> bool:
+        element = x[column_name]
+        if not isinstance(element, (list, np.ndarray)):
+            return False
+        for num in element:
+            if not isinstance(num, Number):
+                return False
+        return True
+
+    check_results = df.apply(
+        element_is_number_array,
+        axis=1,
+        column_name=column_name,
+    )
+    return check_results.values.all()
+
+
+def df_has_number_column_target_name(df: pd.DataFrame, column_name: str) -> bool:
+    if column_name not in df.columns:
+        return False
+
+    def element_is_number(x: pd.Series, column_name: str) -> bool:
+        element = x[column_name]
+        if not isinstance(element, Number):
+            return False
+        return True
+
+    check_results = df.apply(
+        element_is_number,
+        axis=1,
+        column_name=column_name,
+    )
+    return check_results.values.all()
