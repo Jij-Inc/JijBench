@@ -6,7 +6,7 @@ import networkx as nx
 import numpy.typing as npt
 from typing import cast
 
-from jijbench.visualize.figure.interface import Figure
+from jijbench.visualization.figure.interface import Figure
 
 # TODO: node_posなどの型アノテーションを行う
 

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import jijmodeling as jm
 from numbers import Number
+import numpy as np
 import pandas as pd
 import typing as tp
 
@@ -36,7 +37,7 @@ def construct_experiment_from_samplesets(
         ```python
         import jijbench as jb
         import jijzept as jz
-        from jijbench.visualize.metrics.utils import construct_experiment_from_samplesets
+        from jijbench.visualization.metrics.utils import construct_experiment_from_samplesets
 
         problem = jb.get_problem("TSP")
         instance_data = jb.get_instance_data("TSP")[0][1]
@@ -100,7 +101,7 @@ def construct_experiment_from_samplesets(
     return experiment
 
 
-def create_fig_title_list(
+def _create_fig_title_list(
     metrics: pd.Series,
     title: str | list[str] | None,
 ) -> list[str]:
@@ -126,29 +127,35 @@ def create_fig_title_list(
     elif title is None:
         title_list = []
         index_names = metrics.index.names
-        for indices, data in metrics.items():
-            if indices is None:
+        for index, _ in metrics.items():
+            # If user don't give title, the title list is automatically generated from the metrics index.
+            if index is None:
                 title_list.append("")
-            else:
-                # If user don't give title, the title list is automatically generated from the metrics indices.
+            elif isinstance(index, tuple):
                 title_list.append(
                     "\n".join(
                         [
-                            f"{index_name}: {index}"
-                            for index_name, index in zip(index_names, indices)
+                            f"{index_name}: {index_element}"
+                            for index_name, index_element in zip(index_names, index)
                         ]
                     )
                 )
+            else:
+                index_name = index_names[0] if index_names[0] is not None else "index"
+                title_list.append(f"{index_name}: {index}")
         return title_list
     else:
         raise TypeError("title must be str or list[str].")
 
 
-def is_multipliers_column_valid(df: pd.DataFrame) -> bool:
-    if not "multipliers" in df.columns:
+def _df_has_valid_multipliers_column(df: pd.DataFrame) -> bool:
+    """
+    Check that the `pd.DataFrame` instance has `multipliers` column in `JijBenchmark` format.
+    """
+    if "multipliers" not in df.columns:
         return False
 
-    def is_multiplier_valid(x: pd.Series, constraint_names: list[str]) -> bool:
+    def element_is_valid(x: pd.Series, constraint_names: list[str]) -> bool:
         multipliers = x["multipliers"]
         if not isinstance(multipliers, dict):
             return False
@@ -161,13 +168,60 @@ def is_multipliers_column_valid(df: pd.DataFrame) -> bool:
             return False
         return True
 
-    try:
-        constraint_names = list(df["multipliers"].values[0].keys())
-    except AttributeError:
+    first_element = df["multipliers"].values[0]
+    if isinstance(first_element, dict):
+        first_element = tp.cast(dict, first_element)
+        constraint_names = list(first_element.keys())
+    else:
         return False
-    is_multiplier_valid_array = df.apply(
-        is_multiplier_valid,
+    check_results = df.apply(
+        element_is_valid,
         axis=1,
         constraint_names=constraint_names,
     )
-    return is_multiplier_valid_array.values.all()
+    return all(check_results.values)
+
+
+def _df_has_number_array_column_target_name(df: pd.DataFrame, column_name: str) -> bool:
+    """
+    Check that the `pd.DataFrame` instance has a column named `column_name` and its element is number array.
+    """
+    if column_name not in df.columns:
+        return False
+
+    def element_is_number_array(x: pd.Series, column_name: str) -> bool:
+        element = x[column_name]
+        if not isinstance(element, (list, np.ndarray)):
+            return False
+        for num in element:
+            if not isinstance(num, Number):
+                return False
+        return True
+
+    check_results = df.apply(
+        element_is_number_array,
+        axis=1,
+        column_name=column_name,
+    )
+    return all(check_results.values)
+
+
+def _df_has_number_column_target_name(df: pd.DataFrame, column_name: str) -> bool:
+    """
+    Check that the `pd.DataFrame` instance has a column named `column_name` and its element is number.
+    """
+    if column_name not in df.columns:
+        return False
+
+    def element_is_number(x: pd.Series, column_name: str) -> bool:
+        element = x[column_name]
+        if not isinstance(element, Number):
+            return False
+        return True
+
+    check_results = df.apply(
+        element_is_number,
+        axis=1,
+        column_name=column_name,
+    )
+    return all(check_results.values)

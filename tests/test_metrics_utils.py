@@ -7,10 +7,12 @@ import pytest
 
 import jijbench as jb
 
-from jijbench.visualize.metrics.utils import (
+from jijbench.visualization.metrics.utils import (
     construct_experiment_from_samplesets,
-    create_fig_title_list,
-    is_multipliers_column_valid,
+    _create_fig_title_list,
+    _df_has_valid_multipliers_column,
+    _df_has_number_array_column_target_name,
+    _df_has_number_column_target_name,
 )
 
 
@@ -179,7 +181,7 @@ def test_create_fig_title_list(input_title, expect):
     )
     series.index.names = ["i"]
 
-    title_list = create_fig_title_list(
+    title_list = _create_fig_title_list(
         metrics=series,
         title=input_title,
     )
@@ -191,11 +193,22 @@ def test_create_fig_title_list_for_series_with_no_index():
         data=[1, 2],
         index=[None, None],
     )
-    title_list = create_fig_title_list(
+    title_list = _create_fig_title_list(
         metrics=series,
         title=None,
     )
     assert title_list == ["", ""]
+
+
+def test_create_fig_title_list_for_series_with_default_index():
+    series = pd.Series(
+        data=[1, 2],
+    )
+    title_list = _create_fig_title_list(
+        metrics=series,
+        title=None,
+    )
+    assert title_list == ["index: 0", "index: 1"]
 
 
 def test_create_fig_title_list_for_invalid_input():
@@ -207,7 +220,7 @@ def test_create_fig_title_list_for_invalid_input():
     )
     series.index.names = ["i"]
     with pytest.raises(TypeError):
-        create_fig_title_list(
+        _create_fig_title_list(
             metrics=series,
             title=invalid_input_title,
         )
@@ -233,7 +246,7 @@ params = {
     list(params.values()),
     ids=list(params.keys()),
 )
-def test_is_multipliers_column_valid(data, columns, expect):
+def test_df_has_valid_multipliers_column(data, columns, expect):
     def create_df(data, columns):
         df = pd.DataFrame(columns=columns)
         for i, row in enumerate(data):
@@ -243,14 +256,39 @@ def test_is_multipliers_column_valid(data, columns, expect):
         return df
 
     df = create_df(data, columns)
-    assert is_multipliers_column_valid(df) == expect
+    assert _df_has_valid_multipliers_column(df) == expect
 
 
-def test_is_multipliers_column_valid_hoge():
-    data = [[{"onehot1": 1}], [{"onehot1": 2}]]
-    columns = ["multipliers"]
-    expect = True
+params = {
+    "no_target_columns": ("number_array", [[0, 1], [2, 3]], ["col_0", "col_1"], False),
+    "target_column_isnot_array": ("number_array", [[0]], ["number_array"], False),
+    "target_column_element_isnot_number": (
+        "number_array",
+        [[["a"]]],
+        ["number_array"],
+        False,
+    ),
+    "target_column_is_valid_list": (
+        "number_array",
+        [[[0, 1]], [[2, 3]]],
+        ["number_array"],
+        True,
+    ),
+    "target_column_is_valid_nparray": (
+        "number_array",
+        [[np.array([0, 1])], [np.array([2, 3])]],
+        ["number_array"],
+        True,
+    ),
+}
 
+
+@pytest.mark.parametrize(
+    "target_column, data, columns, expect",
+    list(params.values()),
+    ids=list(params.keys()),
+)
+def test_df_has_number_array_column_target_name(target_column, data, columns, expect):
     def create_df(data, columns):
         df = pd.DataFrame(columns=columns)
         for i, row in enumerate(data):
@@ -260,5 +298,37 @@ def test_is_multipliers_column_valid_hoge():
         return df
 
     df = create_df(data, columns)
+    assert (
+        _df_has_number_array_column_target_name(df, column_name=target_column) == expect
+    )
 
-    assert is_multipliers_column_valid(df) == expect
+
+params = {
+    "no_target_columns": ("number", [[0, 1], [2, 3]], ["col_0", "col_1"], False),
+    "target_column_is_list": ("number", [[[0]]], ["number"], False),
+    "target_column_is_str": ("number", [["0"]], ["number"], False),
+    "target_column_is_number": (
+        "number",
+        [[0], [1]],
+        ["number"],
+        True,
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    "target_column, data, columns, expect",
+    list(params.values()),
+    ids=list(params.keys()),
+)
+def test_df_has_number_column_target_name(target_column, data, columns, expect):
+    def create_df(data, columns):
+        df = pd.DataFrame(columns=columns)
+        for i, row in enumerate(data):
+            for j, element in enumerate(row):
+                df.at[i, columns[j]] = object
+                df.at[i, columns[j]] = element
+        return df
+
+    df = create_df(data, columns)
+    assert _df_has_number_column_target_name(df, column_name=target_column) == expect
