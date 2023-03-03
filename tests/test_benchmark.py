@@ -1,14 +1,10 @@
 import os, shutil, time
 
-import inspect
 import jijmodeling as jm
 import jijzept as jz
-import numpy as np
-import pandas as pd
 import pytest
 
 import jijbench as jb
-from jijbench.exceptions.exceptions import SolverFailedError, ConcurrentFailedError
 from unittest.mock import MagicMock
 
 
@@ -18,8 +14,8 @@ def pre_post_process():
     yield
     # postprocess
     norm_path = os.path.normcase("./.jb_results")
-    # if os.path.exists(norm_path):
-    #    shutil.rmtree(norm_path)
+    if os.path.exists(norm_path):
+        shutil.rmtree(norm_path)
 
 
 def test_simple_benchmark():
