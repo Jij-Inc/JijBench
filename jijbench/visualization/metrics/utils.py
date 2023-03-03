@@ -8,7 +8,7 @@ import typing as tp
 
 from jijbench.experiment.experiment import Experiment
 from jijbench.functions.concat import Concat
-from jijbench.solver.base import Parameter, Return
+from jijbench.solver.base import Parameter, Response
 from jijbench.functions.factory import RecordFactory
 
 
@@ -92,7 +92,7 @@ def construct_experiment_from_samplesets(
     experiment = Experiment(autosave=False)
     for i, sampleset in enumerate(samplesets):
         factory = RecordFactory()
-        ret = [Return(data=sampleset, name="")]
+        ret = [Response(data=sampleset, name="")]
         record = factory(ret)
         # Concat additional_data if given.
         if len(params) >= 1:
