@@ -37,7 +37,7 @@ def construct_experiment_from_samplesets(
         ```python
         import jijbench as jb
         import jijzept as jz
-        from jijbench.visualize.metrics.utils import construct_experiment_from_samplesets
+        from jijbench.visualization.metrics.utils import construct_experiment_from_samplesets
 
         problem = jb.get_problem("TSP")
         instance_data = jb.get_instance_data("TSP")[0][1]
@@ -127,19 +127,22 @@ def _create_fig_title_list(
     elif title is None:
         title_list = []
         index_names = metrics.index.names
-        for indices, data in metrics.items():
-            if indices is None:
+        for index, _ in metrics.items():
+            # If user don't give title, the title list is automatically generated from the metrics index.
+            if index is None:
                 title_list.append("")
-            else:
-                # If user don't give title, the title list is automatically generated from the metrics indices.
+            elif isinstance(index, tuple):
                 title_list.append(
                     "\n".join(
                         [
-                            f"{index_name}: {index}"
-                            for index_name, index in zip(index_names, indices)
+                            f"{index_name}: {index_element}"
+                            for index_name, index_element in zip(index_names, index)
                         ]
                     )
                 )
+            else:
+                index_name = index_names[0] if index_names[0] is not None else "index"
+                title_list.append(f"{index_name}: {index}")
         return title_list
     else:
         raise TypeError("title must be str or list[str].")
@@ -165,16 +168,18 @@ def _df_has_valid_multipliers_column(df: pd.DataFrame) -> bool:
             return False
         return True
 
-    try:
-        constraint_names = list(df["multipliers"].values[0].keys())
-    except AttributeError:
+    first_element = df["multipliers"].values[0]
+    if isinstance(first_element, dict):
+        first_element = tp.cast(dict, first_element)
+        constraint_names = list(first_element.keys())
+    else:
         return False
     check_results = df.apply(
         element_is_valid,
         axis=1,
         constraint_names=constraint_names,
     )
-    return check_results.values.all()
+    return all(check_results.values)
 
 
 def _df_has_number_array_column_target_name(df: pd.DataFrame, column_name: str) -> bool:
@@ -198,7 +203,7 @@ def _df_has_number_array_column_target_name(df: pd.DataFrame, column_name: str) 
         axis=1,
         column_name=column_name,
     )
-    return check_results.values.all()
+    return all(check_results.values)
 
 
 def _df_has_number_column_target_name(df: pd.DataFrame, column_name: str) -> bool:
@@ -219,4 +224,4 @@ def _df_has_number_column_target_name(df: pd.DataFrame, column_name: str) -> boo
         axis=1,
         column_name=column_name,
     )
-    return check_results.values.all()
+    return all(check_results.values)

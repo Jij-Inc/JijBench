@@ -7,7 +7,7 @@ import pytest
 
 import jijbench as jb
 
-from jijbench.visualize.metrics.plot import _get_violations_dict, MetricsPlot
+from jijbench.visualization.metrics.plot import _get_violations_dict, MetricsPlot
 
 
 def solve():

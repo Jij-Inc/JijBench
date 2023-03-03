@@ -6,7 +6,7 @@ import pytest
 
 import jijbench as jb
 from jijbench.exceptions.exceptions import UserFunctionFailedError
-from jijbench.visualize.metrics.plot import MetricsPlot
+from jijbench.visualization.metrics.plot import MetricsPlot
 
 
 def solve():

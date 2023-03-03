@@ -15,7 +15,7 @@ from typing import Callable, cast
 
 import jijbench as jb
 from jijbench.exceptions.exceptions import UserFunctionFailedError
-from jijbench.visualize.metrics.utils import (
+from jijbench.visualization.metrics.utils import (
     _create_fig_title_list,
     _df_has_valid_multipliers_column,
     _df_has_number_array_column_target_name,
@@ -40,7 +40,7 @@ def _get_violations_dict(x: pd.Series) -> dict:
         ```python
         import jijbench as jb
         import jijzept as jz
-        from jijbench.visualize.metrics.plot import _get_violations_dict
+        from jijbench.visualization.metrics.plot import _get_violations_dict
 
         problem = jb.get_problem("TSP")
         instance_data = jb.get_instance_data("TSP")[0][1]
@@ -107,7 +107,7 @@ class MetricsPlot:
             import jijbench as jb
             import jijzept as jz
             from jijzept.sampler.openjij.sa_cpu import JijSAParameters
-            from jijbench.visualize.metrics.plot import MetricsPlot
+            from jijbench.visualization.metrics.plot import MetricsPlot
 
             problem = jb.get_problem("TSP")
             instance_data = jb.get_instance_data("TSP")[0][1]
@@ -181,7 +181,7 @@ class MetricsPlot:
             import jijbench as jb
             import jijzept as jz
             from jijzept.sampler.openjij.sa_cpu import JijSAParameters
-            from jijbench.visualize.metrics.plot import MetricsPlot
+            from jijbench.visualization.metrics.plot import MetricsPlot
             import pandas as pd
 
             problem = jb.get_problem("TSP")
@@ -223,8 +223,8 @@ class MetricsPlot:
             ```python
             import jijbench as jb
             import jijzept as jz
-            from jijbench.visualize.metrics.plot import MetricsPlot
-            from jijbench.visualize.metrics.utils import construct_experiment_from_samplesets
+            from jijbench.visualization.metrics.plot import MetricsPlot
+            from jijbench.visualization.metrics.utils import construct_experiment_from_samplesets
             import pandas as pd
 
             problem = jb.get_problem("TSP")
@@ -248,7 +248,7 @@ class MetricsPlot:
         title_list = _create_fig_title_list(metrics, title)
 
         fig_ax_list = []
-        for i, (indices, data) in enumerate(metrics.items()):
+        for i, (_, data) in enumerate(metrics.items()):
             fig, ax = plt.subplots(figsize=figsize)
             fig.suptitle(title_list[i], fontsize=title_fontsize)
             ax.boxplot(data.values(), **matplotlib_boxplot_kwargs)
@@ -310,7 +310,7 @@ class MetricsPlot:
             import jijbench as jb
             import jijzept as jz
             from jijzept.sampler.openjij.sa_cpu import JijSAParameters
-            from jijbench.visualize.metrics.plot import MetricsPlot
+            from jijbench.visualization.metrics.plot import MetricsPlot
 
             problem = jb.get_problem("TSP")
             instance_data = jb.get_instance_data("TSP")[0][1]
@@ -347,8 +347,8 @@ class MetricsPlot:
             ```python
             import jijbench as jb
             import jijzept as jz
-            from jijbench.visualize.metrics.plot import MetricsPlot
-            from jijbench.visualize.metrics.utils import construct_experiment_from_samplesets
+            from jijbench.visualization.metrics.plot import MetricsPlot
+            from jijbench.visualization.metrics.utils import construct_experiment_from_samplesets
 
             problem = jb.get_problem("TSP")
             instance_data = jb.get_instance_data("TSP")[0][1]
@@ -437,7 +437,7 @@ class MetricsPlot:
             ```python
             from itertools import product
             import jijbench as jb
-            from jijbench.visualize.metrics.plot import MetricsPlot
+            from jijbench.visualization.metrics.plot import MetricsPlot
             import jijzept as jz
 
             problem = jb.get_problem("TSP")
@@ -487,7 +487,7 @@ class MetricsPlot:
             import pandas as pd
 
             import jijbench as jb
-            from jijbench.visualize.metrics.plot import MetricsPlot
+            from jijbench.visualization.metrics.plot import MetricsPlot
             import jijzept as jz
             from jijzept.sampler.openjij.sa_cpu import JijSAParameters
 

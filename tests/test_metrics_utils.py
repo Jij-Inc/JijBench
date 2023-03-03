@@ -7,7 +7,7 @@ import pytest
 
 import jijbench as jb
 
-from jijbench.visualize.metrics.utils import (
+from jijbench.visualization.metrics.utils import (
     construct_experiment_from_samplesets,
     _create_fig_title_list,
     _df_has_valid_multipliers_column,
@@ -198,6 +198,17 @@ def test_create_fig_title_list_for_series_with_no_index():
         title=None,
     )
     assert title_list == ["", ""]
+
+
+def test_create_fig_title_list_for_series_with_default_index():
+    series = pd.Series(
+        data=[1, 2],
+    )
+    title_list = _create_fig_title_list(
+        metrics=series,
+        title=None,
+    )
+    assert title_list == ["index: 0", "index: 1"]
 
 
 def test_create_fig_title_list_for_invalid_input():
