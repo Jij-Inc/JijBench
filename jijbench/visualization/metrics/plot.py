@@ -96,7 +96,7 @@ class MetricsPlot:
 
          Attributes:
              result (jb.Experiment): a benchmark result.
-             parallelplot_datalabels (list[str]): a list of the names of all the metrics that can be plotted by `parallelplot_experiment`.
+             parallelplot_axes_list (list[str]): a list of the names of all the metrics that can be plotted by `parallelplot_experiment`.
                  None until `parallelplot_experiment` is called.
 
         Example:
@@ -394,12 +394,12 @@ class MetricsPlot:
         self,
         color_column_name: str | None = None,
         color_midpoint: float | None = None,
-        additional_display_data: list[str] | None = None,
-        additional_display_data_by_customfunc: list[tuple[Callable, str]] | None = None,
-        select_and_sort_displayed_data: list[str] | None = None,
-        display_name_of_data: dict[str, str] | None = None,
-        data_label_pos_top_or_bottom: str | None = None,
-        data_label_fontsize: Number | None = None,
+        additional_axes: list[str] | None = None,
+        additional_axes_created_by_function: dict[str, Callable] | None = None,
+        display_axes_list: list[str] | None = None,
+        rename_map: dict[str, str] | None = None,
+        axis_label_pos: str | None = None,
+        axis_label_fontsize: Number | None = None,
         title: str | None = None,
         height: Number | None = None,
         width: Number | None = None,
@@ -410,20 +410,20 @@ class MetricsPlot:
             color_column_name (str | None): the column name, and the values from this column are used to assign color to mark.
                 Defaults to samplemean_total_violations or objective if those columns exist.
             color_midpoint (float | None): the midpoint of the color scale. Defaults to the mean of the color column value.
-            additional_display_data (list[str] | None): A list of column names for additional data to display.
+            additional_axes (list[str] | None): A list of column names for additional axes.
                 The conditions for available column names are that they are elements of self.result.table.columns and that the values from the column is number.
                 Defaults to None.
-            additional_display_data_by_customfunc (list[tuple[Callable, str]] | None): A list of tuples, one callable and one str.
-                The callable is applied to `self.result.table` as self.result.table.apply(callable, axis=1), and the result is added to the displayed data.
-                The callable takes a `pd.Series` and returns a number, and the string will be the label for the display data.
+            additional_axes_created_by_function (dict[str, Callable]): A list of dict, where the key is the label of the axis and the value is the callable.
+                The callable is applied to `self.result.table` as self.result.table.apply(callable, axis=1), and the result is added to axes.
+                The callable takes a `pd.Series` and returns a number.
                 Defaults to None.
-            select_and_sort_displayed_data (list[str] | None): A list of labels for the data to display. Also, the order in the list matches the order in which they are plotted.
-                Check the `parallelplot_datalabels` attribute for available data labels. Defaults to all labels.
-            display_name_of_data (dict[str, str] | None): A dictionary where the key is the original data label and the value is the user-specified display label.
-                Check the original data labels in the `parallelplot_datalabels` attribute.
-                Defaults is None, which shows the original data labels.
-            data_label_pos_top_or_bottom (str | None): the position of the data label. Only "top" or "bottom" are accepted. Defaults to top.
-            data_label_fontsize (Number | None): the fontsize of the data label. Defaults to None.
+            display_axes_list (list[str] | None): A list of labels for the displayed axes. This argument allows you to select and sort the axes to display.
+                Check the `parallelplot_axes_list` attribute for available axes. Defaults to all axes.
+            rename_map (dict[str, str] | None): A dictionary where the key is the original axis label and the value is the user-specified axis label.
+                Check the original axis labels in the `parallelplot_axes_list` attribute.
+                Defaults is None, the original axis labels is displayed.
+            axis_label_pos (str | None): the position of the axis label. Only "top" or "bottom" are accepted. Defaults to top.
+            axis_label_fontsize (Number | None): the fontsize of the axis label. Defaults to None.
             title (str | None): the title of the plot. Defaults to None.
             height (Number | None): the height of the plot. Defaults to None.
             width (Number | None): the width of the plot. Defaults to None.
@@ -476,10 +476,10 @@ class MetricsPlot:
             ```
 
             This example gives some arguments to `parallelplot_experiment`.
-            `additional_display_data` argument adds the execution_time column to the plot. This is the column of result.table and its element are number.
-            `additional_display_data_by_customfunc` argument add the values calculated from result.table to the plot.
-            `display_name_of_data` insert line breaks for long data labels to make the charts easier to read. Line breaks are done with <br>.
-            `data_label_pos_top_or_bottom` is set to bottom to avoid the data label overlapping the figure due to line breaks.
+            `additional_axes` argument adds the execution_time column to the plot. This is the column of result.table and its element are number.
+            `additional_axes_created_by_function` argument add the values calculated from result.table to the plot.
+            `rename_map` insert line breaks for long data labels to make the charts easier to read. Line breaks are done with <br>.
+            `axis_label_pos` is set to bottom to avoid the data label overlapping the figure due to line breaks.
 
             ```python
             from itertools import product
@@ -527,12 +527,12 @@ class MetricsPlot:
 
             mp = MetricsPlot(result)
             fig = mp.parallelplot_experiment(
-                additional_display_data=["execution_time"],
-                additional_display_data_by_customfunc=[
+                additional_axes=["execution_time"],
+                additional_axes_created_by_function=[
                     (get_num_reads_from_parameters, "num_reads"),
                     (calc_samplemean_energy, "samplemean_energy"),
                 ],
-                display_name_of_data={
+                rename_map={
                     "onehot_time_multiplier": "onehot_time<br>multiplier",
                     "onehot_location_multiplier": "onehot_location<br>multiplier",
                     "samplemean_objective": "samplemean<br>objective",
@@ -540,18 +540,18 @@ class MetricsPlot:
                     "samplemean_onehot_location_violations": "samplemean<br>onehot_location<br>violations",
                     "samplemean_total_violations": "samplemean<br>total_violations",
                 },
-                data_label_pos_top_or_bottom="bottom",
+                axis_label_pos="bottom",
             )
 
             ```
 
         """
-        if additional_display_data is None:
-            additional_display_data = []
-        if additional_display_data_by_customfunc is None:
-            additional_display_data_by_customfunc = []
-        if data_label_pos_top_or_bottom is None:
-            data_label_pos_top_or_bottom = "top"
+        if additional_axes is None:
+            additional_axes = []
+        if additional_axes_created_by_function is None:
+            additional_axes_created_by_function = {}
+        if axis_label_pos is None:
+            axis_label_pos = "top"
 
         result_table = self.result.table
 
@@ -559,7 +559,7 @@ class MetricsPlot:
         data_to_create_df_parallelplot = {}
 
         # Displayed data specified by user
-        for display_column in additional_display_data:
+        for display_column in additional_axes:
             # Check if the column exists and the elements is number.
             if not _df_has_number_column_target_name(result_table, display_column):
                 raise TypeError(
@@ -570,14 +570,14 @@ class MetricsPlot:
             ]
 
         # Data generated by user custom functions
-        for func, column_name in additional_display_data_by_customfunc:
+        for column_name, func in additional_axes_created_by_function.items():
             # TODO: デコレータで書き直した方が可読性が上がると思われる。エラーレイズと返り値がnumberであることのチェックをデコレータ内で行う
             try:
                 data_to_create_df_parallelplot[column_name] = result_table.apply(
                     func, axis=1
                 )
             except Exception as e:
-                msg = f'An error occurred inside your function. Please check "{func.__name__}" in additional_display_data_by_customfunc. -> {e}'
+                msg = f'An error occurred inside your function. Please check "{func.__name__}" in additional_axes_created_by_function. -> {e}'
                 raise UserFunctionFailedError(msg)
             for value in data_to_create_df_parallelplot[column_name].values:
                 if not isinstance(value, Number):
@@ -637,10 +637,10 @@ class MetricsPlot:
             data_to_create_df_parallelplot
         )
 
-        if select_and_sort_displayed_data is None:
-            select_and_sort_displayed_data = self.parallelplot_datalabels
+        if display_axes_list is None:
+            display_axes_list = self.parallelplot_axes_list
         self.df_parallelplot_displayed = df_parallelplot_displayed = df_parallelplot[
-            select_and_sort_displayed_data
+            display_axes_list
         ]
 
         if color_column_name is None:
@@ -655,25 +655,23 @@ class MetricsPlot:
         fig = px.parallel_coordinates(
             df_parallelplot_displayed.reset_index(),
             color=color_column_name,
-            labels=display_name_of_data,
+            labels=rename_map,
             color_continuous_scale=px.colors.diverging.Tealrose,
             color_continuous_midpoint=color_midpoint,
             title=title,
             height=height,
             width=width,
         )
+        fig.update_traces(labelside=axis_label_pos, selector=dict(type="parcoords"))
         fig.update_traces(
-            labelside=data_label_pos_top_or_bottom, selector=dict(type="parcoords")
-        )
-        fig.update_traces(
-            labelfont_size=data_label_fontsize, selector=dict(type="parcoords")
+            labelfont_size=axis_label_fontsize, selector=dict(type="parcoords")
         )
         fig.show()
 
         return fig
 
     @property
-    def parallelplot_datalabels(self) -> list[str]:
+    def parallelplot_axes_list(self) -> list[str]:
         if hasattr(self, "df_parallelplot"):
             return list(self.df_parallelplot.columns)
         else:

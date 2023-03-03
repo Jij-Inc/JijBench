@@ -413,13 +413,11 @@ params = {
 
 
 @pytest.mark.parametrize(
-    "data_label_pos_top_or_bottom, expect",
+    "axis_label_pos, expect",
     list(params.values()),
     ids=list(params.keys()),
 )
-def test_metrics_plot_parallelplot_arg_data_label_pos_top_or_bottom(
-    mocker, data_label_pos_top_or_bottom, expect
-):
+def test_metrics_plot_parallelplot_arg_axis_label_pos(mocker, axis_label_pos, expect):
     # Without this mock, the browser will launch and display the visualization results
     mocker.patch("plotly.io.show")
     bench = jb.Benchmark(
@@ -428,9 +426,7 @@ def test_metrics_plot_parallelplot_arg_data_label_pos_top_or_bottom(
     )
     result = bench()
     mplot = MetricsPlot(result)
-    fig = mplot.parallelplot_experiment(
-        data_label_pos_top_or_bottom=data_label_pos_top_or_bottom
-    )
+    fig = mplot.parallelplot_experiment(axis_label_pos=axis_label_pos)
     assert fig.data[0].labelside == expect
 
 
@@ -445,7 +441,7 @@ params = {
     list(params.values()),
     ids=list(params.keys()),
 )
-def test_metrics_plot_parallelplot_arg_data_label_fontsize(mocker, fontsize, expect):
+def test_metrics_plot_parallelplot_arg_axis_label_fontsize(mocker, fontsize, expect):
     # Without this mock, the browser will launch and display the visualization results
     mocker.patch("plotly.io.show")
     bench = jb.Benchmark(
@@ -454,11 +450,11 @@ def test_metrics_plot_parallelplot_arg_data_label_fontsize(mocker, fontsize, exp
     )
     result = bench()
     mplot = MetricsPlot(result)
-    fig = mplot.parallelplot_experiment(data_label_fontsize=fontsize)
+    fig = mplot.parallelplot_experiment(axis_label_fontsize=fontsize)
     assert fig.data[0].labelfont.size == expect
 
 
-def test_metrics_plot_parallelplot_arg_additional_display_data(mocker):
+def test_metrics_plot_parallelplot_arg_additional_axes(mocker):
     # Without this mock, the browser will launch and display the visualization results
     mocker.patch("plotly.io.show")
     bench = jb.Benchmark(
@@ -468,7 +464,7 @@ def test_metrics_plot_parallelplot_arg_additional_display_data(mocker):
     result = bench()
     mplot = MetricsPlot(result)
     fig = mplot.parallelplot_experiment(
-        additional_display_data=["num_samples"],
+        additional_axes=["num_samples"],
     )
 
     expect_num_samples = result.table["num_samples"].values
@@ -476,7 +472,7 @@ def test_metrics_plot_parallelplot_arg_additional_display_data(mocker):
     assert fig_contain_target_data(fig, "num_samples", expect_num_samples)
 
 
-def test_metrics_plot_parallelplot_arg_additional_display_data_not_number(mocker):
+def test_metrics_plot_parallelplot_arg_additional_axes_not_number(mocker):
     # Without this mock, the browser will launch and display the visualization results
     mocker.patch("plotly.io.show")
     bench = jb.Benchmark(
@@ -487,11 +483,11 @@ def test_metrics_plot_parallelplot_arg_additional_display_data_not_number(mocker
     mplot = MetricsPlot(result)
     with pytest.raises(TypeError):
         mplot.parallelplot_experiment(
-            additional_display_data=["energy"],
+            additional_axes=["energy"],
         )
 
 
-def test_metrics_plot_parallelplot_arg_additional_display_data_by_customfunc(mocker):
+def test_metrics_plot_parallelplot_arg_additional_axes_created_by_function(mocker):
     # Without this mock, the browser will launch and display the visualization results
     mocker.patch("plotly.io.show")
     bench = jb.Benchmark(
@@ -511,10 +507,10 @@ def test_metrics_plot_parallelplot_arg_additional_display_data_by_customfunc(moc
         return mean
 
     fig = mplot.parallelplot_experiment(
-        additional_display_data_by_customfunc=[
-            (get_max_num_occurrences, "max_num_occurrences"),
-            (calc_samplemean_energy, "samplemean_energy"),
-        ],
+        additional_axes_created_by_function={
+            "max_num_occurrences": get_max_num_occurrences,
+            "samplemean_energy": calc_samplemean_energy,
+        },
     )
 
     def calc_expect_max_num_occurrences(result, idx):
@@ -537,7 +533,7 @@ def test_metrics_plot_parallelplot_arg_additional_display_data_by_customfunc(moc
     )
 
 
-def test_metrics_plot_parallelplot_arg_additional_display_data_by_customfunc_return_not_number(
+def test_metrics_plot_parallelplot_arg_additional_axes_created_by_function_return_not_number(
     mocker,
 ):
     # Without this mock, the browser will launch and display the visualization results
@@ -555,13 +551,13 @@ def test_metrics_plot_parallelplot_arg_additional_display_data_by_customfunc_ret
 
     with pytest.raises(TypeError):
         mplot.parallelplot_experiment(
-            additional_display_data_by_customfunc=[
-                (get_max_num_occurrences_return_not_number, "max_num_occurrences"),
-            ],
+            additional_axes_created_by_function={
+                "max_num_occurrences": get_max_num_occurrences_return_not_number
+            }
         )
 
 
-def test_metrics_plot_parallelplot_arg_additional_display_data_by_customfunc_error_in_func(
+def test_metrics_plot_parallelplot_arg_additional_axes_created_by_function_error_in_func(
     mocker,
 ):
     # Without this mock, the browser will launch and display the visualization results
@@ -578,13 +574,11 @@ def test_metrics_plot_parallelplot_arg_additional_display_data_by_customfunc_err
     mplot = MetricsPlot(result)
     with pytest.raises(UserFunctionFailedError):
         mplot.parallelplot_experiment(
-            additional_display_data_by_customfunc=[
-                (error_func, "column_name"),
-            ],
+            additional_axes_created_by_function={"column_name": error_func}
         )
 
 
-def test_metrics_plot_parallelplot_arg_select_and_sort_displayed_data(mocker):
+def test_metrics_plot_parallelplot_arg_display_axes_list(mocker):
     # Without this mock, the browser will launch and display the visualization results
     mocker.patch("plotly.io.show")
     bench = jb.Benchmark(
@@ -594,7 +588,7 @@ def test_metrics_plot_parallelplot_arg_select_and_sort_displayed_data(mocker):
     result = bench()
     mplot = MetricsPlot(result)
     fig = mplot.parallelplot_experiment(
-        select_and_sort_displayed_data=[
+        display_axes_list=[
             "samplemean_onehot2_violations",
             "samplemean_onehot1_violations",
         ]
@@ -605,7 +599,7 @@ def test_metrics_plot_parallelplot_arg_select_and_sort_displayed_data(mocker):
     assert fig.data[0].dimensions[1].label == "samplemean_onehot1_violations"
 
 
-def test_metrics_plot_parallelplot_property_parallelplot_datalabels(mocker):
+def test_metrics_plot_parallelplot_property_parallelplot_axes_list(mocker):
     # Without this mock, the browser will launch and display the visualization results
     mocker.patch("plotly.io.show")
     bench = jb.Benchmark(
@@ -618,10 +612,10 @@ def test_metrics_plot_parallelplot_property_parallelplot_datalabels(mocker):
 
     expect_name_list = [dimension.label for dimension in fig.data[0].dimensions]
 
-    assert mplot.parallelplot_datalabels == expect_name_list
+    assert mplot.parallelplot_axes_list == expect_name_list
 
 
-def test_metrics_plot_parallelplot_property_parallelplot_datalabels_before_call_parallelplot():
+def test_metrics_plot_parallelplot_property_parallelplot_axes_list_before_call_parallelplot():
     bench = jb.Benchmark(
         params={},
         solver=[solve],
@@ -629,10 +623,10 @@ def test_metrics_plot_parallelplot_property_parallelplot_datalabels_before_call_
     result = bench()
     mplot = MetricsPlot(result)
 
-    assert mplot.parallelplot_datalabels == []
+    assert mplot.parallelplot_axes_list == []
 
 
-def test_metrics_plot_parallelplot_arg_display_name_of_data(mocker):
+def test_metrics_plot_parallelplot_arg_rename_map(mocker):
     # Without this mock, the browser will launch and display the visualization results
     mocker.patch("plotly.io.show")
     bench = jb.Benchmark(
@@ -642,7 +636,7 @@ def test_metrics_plot_parallelplot_arg_display_name_of_data(mocker):
     result = bench()
     mplot = MetricsPlot(result)
     fig = mplot.parallelplot_experiment(
-        display_name_of_data={
+        rename_map={
             "samplemean_onehot1_violations": "Samplemean Onehot1 Violations",
             "samplemean_onehot2_violations": "Samplemean Onehot2 Violations",
             "samplemean_total_violations": "Samplemean Total Violations",
