@@ -6,7 +6,7 @@ import networkx as nx
 import numpy.typing as npt
 from typing import cast
 
-from jijbench.figure.interface import Figure
+from jijbench.visualization.figure.interface import Figure
 
 # TODO: node_posなどの型アノテーションを行う
 
@@ -26,9 +26,9 @@ class Graph(Figure):
     """Visualize graph.
 
     You can also instantiate from edge_list, distance matrix by class method.
-    fig_ax (tuple[matplotlib.figure.Figure, matplotlib.axes.Subplot]): Figure and Axes of matplotlib. Available after show method is called.
     Attributes:
         G (nx.Graph): the networkX Graph instance.
+        fig_ax (tuple[matplotlib.figure.Figure, matplotlib.axes.Subplot]): Figure and Axes of matplotlib. Available after show method is called.
     Example:
         The code below visualizes an undirected graph given by edge list.
         The style of the graph (e.g. color) can be changed by arguments of the show method.

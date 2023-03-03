@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import jijmodeling as jm
+import pandas as pd
 import typing as tp
 import inspect
 import itertools
@@ -10,6 +11,7 @@ import pathlib
 from jijbench.consts.path import DEFAULT_RESULT_DIR
 from jijbench.node.base import FunctionNode
 from jijbench.elements.base import Callable
+from jijbench.elements.date import Date
 from jijbench.elements.id import ID
 from jijbench.experiment.experiment import Experiment
 from jijbench.functions.concat import Concat
@@ -75,7 +77,6 @@ class Benchmark(FunctionNode[Experiment, Experiment]):
         self,
         inputs: list[Experiment] | None = None,
         concurrent: bool = False,
-        is_parsed_sampleset: bool = True,
         autosave: bool = True,
         savedir: str | pathlib.Path = DEFAULT_RESULT_DIR,
     ) -> Experiment:
@@ -84,7 +85,6 @@ class Benchmark(FunctionNode[Experiment, Experiment]):
         Args:
             inputs (list[Experiment] | None, optional): A list of input experiments to be used by the benchmark. Defaults to None.
             concurrent (bool, optional): Whether to run the experiments concurrently or not. Defaults to False.
-            is_parsed_sampleset (bool, optional): Whether the sampleset is parsed or not. Defaults to True.
             autosave (bool, optional): Whether to automatically save the Experiment object after each run. Defaults to True.
             savedir (str | pathlib.Path, optional): The directory to save the Experiment object. Defaults to DEFAULT_RESULT_DIR.
 
@@ -101,7 +101,6 @@ class Benchmark(FunctionNode[Experiment, Experiment]):
         return super().__call__(
             inputs,
             concurrent=concurrent,
-            is_parsed_sampleset=is_parsed_sampleset,
             autosave=autosave,
             savedir=savedir,
         )
@@ -129,7 +128,6 @@ class Benchmark(FunctionNode[Experiment, Experiment]):
         self,
         inputs: list[Experiment],
         concurrent: bool = False,
-        is_parsed_sampleset: bool = True,
         autosave: bool = True,
         savedir: str | pathlib.Path = DEFAULT_RESULT_DIR,
     ) -> Experiment:
@@ -138,7 +136,6 @@ class Benchmark(FunctionNode[Experiment, Experiment]):
         Args:
             inputs (list[Experiment]): A list of input experiments.
             concurrent (bool, optional): Whether to run the operations concurrently or not. Defaults to False.
-            is_parsed_sampleset (bool, optional): Whether the sampleset is already parsed or not. Defaults to True.
             autosave (bool, optional): Whether to automatically save the Experiment object after each run. Defaults to True.
             savedir (str | pathlib.Path, optional): The directory to save the Experiment object. Defaults to DEFAULT_RESULT_DIR.
 
@@ -151,7 +148,7 @@ class Benchmark(FunctionNode[Experiment, Experiment]):
         if concurrent:
             return self._co()
         else:
-            return self._seq(experiment, is_parsed_sampleset)
+            return self._seq(experiment)
 
     def _co(self) -> Experiment:
         raise NotImplementedError
@@ -159,20 +156,24 @@ class Benchmark(FunctionNode[Experiment, Experiment]):
     def _seq(
         self,
         experiment: Experiment,
-        is_parsed_sampleset: bool,
     ) -> Experiment:
         for f in self.solver:
             for params in self.params:
                 with experiment:
-                    name = (self.name, experiment.name, ID().data)
-                    fdata = [Callable(f.function, str(f.name))]
-                    record = f(params, is_parsed_sampleset=is_parsed_sampleset)
-                    record = Concat()(
-                        [RecordFactory()(params + fdata), record], name=name
+                    info = RecordFactory()(
+                        [Date(), *params, Callable(f.function, str(f.name))]
                     )
+                    ret = f(params)
+                    record = Concat()([info, ret])
+
+                    state = getattr(experiment, "state")
+                    state.name = (self.name, experiment.name)
                     experiment.append(record)
-            experiment.name = ID().data
-        experiment.data[1].index.names = ["benchmark_id", "experiment_id", "run_id"]
+                    experiment.data[1].index.names = [
+                        "benchmark_id",
+                        "experiment_id",
+                        "run_id",
+                    ]
         return experiment
 
 
@@ -182,7 +183,7 @@ def construct_benchmark_for(
     params: dict[str, tp.Iterable],
     name: str | None = None,
 ) -> Benchmark:
-    """ Create a Benchmark object.
+    """Create a Benchmark object.
 
     Args:
         sampler (JijZeptBaseSampler): The sampler to use for creating the benchmark.

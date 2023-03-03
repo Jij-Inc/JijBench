@@ -13,6 +13,7 @@ if tp.TYPE_CHECKING:
     from jijbench.node.base import DataNode
 
 T = tp.TypeVar("T")
+T_co = tp.TypeVar("T_co")
 
 # node
 DataNodeT = tp.TypeVar("DataNodeT", bound="DataNode")

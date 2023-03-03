@@ -14,3 +14,7 @@ class ConcurrentFailedError(JijBenchmarkError):
 
 class SolverFailedError(JijBenchmarkError):
     pass
+
+
+class UserFunctionFailedError(JijBenchmarkError):
+    pass

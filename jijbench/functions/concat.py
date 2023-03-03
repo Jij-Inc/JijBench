@@ -1,52 +1,51 @@
 from __future__ import annotations
 
+import jijmodeling as jm
 import pandas as pd
 import pathlib
 import typing as tp
 
 from jijbench.consts.path import DEFAULT_RESULT_DIR
 from jijbench.elements.id import ID
-from jijbench.node.base import FunctionNode
-from jijbench.typing import MappingT, MappingTypes, MappingListTypes
+from jijbench.node.base import DataNode, FunctionNode
+from jijbench.typing import DataNodeT
 from typing_extensions import TypeGuard
 
 if tp.TYPE_CHECKING:
-    from jijbench.mappings.mappings import Artifact, Record, Table
     from jijbench.experiment.experiment import Experiment
+    from jijbench.mappings.mappings import Artifact, Record, Table
+    from jijbench.solver.jijzept import SampleSet
 
 
-def _is_artifact_list(
-    inputs: MappingListTypes,
-) -> TypeGuard[list[Artifact]]:
+def _is_artifact_list(inputs: list[DataNodeT]) -> TypeGuard[list[Artifact]]:
     return all([node.__class__.__name__ == "Artifact" for node in inputs])
 
 
-def _is_experiment_list(
-    inputs: MappingListTypes,
-) -> TypeGuard[list[Experiment]]:
+def _is_experiment_list(inputs: list[DataNodeT]) -> TypeGuard[list[Experiment]]:
     return all([node.__class__.__name__ == "Experiment" for node in inputs])
 
 
-def _is_record_list(
-    inputs: MappingListTypes,
-) -> TypeGuard[list[Record]]:
+def _is_record_list(inputs: list[DataNodeT]) -> TypeGuard[list[Record]]:
     return all([node.__class__.__name__ == "Record" for node in inputs])
 
 
-def _is_table_list(
-    inputs: MappingListTypes,
-) -> TypeGuard[list[Table]]:
+def _is_table_list(inputs: list[DataNodeT]) -> TypeGuard[list[Table]]:
     return all([node.__class__.__name__ == "Table" for node in inputs])
 
 
-def _is_mapping_list(inputs: MappingListTypes) -> TypeGuard[list[MappingT]]:
-    cls_name = inputs[0].__class__.__name__
-    return all([node.__class__.__name__ == cls_name for node in inputs])
+def _is_sampleset_list(inputs: list[DataNodeT]) -> TypeGuard[list[SampleSet]]:
+    return all([node.__class__.__name__ == "SampleSet" for node in inputs])
 
 
-class Concat(FunctionNode[MappingT, MappingT]):
-    """Concat class for concatenating multiple mapping data.
-    This class can be apply to `Artifact`, `Experiment`, `Record`, `Table`.
+def _is_datanode_list(inputs: list[DataNodeT]) -> bool:
+    sample = inputs[0]
+    is_datanode = isinstance(sample, DataNode)
+    return all([isinstance(node, sample.__class__) for node in inputs]) & is_datanode
+
+
+class Concat(FunctionNode[DataNodeT, DataNodeT]):
+    """Concat class for concatenating multiple data nodes.
+    This class can be apply to `Artifact`, `Experiment`, `Record`, `Table`, `SampleSet`.
     """
 
     @tp.overload
@@ -61,6 +60,8 @@ class Concat(FunctionNode[MappingT, MappingT]):
         *,
         autosave: bool = True,
         savedir: str | pathlib.Path = DEFAULT_RESULT_DIR,
+        axis: tp.Literal[0, 1] = 0,
+        index_name: str | None = None,
     ) -> Experiment:
         ...
 
@@ -79,20 +80,24 @@ class Concat(FunctionNode[MappingT, MappingT]):
     ) -> Table:
         ...
 
+    @tp.overload
+    def __call__(self, inputs: list[SampleSet], name: str) -> SampleSet:
+        ...
+
     def __call__(
         self,
-        inputs: MappingListTypes,
+        inputs: list[DataNodeT],
         name: tp.Hashable = None,
         *,
         autosave: bool = True,
         savedir: str | pathlib.Path = DEFAULT_RESULT_DIR,
         axis: tp.Literal[0, 1] = 0,
         index_name: str | None = None,
-    ) -> MappingTypes:
+    ) -> DataNode:
         """Concatenates the given list of mapping type objects.
 
         Args:
-            inputs (MappingListTypes): A list of artifacts, experiments, records, or tables. The type of elements in 'inputs' must be unified either 'Artifact', 'Experiment', 'Record' or 'Table'.
+            inputs (DataNodeT): A list of artifacts, experiments, records, or tables. The type of elements in 'inputs' must be unified either 'Artifact', 'Experiment', 'Record' or 'Table'.
             name (tp.Hashable, optional): A name for the resulting data. Defaults to None.
             autosave (bool, optional): A flag indicating whether to save the result to disk. Defaults to True.
             savedir (str | pathlib.Path, optional): The directory to save the result in. Defaults to DEFAULT_RESULT_DIR.
@@ -103,9 +108,9 @@ class Concat(FunctionNode[MappingT, MappingT]):
             TypeError: If the type of elements in 'inputs' is not unified either 'Artifact', 'Experiment', 'Record' or 'Table'.
 
         Returns:
-            MappingTypes: The resulting artifact, experiment, record, or table object.
+            DataNode: The resulting Artifact, Experiment, Record, Table or Sampleset object.
         """
-        if _is_mapping_list(inputs):
+        if _is_datanode_list(inputs):
             return super().__call__(
                 inputs,
                 name=name,
@@ -135,7 +140,7 @@ class Concat(FunctionNode[MappingT, MappingT]):
         ...
 
     @tp.overload
-    def operate(self, inputs: list[Record]) -> Record:
+    def operate(self, inputs: list[Record], name: tp.Hashable = None) -> Record:
         ...
 
     @tp.overload
@@ -149,16 +154,20 @@ class Concat(FunctionNode[MappingT, MappingT]):
     ) -> Table:
         ...
 
+    @tp.overload
+    def operate(self, inputs: list[SampleSet], name: str) -> SampleSet:
+        ...
+
     def operate(
         self,
-        inputs: MappingListTypes,
+        inputs: list[DataNodeT],
         name: tp.Hashable = None,
         *,
         autosave: bool = True,
         savedir: str | pathlib.Path = DEFAULT_RESULT_DIR,
         axis: tp.Literal[0, 1] = 0,
         index_name: str | None = None,
-    ) -> MappingTypes:
+    ) -> DataNode:
         """This method operates the concatenation of the given 'inputs' either 'Artifact', 'Experiment', 'Record' or 'Table'
         objects into a single object of the same type as 'inputs'.
 
@@ -175,12 +184,16 @@ class Concat(FunctionNode[MappingT, MappingT]):
 
         Returns:
             MappingTypes: The resulting 'Artifact', 'Experiment', 'Record' or 'Table' object.
-        
+
         """
         if _is_artifact_list(inputs):
             data = {}
             for node in inputs:
-                data.update(node.data.copy())
+                for k, v in node.data.items():
+                    if k in data:
+                        data[k].update(v.copy())
+                    else:
+                        data[k] = v.copy()
             return type(inputs[0])(data, name)
         elif _is_experiment_list(inputs):
             concat_a: Concat[Artifact] = Concat()
@@ -188,7 +201,9 @@ class Concat(FunctionNode[MappingT, MappingT]):
             inputs_a = [n.data[0] for n in inputs]
             inputs_t = [n.data[1] for n in inputs]
             artifact = inputs_a[0].apply(concat_a, inputs_a[1:])
-            table = inputs_t[0].apply(concat_t, inputs_t[1:])
+            table = inputs_t[0].apply(
+                concat_t, inputs_t[1:], axis=axis, index_name=index_name
+            )
 
             if name is None:
                 name = ID().data
@@ -209,6 +224,9 @@ class Concat(FunctionNode[MappingT, MappingT]):
             data = pd.concat([node.data for node in inputs], axis=axis)
             data.index.name = index_name
             return type(inputs[0])(data, name)
+        elif _is_sampleset_list(inputs):
+            data = jm.concatenate([node.data for node in inputs])
+            return type(inputs[0])(data, str(name))
         else:
             raise TypeError(
                 "Type of elements in 'inputs' must be unified either 'Artifact', 'Experiment', 'Record' or 'Table'."

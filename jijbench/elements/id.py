@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import typing as tp
 import uuid
 
 from dataclasses import dataclass, field
@@ -16,7 +17,7 @@ class ID(DataNode[str]):
     """
 
     data: str = field(default_factory=lambda: str(uuid.uuid4()))
-    name: str | None = None
+    name: str = "id"
 
     @classmethod
     def validate_data(cls, data: str) -> str:
