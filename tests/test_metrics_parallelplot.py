@@ -146,8 +146,6 @@ def test_metrics_plot_parallelplot_num_feasible(mocker):
 
     assert fig_contain_target_data(fig, "num_feasible", expect_arr)
 
-    print(fig)
-
 
 def test_metrics_plot_parallelplot_samplemean_objective(mocker):
     # Without this mock, the browser will launch and display the visualization results

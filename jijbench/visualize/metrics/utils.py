@@ -91,7 +91,6 @@ def construct_experiment_from_samplesets(
     ]
     experiment = Experiment(autosave=False)
     for i, sampleset in enumerate(samplesets):
-        print(type(sampleset))
         factory = RecordFactory()
         ret = [Return(data=sampleset, name="")]
         record = factory(ret)
