@@ -14,7 +14,7 @@ from jijbench.typing import DataNodeT, DataNodeT2
 
 if tp.TYPE_CHECKING:
     from jijbench.mappings.mappings import Artifact, Record, Table
-    from jijbench.solver.base import Return
+    from jijbench.solver.base import Response
 
 
 class Factory(FunctionNode[DataNodeT, DataNodeT2]):
@@ -72,7 +72,6 @@ class RecordFactory(Factory[DataNodeT, "Record"]):
         self,
         inputs: list[DataNodeT],
         name: str = "",
-        is_parsed_sampleset: bool = True,
     ) -> Record:
         """Create a Record object from the input DataNode objects.
 
@@ -91,68 +90,8 @@ class RecordFactory(Factory[DataNodeT, "Record"]):
         """
         from jijbench.mappings.mappings import Record
 
-        data = {}
-        for node in inputs:
-            if isinstance(node.data, jm.SampleSet) and is_parsed_sampleset:
-                data.update(
-                    {n.name: n for n in self._to_nodes_from_sampleset(node.data)}
-                )
-            else:
-                data[node.name] = node
-        data = pd.Series(data)
+        data = pd.Series({node.name: node for node in inputs})
         return Record(data, name)
-
-    def _to_nodes_from_sampleset(self, sampleset: jm.SampleSet) -> list[Return]:
-        """Extract relevant data from a jijmodeling SampleSet.
-
-        This method extracts relevant data from a `jijmodeling.SampleSet`, such as the number of occurrences,
-        energy, objective, constraint violations, number of samples, number of feasible samples, and the
-        execution time. The extracted data is returned as a list of DataNode objects.
-
-        Args:
-            sampleset (jijmodeling.SampleSet): A jijmodeling SampleSet from which to extract data.
-
-        Returns:
-            list[DataNode]: A list of DataNode objects containing the extracted data from the SampleSet.
-        """
-        from jijbench.solver.base import Return
-
-        data = []
-
-        data.append(
-            Array(np.array(sampleset.record.num_occurrences), "num_occurrences")
-        )
-        data.append(Array(np.array(sampleset.evaluation.energy), "energy"))
-        data.append(Array(np.array(sampleset.evaluation.objective), "objective"))
-
-        constraint_violations = sampleset.evaluation.constraint_violations
-        if constraint_violations:
-            for k, v in constraint_violations.items():
-                data.append(Array(np.array(v), f"{k}_violations"))
-
-        data.append(Number(sum(sampleset.record.num_occurrences), "num_samples"))
-        data.append(
-            Number(sum(sampleset.feasible().record.num_occurrences), "num_feasible")
-        )
-
-        # TODO スキーマが変わったら修正
-        solving_time = sampleset.measuring_time.solve
-        if solving_time is None:
-            execution_time = np.nan
-            warnings.warn(
-                "'solve' of jijmodeling.SampleSet is None. Give it if you want to evaluate automatically."
-            )
-        else:
-            if solving_time.solve is None:
-                execution_time = np.nan
-                warnings.warn(
-                    "'solve' of jijmodeling.SampleSet is None. Give it if you want to evaluate automatically."
-                )
-            else:
-                execution_time = solving_time.solve
-        data.append(Number(execution_time, "execution_time"))
-        data = [Return(node.data, node.name) for node in data]
-        return data
 
 
 class ArtifactFactory(Factory["Record", "Artifact"]):

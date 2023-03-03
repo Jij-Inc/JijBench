@@ -5,23 +5,11 @@ import typing as tp
 
 from dataclasses import dataclass
 from jijbench.node.base import DataNode
-from jijbench.typing import NumberTypes, T
+from jijbench.typing import NumberTypes
 
 
 @dataclass
-class Element(DataNode[T]):
-    """A generic class representing a element node.
-
-    Attributes:
-        data: The data in the node.
-        name (str): The name of the element.
-    """
-
-    name: str
-
-
-@dataclass
-class Number(Element[NumberTypes]):
+class Number(DataNode[NumberTypes]):
     """A class representing a numerical element.
 
     Attributes:
@@ -46,7 +34,7 @@ class Number(Element[NumberTypes]):
 
 
 @dataclass
-class String(Element[str]):
+class String(DataNode[str]):
     """A class representing a string element.
 
     Attributes:
@@ -71,7 +59,7 @@ class String(Element[str]):
 
 
 @dataclass
-class Callable(Element[tp.Callable]):
+class Callable(DataNode[tp.Callable]):
     """A class representing a callable element.
 
     Attributes:
