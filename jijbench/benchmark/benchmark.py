@@ -23,7 +23,7 @@ __all__ = []
 
 
 class Benchmark:
-    """Define benchmark.
+    """Benchmark.
 
     Args:
         params (Dict[str, List]): Parameters to be swept in the benchmark. key is parameter name. list is list of value of a parameter.
