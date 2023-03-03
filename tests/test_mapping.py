@@ -169,13 +169,14 @@ def test_experiment_append():
     e = jb.Experiment(name=ename)
 
     for i in range(3):
-        data = [
-            jb.Date(),
-            jb.Number(i, "num"),
-            jb.Array(np.arange(5), "array"),
-        ]
-        record = jb.functions.RecordFactory()(data, name=(ename, i))
-        e.append(record)
+        with e:
+            data = [
+                jb.Date(),
+                jb.Number(i, "num"),
+                jb.Array(np.arange(5), "array"),
+            ]
+            record = jb.functions.RecordFactory()(data)
+            e.append(record)
 
     assert isinstance(e, jb.Experiment)
     assert e.operator is not None
@@ -183,11 +184,9 @@ def test_experiment_append():
     assert e.data[1].operator is not None
     assert len(e.operator.inputs) == 2
 
-    for i in range(3):
-        k = (ename, i)
-        assert k in e.artifact
-        assert e.artifact[k]["num"] == i
-        assert e.table.loc[k, "num"] == i
+    for i, index in zip(range(3), e.artifact):
+        assert e.artifact[index]["num"] == i
+        assert e.table.loc[index, "num"] == i
 
 
 def test_ref():

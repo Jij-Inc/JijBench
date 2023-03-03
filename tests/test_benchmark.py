@@ -18,8 +18,8 @@ def pre_post_process():
     yield
     # postprocess
     norm_path = os.path.normcase("./.jb_results")
-    if os.path.exists(norm_path):
-        shutil.rmtree(norm_path)
+    # if os.path.exists(norm_path):
+    #    shutil.rmtree(norm_path)
 
 
 def test_simple_benchmark():
@@ -57,8 +57,9 @@ def test_benchmark_for_jijzept_sampler(
         {"num_reads": [1, 2]},
     )
     res = bench(autosave=False)
-    
+
     from icecream import ic
+
     print()
     ic(res.data[1].columns)
     ic(res.data[1])
@@ -96,7 +97,7 @@ def test_benchmark_for_jijzept_sampler_with_multi_models(
             "num_search": [5],
         },
     )
-    res = bench()
+    res = bench(autosave=False)
 
     assert sample_model.call_count == 4
     assert len(sample_model.call_args_list) == 4
@@ -139,7 +140,7 @@ def test_benchmark_for_jijzept_sampler_using_params(onehot_problem: jm.Problem, 
         },
         solver=f,
     )
-    res = bench()
+    res = bench(autosave=False)
 
     # assert res.table["problem_name"][0] == "problem"
     # assert res.table["instance_data_name"][0] == "Unnamed[0]"
