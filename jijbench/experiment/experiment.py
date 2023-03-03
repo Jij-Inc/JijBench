@@ -27,6 +27,8 @@ class Experiment(Mapping[ExperimentDataType]):
     savedir: str | pathlib.Path = field(default=DEFAULT_RESULT_DIR, repr=False)
 
     def __post_init__(self):
+        super().__post_init__()
+        
         if not isinstance(self.data, tuple):
             raise TypeError(f"Data must be a tuple, got {type(self.data)}.")
 
