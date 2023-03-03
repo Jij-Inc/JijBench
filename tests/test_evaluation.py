@@ -29,11 +29,6 @@ def test_success_probability(jm_sampleset: jm.SampleSet):
     f = SuccessProbability()
     ps = f([sampleset], opt_value=opt_value)
 
-    from icecream import ic
-
-    print()
-    ic(ps)
-
     assert ps.data == 0.4
 
 
@@ -44,11 +39,6 @@ def test_feasible_rate(jm_sampleset: jm.SampleSet):
 
     f = FeasibleRate()
     feas_rate = f([sampleset])
-
-    from icecream import ic
-
-    print()
-    ic(feas_rate)
 
     assert feas_rate.data == 0.7
 
@@ -63,18 +53,12 @@ def test_time_to_solution(jm_sampleset: jm.SampleSet):
     f = TimeToSolution()
     tts = f([sampleset], opt_value=opt_value, pr=pr)
 
-    from icecream import ic
-
-    print()
-    ic(tts)
     assert round(tts.data, 3) == 2.357
 
     tts = f([sampleset], pr, base="feasible")
-    ic(tts)
     assert tts.data == 1.0
 
     tts = f([sampleset], pr, base="derived")
-    ic(tts)
     assert round(tts.data, 3) == 2.357
 
 
@@ -87,11 +71,6 @@ def test_residual_energy(jm_sampleset: jm.SampleSet):
     f = ResidualEnergy()
     residual_energy = f([sampleset], opt_value=opt_value)
 
-    from icecream import ic
-
-    print()
-    ic(residual_energy)
-
     assert residual_energy.data == 9.0
 
 
@@ -99,18 +78,10 @@ def test_evaluate_benchmark_results(sample_model):
     bench = jb.Benchmark({"num_reads": [1, 2]}, solver=sample_model)
     res = bench(autosave=False)
 
-    from icecream import ic
-
-    # print()
-    # ic(res)
-
     opt_value = 3.0
     pr = 0.7
     evaluation = jb.Evaluation()
     res = evaluation([res], opt_value=opt_value, pr=pr)
-
-    print()
-    ic(res.table)
 
 
 #
