@@ -77,7 +77,6 @@ class Benchmark(FunctionNode[Experiment, Experiment]):
         self,
         inputs: list[Experiment] | None = None,
         concurrent: bool = False,
-        is_parsed_sampleset: bool = True,
         autosave: bool = True,
         savedir: str | pathlib.Path = DEFAULT_RESULT_DIR,
     ) -> Experiment:
@@ -86,7 +85,6 @@ class Benchmark(FunctionNode[Experiment, Experiment]):
         Args:
             inputs (list[Experiment] | None, optional): A list of input experiments to be used by the benchmark. Defaults to None.
             concurrent (bool, optional): Whether to run the experiments concurrently or not. Defaults to False.
-            is_parsed_sampleset (bool, optional): Whether the sampleset is parsed or not. Defaults to True.
             autosave (bool, optional): Whether to automatically save the Experiment object after each run. Defaults to True.
             savedir (str | pathlib.Path, optional): The directory to save the Experiment object. Defaults to DEFAULT_RESULT_DIR.
 
@@ -103,7 +101,6 @@ class Benchmark(FunctionNode[Experiment, Experiment]):
         return super().__call__(
             inputs,
             concurrent=concurrent,
-            is_parsed_sampleset=is_parsed_sampleset,
             autosave=autosave,
             savedir=savedir,
         )
@@ -131,7 +128,6 @@ class Benchmark(FunctionNode[Experiment, Experiment]):
         self,
         inputs: list[Experiment],
         concurrent: bool = False,
-        is_parsed_sampleset: bool = True,
         autosave: bool = True,
         savedir: str | pathlib.Path = DEFAULT_RESULT_DIR,
     ) -> Experiment:
@@ -140,7 +136,6 @@ class Benchmark(FunctionNode[Experiment, Experiment]):
         Args:
             inputs (list[Experiment]): A list of input experiments.
             concurrent (bool, optional): Whether to run the operations concurrently or not. Defaults to False.
-            is_parsed_sampleset (bool, optional): Whether the sampleset is already parsed or not. Defaults to True.
             autosave (bool, optional): Whether to automatically save the Experiment object after each run. Defaults to True.
             savedir (str | pathlib.Path, optional): The directory to save the Experiment object. Defaults to DEFAULT_RESULT_DIR.
 
@@ -153,7 +148,7 @@ class Benchmark(FunctionNode[Experiment, Experiment]):
         if concurrent:
             return self._co()
         else:
-            return self._seq(experiment, is_parsed_sampleset)
+            return self._seq(experiment)
 
     def _co(self) -> Experiment:
         raise NotImplementedError
@@ -161,7 +156,6 @@ class Benchmark(FunctionNode[Experiment, Experiment]):
     def _seq(
         self,
         experiment: Experiment,
-        is_parsed_sampleset: bool,
     ) -> Experiment:
         for f in self.solver:
             for params in self.params:
@@ -169,21 +163,17 @@ class Benchmark(FunctionNode[Experiment, Experiment]):
                     info = RecordFactory()(
                         [Date(), *params, Callable(f.function, str(f.name))]
                     )
-                    ret = f(params, is_parsed_sampleset=is_parsed_sampleset)
+                    ret = f(params)
                     record = Concat()([info, ret])
+
+                    state = getattr(experiment, "state")
+                    state.name = (self.name, experiment.name)
                     experiment.append(record)
-                    artifact, table = experiment.data
-                    
-                    table.data.set_index(
-                        pd.Series([self.name] * len(table), name="benchmark_id"),
-                        inplace=True,
-                        append=True,
-                    )
-                    print(list(experiment.data[1].index))
-                    print(list(experiment.table.index))
-                    print(list(table.index))
-                    print("fafafaf")
-                    # print(experiment.table)
+                    experiment.data[1].index.names = [
+                        "benchmark_id",
+                        "experiment_id",
+                        "run_id",
+                    ]
         return experiment
 
 

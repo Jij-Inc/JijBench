@@ -1,20 +1,20 @@
 from __future__ import annotations
 
-import numpy as np
+import jijmodeling as jm
 import pandas as pd
 import pathlib
 import typing as tp
 
 from jijbench.consts.path import DEFAULT_RESULT_DIR
-from jijbench.elements.base import Number
 from jijbench.elements.id import ID
 from jijbench.node.base import DataNode, FunctionNode
 from jijbench.typing import DataNodeT
 from typing_extensions import TypeGuard
 
 if tp.TYPE_CHECKING:
-    from jijbench.mappings.mappings import Artifact, Record, Table
     from jijbench.experiment.experiment import Experiment
+    from jijbench.mappings.mappings import Artifact, Record, Table
+    from jijbench.solver.jijzept import SampleSet
 
 
 def _is_artifact_list(inputs: list[DataNodeT]) -> TypeGuard[list[Artifact]]:
@@ -33,8 +33,8 @@ def _is_table_list(inputs: list[DataNodeT]) -> TypeGuard[list[Table]]:
     return all([node.__class__.__name__ == "Table" for node in inputs])
 
 
-def _is_sampleset_list(inputs: list[SampleSet]) -> TypeGuard[list[SampleSet]]:
-    return all([node.__class__.__name == "SampleSet" for node in inputs])
+def _is_sampleset_list(inputs: list[DataNodeT]) -> TypeGuard[list[SampleSet]]:
+    return all([node.__class__.__name__ == "SampleSet" for node in inputs])
 
 
 def _is_datanode_list(inputs: list[DataNodeT]) -> bool:
@@ -140,7 +140,7 @@ class Concat(FunctionNode[DataNodeT, DataNodeT]):
         ...
 
     @tp.overload
-    def operate(self, inputs: list[Record]) -> Record:
+    def operate(self, inputs: list[Record], name: tp.Hashable = None) -> Record:
         ...
 
     @tp.overload
@@ -152,6 +152,10 @@ class Concat(FunctionNode[DataNodeT, DataNodeT]):
         axis: tp.Literal[0, 1] = 0,
         index_name: str | None = None,
     ) -> Table:
+        ...
+
+    @tp.overload
+    def operate(self, inputs: list[SampleSet], name: str) -> SampleSet:
         ...
 
     def operate(
@@ -216,6 +220,9 @@ class Concat(FunctionNode[DataNodeT, DataNodeT]):
             data = pd.concat([node.data for node in inputs], axis=axis)
             data.index.name = index_name
             return type(inputs[0])(data, name)
+        elif _is_sampleset_list(inputs):
+            data = jm.concatenate([node.data for node in inputs])
+            return type(inputs[0])(data, str(name))
         else:
             raise TypeError(
                 "Type of elements in 'inputs' must be unified either 'Artifact', 'Experiment', 'Record' or 'Table'."

@@ -3,6 +3,7 @@ from __future__ import annotations
 import abc
 import pandas as pd
 import pathlib
+import typing as tp
 import uuid
 import warnings
 
@@ -11,7 +12,7 @@ from jijbench.consts.path import DEFAULT_RESULT_DIR
 from jijbench.elements.base import Callable
 from jijbench.elements.id import ID
 from jijbench.functions.concat import Concat
-from jijbench.functions.factory import ArtifactFactory, RecordFactory, TableFactory
+from jijbench.functions.factory import ArtifactFactory, TableFactory
 from jijbench.io.io import save
 from jijbench.mappings.mappings import Artifact, Mapping, Record, Table
 from jijbench.solver.base import Parameter, Response
@@ -26,16 +27,26 @@ class Experiment(Mapping[ExperimentDataType]):
     savedir: str | pathlib.Path = field(default=DEFAULT_RESULT_DIR, repr=False)
 
     def __post_init__(self):
+        if not isinstance(self.data, tuple):
+            raise TypeError(f"Data must be a tuple, got {type(self.data)}.")
+
+        if len(self.data) != 2:
+            raise ValueError(f"Data must be a tuple of length 2, got {len(self.data)}.")
+
+        if not isinstance(self.data[0], Artifact):
+            raise TypeError(f"First element of data must be an Artifact, got {type(self.data[0])}.")
+
+        if not isinstance(self.data[1], Table):
+            raise TypeError(f"Second element of data must be a Table, got {type(self.data[1])}.")
+        
         if self.data[0].name is None:
             self.data[0].name = self.name
 
         if self.data[1].name is None:
             self.data[1].name = self.name
 
-        if isinstance(self.savedir, str):
-            self.savedir = pathlib.Path(self.savedir)
-
-        setattr(self, "state", _Created())
+        self.savedir = pathlib.Path(self.savedir)
+        setattr(self, "state", _Created(self.name))
 
     def __len__(self) -> int:
         """
@@ -53,14 +64,8 @@ class Experiment(Mapping[ExperimentDataType]):
         """Set up Experiment.
         Automatically makes a directory for saving the experiment, if it doesn't exist."""
 
-        setattr(self, "state", _Running())
-
-        savedir = (
-            self.savedir
-            if isinstance(self.savedir, pathlib.Path)
-            else pathlib.Path(self.savedir)
-        )
-        savedir.mkdir(parents=True, exist_ok=True)
+        setattr(self, "state", _Running(self.name))
+        pathlib.Path(self.savedir).mkdir(parents=True, exist_ok=True)
         return self
 
     def __exit__(self, exception_type, exception_value, traceback) -> None:
@@ -70,7 +75,7 @@ class Experiment(Mapping[ExperimentDataType]):
         if self.autosave:
             state.save(self)
 
-        setattr(self, "state", _Waiting())
+        setattr(self, "state", _Waiting(self.name))
 
     @property
     def artifact(self) -> dict:
@@ -142,17 +147,15 @@ class Experiment(Mapping[ExperimentDataType]):
 
     def save(self):
         """Save the experiment."""
-        savedir = (
-            self.savedir
-            if isinstance(self.savedir, pathlib.Path)
-            else pathlib.Path(self.savedir)
-        )
-        savedir.mkdir(parents=True, exist_ok=True)
+        pathlib.Path(self.savedir).mkdir(parents=True, exist_ok=True)
         state = getattr(self, "state")
         state.save(self)
 
 
 class _ExperimentState(metaclass=abc.ABCMeta):
+    def __init__(self, name: tp.Hashable) -> None:
+        self.name = name
+
     @abc.abstractmethod
     def append(self, context: Experiment, record: Record) -> None:
         pass
@@ -166,7 +169,7 @@ class _Created(_ExperimentState):
     def append(self, context: Experiment, record: Record) -> None:
         record.name = len(context)
         _append(context, record)
-        context.state = _Waiting()
+        context.state = _Waiting(self.name)
 
     def save(self, context: Experiment) -> None:
         save(context, savedir=context.savedir)
@@ -183,27 +186,24 @@ class _Waiting(_ExperimentState):
 
 class _Running(_ExperimentState):
     def append(self, context: Experiment, record: Record) -> None:
-        experiment_id, run_id = ID(name="experiment_id"), ID(name="run_id")
-        ids = RecordFactory()([experiment_id, run_id])
-        record.name = tuple(ids.view().tolist())
+        run_id = ID().data
+        if isinstance(self.name, str):
+            record.name = (self.name, run_id)
+        elif isinstance(self.name, tp.Iterable):
+            record.name = (*self.name, run_id)
+        else:
+            record.name = (self.name, run_id)
         _append(context, record)
-        _, table = context.data
-        table.index.names = [experiment_id.name, run_id.name]
 
     def save(
         self,
         context: Experiment,
     ) -> None:
-        state: _Running = getattr(context, "state")
-
         a, t = context.data
-        ids = tuple(t.index)
-        print(tuple(t.index))
-        print(a.keys())
-        fafaf
+        latest = t.index[-1]
 
-        ai = Artifact({ids: a.data[ids]}, a.name)
-        ti = Table(t.data.loc[[ids]], t.name)
+        ai = Artifact({latest: a.data[latest]}, a.name)
+        ti = Table(t.data.loc[[latest]], t.name)
 
         experiment = Experiment(
             (ai, ti), context.name, autosave=context.autosave, savedir=context.savedir

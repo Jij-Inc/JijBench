@@ -1,14 +1,22 @@
 from __future__ import annotations
 
 import abc
+import numpy as np
 import pandas as pd
+import jijmodeling as jm
 import typing as tp
+import warnings
 
 from dataclasses import dataclass, field
+from jijbench.elements.array import Array
+from jijbench.elements.base import Number
 from jijbench.functions.concat import Concat
 from jijbench.functions.factory import ArtifactFactory, TableFactory
 from jijbench.node.base import DataNode
 from jijbench.typing import T, ArtifactDataType
+
+if tp.TYPE_CHECKING:
+    from jijbench.solver.jijzept import SampleSet
 
 
 @dataclass
@@ -290,12 +298,61 @@ class Table(Mapping[pd.DataFrame]):
         if self.data.empty:
             return self.data
         else:
-            is_tuple_index = all([isinstance(i, tuple) for i in self.data.index])
-            if is_tuple_index:
-                names = (
-                    self.data.index.names if len(self.data.index.names) >= 2 else None
+            data = self.data.applymap(lambda x: x.data)
+            sampleset_columns = [
+                c for c in data.columns if isinstance(data[c][0], jm.SampleSet)
+            ]
+            if sampleset_columns:
+                extracted = pd.concat(
+                    [data[c].apply(self._extract) for c in sampleset_columns], axis=1
                 )
-                index = pd.MultiIndex.from_tuples(self.data.index, names=names)
-                # TODO 代入しない
-                self.data.index = index
-            return self.data.applymap(lambda x: x.data)
+                data.drop(sampleset_columns, axis=1, inplace=True)
+                return pd.concat([data, extracted], axis=1)
+            else:
+                return data
+
+    def _extract(self, sampleset: jm.SampleSet) -> pd.Series:
+        """Extract data from jijmodeling.SampleSet object.
+
+        This method extracts relevant data from a `jijmodeling.SampleSet`, such as the number of occurrences,
+        energy, objective, constraint violations, number of samples, number of feasible samples, and the
+        execution time. The extracted data is returned as a list of DataNode objects.
+
+
+        Args:
+            node (jijmodeling.SampleSet): A jijmodeling SampleSet from which to extract data.
+
+        Returns:
+            pd.Series: Extracted data from the SampleSet..
+        """
+
+        data = {}
+        data["num_occurrences"] = np.array(sampleset.record.num_occurrences)
+        data["energy"] = np.array(sampleset.evaluation.energy)
+        data["objective"] = np.array(sampleset.evaluation.objective)
+
+        constraint_violations = sampleset.evaluation.constraint_violations
+        if constraint_violations:
+            for k, v in constraint_violations.items():
+                data[f"{k}_violations"] = np.array(v)
+
+        data["num_samples"] = sum(sampleset.record.num_occurrences)
+        data["num_feasible"] = sum(sampleset.feasible().record.num_occurrences)
+
+        # TODO スキーマが変わったら修正
+        solving_time = sampleset.measuring_time.solve
+        if solving_time is None:
+            execution_time = np.nan
+            warnings.warn(
+                "'solve' of jijmodeling.SampleSet is None. Give it if you want to evaluate automatically."
+            )
+        else:
+            if solving_time.solve is None:
+                execution_time = np.nan
+                warnings.warn(
+                    "'solve' of jijmodeling.SampleSet is None. Give it if you want to evaluate automatically."
+                )
+            else:
+                execution_time = solving_time.solve
+        data["execution_time"] = execution_time
+        return pd.Series(data)
