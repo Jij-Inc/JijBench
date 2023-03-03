@@ -460,7 +460,7 @@ def test_metrics_plot_parallelplot_arg_data_label_fontsize(mocker, fontsize, exp
     assert fig.data[0].labelfont.size == expect
 
 
-def test_metrics_plot_parallelplot_arg_additional_displayed_data(mocker):
+def test_metrics_plot_parallelplot_arg_additional_display_data(mocker):
     # Without this mock, the browser will launch and display the visualization results
     mocker.patch("plotly.io.show")
     bench = jb.Benchmark(
@@ -470,7 +470,7 @@ def test_metrics_plot_parallelplot_arg_additional_displayed_data(mocker):
     result = bench()
     mplot = MetricsPlot(result)
     fig = mplot.parallelplot_experiment(
-        additional_displayed_data=["num_samples"],
+        additional_display_data=["num_samples"],
     )
 
     expect_num_samples = result.table["num_samples"].values
@@ -478,7 +478,7 @@ def test_metrics_plot_parallelplot_arg_additional_displayed_data(mocker):
     assert fig_contain_target_data(fig, "num_samples", expect_num_samples)
 
 
-def test_metrics_plot_parallelplot_arg_additional_displayed_data_not_number(mocker):
+def test_metrics_plot_parallelplot_arg_additional_display_data_not_number(mocker):
     # Without this mock, the browser will launch and display the visualization results
     mocker.patch("plotly.io.show")
     bench = jb.Benchmark(
@@ -489,11 +489,11 @@ def test_metrics_plot_parallelplot_arg_additional_displayed_data_not_number(mock
     mplot = MetricsPlot(result)
     with pytest.raises(TypeError):
         mplot.parallelplot_experiment(
-            additional_displayed_data=["energy"],
+            additional_display_data=["energy"],
         )
 
 
-def test_metrics_plot_parallelplot_arg_additional_displayed_data_by_customfunc(mocker):
+def test_metrics_plot_parallelplot_arg_additional_display_data_by_customfunc(mocker):
     # Without this mock, the browser will launch and display the visualization results
     mocker.patch("plotly.io.show")
     bench = jb.Benchmark(
@@ -513,7 +513,7 @@ def test_metrics_plot_parallelplot_arg_additional_displayed_data_by_customfunc(m
         return mean
 
     fig = mplot.parallelplot_experiment(
-        additional_displayed_data_by_customfunc=[
+        additional_display_data_by_customfunc=[
             (get_max_num_occurrences, "max_num_occurrences"),
             (calc_samplemean_energy, "samplemean_energy"),
         ],
@@ -539,7 +539,7 @@ def test_metrics_plot_parallelplot_arg_additional_displayed_data_by_customfunc(m
     )
 
 
-def test_metrics_plot_parallelplot_arg_additional_displayed_data_by_customfunc_return_not_number(
+def test_metrics_plot_parallelplot_arg_additional_display_data_by_customfunc_return_not_number(
     mocker,
 ):
     # Without this mock, the browser will launch and display the visualization results
@@ -557,13 +557,13 @@ def test_metrics_plot_parallelplot_arg_additional_displayed_data_by_customfunc_r
 
     with pytest.raises(TypeError):
         mplot.parallelplot_experiment(
-            additional_displayed_data_by_customfunc=[
+            additional_display_data_by_customfunc=[
                 (get_max_num_occurrences_return_not_number, "max_num_occurrences"),
             ],
         )
 
 
-def test_metrics_plot_parallelplot_arg_additional_displayed_data_by_customfunc_error_in_func(
+def test_metrics_plot_parallelplot_arg_additional_display_data_by_customfunc_error_in_func(
     mocker,
 ):
     # Without this mock, the browser will launch and display the visualization results
@@ -580,7 +580,7 @@ def test_metrics_plot_parallelplot_arg_additional_displayed_data_by_customfunc_e
     mplot = MetricsPlot(result)
     with pytest.raises(UserFunctionFailedError):
         mplot.parallelplot_experiment(
-            additional_displayed_data_by_customfunc=[
+            additional_display_data_by_customfunc=[
                 (error_func, "column_name"),
             ],
         )
@@ -607,7 +607,7 @@ def test_metrics_plot_parallelplot_arg_select_and_sort_displayed_data(mocker):
     assert fig.data[0].dimensions[1].label == "samplemean_onehot1_violations"
 
 
-def test_metrics_plot_parallelplot_property_name_of_all_parallelplotdata(mocker):
+def test_metrics_plot_parallelplot_property_parallelplot_datalabels(mocker):
     # Without this mock, the browser will launch and display the visualization results
     mocker.patch("plotly.io.show")
     bench = jb.Benchmark(
@@ -620,10 +620,10 @@ def test_metrics_plot_parallelplot_property_name_of_all_parallelplotdata(mocker)
 
     expect_name_list = [dimension.label for dimension in fig.data[0].dimensions]
 
-    assert mplot.name_of_all_parallelplotdata == expect_name_list
+    assert mplot.parallelplot_datalabels == expect_name_list
 
 
-def test_metrics_plot_parallelplot_property_name_of_all_parallelplotdata_before_call_parallelplot():
+def test_metrics_plot_parallelplot_property_parallelplot_datalabels_before_call_parallelplot():
     bench = jb.Benchmark(
         params={},
         solver=[solve],
@@ -631,42 +631,7 @@ def test_metrics_plot_parallelplot_property_name_of_all_parallelplotdata_before_
     result = bench()
     mplot = MetricsPlot(result)
 
-    assert mplot.name_of_all_parallelplotdata == []
-
-
-def test_metrics_plot_parallelplot_property_name_of_displayed_parallelplotdata(mocker):
-    # Without this mock, the browser will launch and display the visualization results
-    mocker.patch("plotly.io.show")
-    bench = jb.Benchmark(
-        params={},
-        solver=[solve],
-    )
-    result = bench()
-    mplot = MetricsPlot(result)
-    mplot.parallelplot_experiment(
-        select_and_sort_displayed_data=[
-            "samplemean_onehot2_violations",
-            "samplemean_onehot1_violations",
-        ]
-    )
-
-    expect_name_list = [
-        "samplemean_onehot2_violations",
-        "samplemean_onehot1_violations",
-    ]
-
-    assert mplot.name_of_displayed_parallelplotdata == expect_name_list
-
-
-def test_metrics_plot_parallelplot_property_name_of_displayed_parallelplotdata_before_call_parallelplot():
-    bench = jb.Benchmark(
-        params={},
-        solver=[solve],
-    )
-    result = bench()
-    mplot = MetricsPlot(result)
-
-    assert mplot.name_of_displayed_parallelplotdata == []
+    assert mplot.parallelplot_datalabels == []
 
 
 def test_metrics_plot_parallelplot_arg_display_name_of_data(mocker):

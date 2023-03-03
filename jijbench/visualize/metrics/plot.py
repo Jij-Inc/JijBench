@@ -96,10 +96,8 @@ class MetricsPlot:
 
          Attributes:
              result (jb.Experiment): a benchmark result.
-             name_of_all_parallelplotdata (list[str]): a list of the names of all the metrics that can be plotted by `parallelplot_experiment`.
+             parallelplot_datalabels (list[str]): a list of the names of all the metrics that can be plotted by `parallelplot_experiment`.
                  None until `parallelplot_experiment` is called.
-             name_of_displayed_parallelplotdata (list[str]): a list of the names of the currently displayed metrics by `parallelplot_experiment`.
-                None until `parallelplot_experiment` is called.
 
         Example:
              Below is the code to boxplot the constraint violations.
@@ -396,9 +394,8 @@ class MetricsPlot:
         self,
         color_column_name: str | None = None,
         color_midpoint: float | None = None,
-        additional_displayed_data: list[str] | None = None,
-        additional_displayed_data_by_customfunc: list[tuple[Callable, str]]
-        | None = None,
+        additional_display_data: list[str] | None = None,
+        additional_display_data_by_customfunc: list[tuple[Callable, str]] | None = None,
         select_and_sort_displayed_data: list[str] | None = None,
         display_name_of_data: dict[str, str] | None = None,
         data_label_pos_top_or_bottom: str | None = None,
@@ -411,19 +408,19 @@ class MetricsPlot:
 
         Args:
             color_column_name (str | None): the column name, and the values from this column are used to assign color to mark.
-                Defaults to samplemean_total_violations or objective. if those columns exist.
+                Defaults to samplemean_total_violations or objective if those columns exist.
             color_midpoint (float | None): the midpoint of the color scale. Defaults to the mean of the color column value.
-            additional_displayed_data (list[str] | None): A list of column names for additional data to display.
-                The conditions for available column names are that they are elements of self.result.table.columns and that the value from this column is number.
+            additional_display_data (list[str] | None): A list of column names for additional data to display.
+                The conditions for available column names are that they are elements of self.result.table.columns and that the values from the column is number.
                 Defaults to None.
-            additional_displayed_data_by_customfunc (list[tuple[Callable, str]] | None): A list of tuples, one callable and one str.
+            additional_display_data_by_customfunc (list[tuple[Callable, str]] | None): A list of tuples, one callable and one str.
                 The callable is applied to `self.result.table` as self.result.table.apply(callable, axis=1), and the result is added to the displayed data.
-                The callable takes a `pd.Series` and returns a number, and the string will be the label for the displayed data.
+                The callable takes a `pd.Series` and returns a number, and the string will be the label for the display data.
                 Defaults to None.
             select_and_sort_displayed_data (list[str] | None): A list of labels for the data to display. Also, the order in the list matches the order in which they are plotted.
-                Check the `name_of_all_parallelplotdata` attribute for available data labels. Defaults to all labels.
+                Check the `parallelplot_datalabels` attribute for available data labels. Defaults to all labels.
             display_name_of_data (dict[str, str] | None): A dictionary where the key is the original data label and the value is the user-specified display label.
-                Check the original data labels in the `name_of_displayed_parallelplotdata` attribute.
+                Check the original data labels in the `parallelplot_datalabels` attribute.
                 Defaults is None, which shows the original data labels.
             data_label_pos_top_or_bottom (str | None): the position of the data label. Only "top" or "bottom" are accepted. Defaults to top.
             data_label_fontsize (Number | None): the fontsize of the data label. Defaults to None.
@@ -478,11 +475,81 @@ class MetricsPlot:
             fig.show()
             ```
 
+            This example gives some arguments to `parallelplot_experiment`.
+            `additional_display_data` argument adds the execution_time column to the plot. This is the column of result.table and its element are number.
+            `additional_display_data_by_customfunc` argument add the values calculated from result.table to the plot.
+            `display_name_of_data` insert line breaks for long data labels to make the charts easier to read. Line breaks are done with <br>.
+            `data_label_pos_top_or_bottom` is set to bottom to avoid the data label overlapping the figure due to line breaks.
+
+            ```python
+            from itertools import product
+            import numpy as np
+            import pandas as pd
+
+            import jijbench as jb
+            from jijbench.visualize.metrics.plot import MetricsPlot
+            import jijzept as jz
+            from jijzept.sampler.openjij.sa_cpu import JijSAParameters
+
+            problem = jb.get_problem("TSP")
+            instance_data = jb.get_instance_data("TSP")[0][1]
+
+            onehot_time_multipliers = [0.01, 0.1]
+            onehot_location_multipliers = [0.01, 0.1]
+            multipliers = [
+                {"onehot_time": onehot_time_multiplier,
+                "onehot_location": onehot_location_multiplier}
+                for onehot_time_multiplier, onehot_location_multiplier in product(onehot_time_multipliers, onehot_location_multipliers)
+            ]
+            config_path = "XX"
+            sa_parameter = JijSAParameters(num_reads=30)
+            sa_sampler = jz.JijSASampler(config=config_path)
+            bench = jb.Benchmark(
+                params = {
+                    "model": [problem],
+                    "feed_dict": [instance_data],
+                    "parameters": [sa_parameter],
+                    "multipliers": multipliers,
+                },
+                solver = [sa_sampler.sample_model],
+            )
+            result = bench()
+
+
+            def get_num_reads_from_parameters(x: pd.Series) -> float:
+                return x["parameters"].num_reads
+
+            def calc_samplemean_energy(x: pd.Series) -> float:
+                num_occ	= x["num_occurrences"]
+                array = x["energy"]
+                mean = np.sum(num_occ * array) / np.sum(num_occ)
+                return mean
+
+            mp = MetricsPlot(result)
+            fig = mp.parallelplot_experiment(
+                additional_display_data=["execution_time"],
+                additional_display_data_by_customfunc=[
+                    (get_num_reads_from_parameters, "num_reads"),
+                    (calc_samplemean_energy, "samplemean_energy"),
+                ],
+                display_name_of_data={
+                    "onehot_time_multiplier": "onehot_time<br>multiplier",
+                    "onehot_location_multiplier": "onehot_location<br>multiplier",
+                    "samplemean_objective": "samplemean<br>objective",
+                    "samplemean_onehot_time_violations": "samplemean<br>onehot_time<br>violations",
+                    "samplemean_onehot_location_violations": "samplemean<br>onehot_location<br>violations",
+                    "samplemean_total_violations": "samplemean<br>total_violations",
+                },
+                data_label_pos_top_or_bottom="bottom",
+            )
+
+            ```
+
         """
-        if additional_displayed_data is None:
-            additional_displayed_data = []
-        if additional_displayed_data_by_customfunc is None:
-            additional_displayed_data_by_customfunc = []
+        if additional_display_data is None:
+            additional_display_data = []
+        if additional_display_data_by_customfunc is None:
+            additional_display_data_by_customfunc = []
         if data_label_pos_top_or_bottom is None:
             data_label_pos_top_or_bottom = "top"
 
@@ -492,7 +559,7 @@ class MetricsPlot:
         data_to_create_df_parallelplot = {}
 
         # Displayed data specified by user
-        for display_column in additional_displayed_data:
+        for display_column in additional_display_data:
             # Check if the column exists and the elements is number.
             if not _df_has_number_column_target_name(result_table, display_column):
                 raise TypeError(
@@ -503,14 +570,14 @@ class MetricsPlot:
             ]
 
         # Data generated by user custom functions
-        for func, column_name in additional_displayed_data_by_customfunc:
+        for func, column_name in additional_display_data_by_customfunc:
             # TODO: デコレータで書き直した方が可読性が上がると思われる。エラーレイズと返り値がnumberであることのチェックをデコレータ内で行う
             try:
                 data_to_create_df_parallelplot[column_name] = result_table.apply(
                     func, axis=1
                 )
             except Exception as e:
-                msg = f'An error occurred inside your function. Please check "{func.__name__}" in additional_displayed_data_by_customfunc. -> {e}'
+                msg = f'An error occurred inside your function. Please check "{func.__name__}" in additional_display_data_by_customfunc. -> {e}'
                 raise UserFunctionFailedError(msg)
             for value in data_to_create_df_parallelplot[column_name].values:
                 if not isinstance(value, Number):
@@ -571,7 +638,7 @@ class MetricsPlot:
         )
 
         if select_and_sort_displayed_data is None:
-            select_and_sort_displayed_data = self.name_of_all_parallelplotdata
+            select_and_sort_displayed_data = self.parallelplot_datalabels
         self.df_parallelplot_displayed = df_parallelplot_displayed = df_parallelplot[
             select_and_sort_displayed_data
         ]
@@ -606,15 +673,8 @@ class MetricsPlot:
         return fig
 
     @property
-    def name_of_all_parallelplotdata(self) -> list[str]:
+    def parallelplot_datalabels(self) -> list[str]:
         if hasattr(self, "df_parallelplot"):
             return list(self.df_parallelplot.columns)
-        else:
-            return []
-
-    @property
-    def name_of_displayed_parallelplotdata(self) -> list[str]:
-        if hasattr(self, "df_parallelplot"):
-            return list(self.df_parallelplot_displayed.columns)
         else:
             return []

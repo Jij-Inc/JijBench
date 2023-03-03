@@ -180,7 +180,7 @@ def _df_has_valid_multipliers_column(df: pd.DataFrame) -> bool:
 
 def _df_has_number_array_column_target_name(df: pd.DataFrame, column_name: str) -> bool:
     """
-    Check that the `pd.DataFrame` instance has a column named column_name and its element is number array.
+    Check that the `pd.DataFrame` instance has a column named `column_name` and its element is number array.
     """
     if column_name not in df.columns:
         return False
@@ -204,7 +204,7 @@ def _df_has_number_array_column_target_name(df: pd.DataFrame, column_name: str) 
 
 def _df_has_number_column_target_name(df: pd.DataFrame, column_name: str) -> bool:
     """
-    Check that the `pd.DataFrame` instance has a column named column_name and its element is number.
+    Check that the `pd.DataFrame` instance has a column named `column_name` and its element is number.
     """
     if column_name not in df.columns:
         return False
