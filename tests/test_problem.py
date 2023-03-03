@@ -4,7 +4,7 @@ import jijbench as jb
 import jijmodeling as jm
 import openjij as oj
 
-from jijbench.problem import TSP, TSPTW, Knapsack
+from jijbench.datasets import TSP, TSPTW, Knapsack
 
 
 def test_tsptw():

@@ -1,4 +1,3 @@
-from pkgutil import extend_path
+# from jijbench.experiment.experiment import Experiment
 
-__path__ = extend_path(__path__, __name__)
-__all__ = []
+# __all__ = ["Experiment"]
