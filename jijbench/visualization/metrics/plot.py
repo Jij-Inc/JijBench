@@ -528,10 +528,10 @@ class MetricsPlot:
             mp = MetricsPlot(result)
             fig = mp.parallelplot_experiment(
                 additional_axes=["execution_time"],
-                additional_axes_created_by_function=[
-                    (get_num_reads_from_parameters, "num_reads"),
-                    (calc_samplemean_energy, "samplemean_energy"),
-                ],
+                additional_axes_created_by_function={
+                    "num_reads": get_num_reads_from_parameters,
+                    "samplemean_energy": calc_samplemean_energy,
+                },
                 rename_map={
                     "onehot_time_multiplier": "onehot_time<br>multiplier",
                     "onehot_location_multiplier": "onehot_location<br>multiplier",
