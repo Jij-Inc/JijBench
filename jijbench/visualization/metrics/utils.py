@@ -170,7 +170,6 @@ def _df_has_valid_multipliers_column(df: pd.DataFrame) -> bool:
 
     first_element = df["multipliers"].values[0]
     if isinstance(first_element, dict):
-        first_element = tp.cast(dict, first_element)
         constraint_names = list(first_element.keys())
     else:
         return False
