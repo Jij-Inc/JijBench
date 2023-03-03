@@ -1,12 +1,13 @@
 from collections import OrderedDict
 import matplotlib
+from matplotlib import axes, collections, figure, patches
 import networkx as nx
 import numpy as np
 import pytest
 
-from jijbench.figure.graph import Graph, GraphType
-from jijbench.figure.schedule import Schedule
-from jijbench.figure.timeseries import TimeSeries
+from jijbench.visualization.figure.graph import Graph, GraphType
+from jijbench.visualization.figure.schedule import Schedule
+from jijbench.visualization.figure.timeseries import TimeSeries
 
 # TODO: colorについて、strだけじゃなくてrgb tupleにも対応させる（テストの追記と型アノテーションでいけると想定）
 # 参考: rgb tupleについての言及 https://networkx.org/documentation/stable/reference/generated/networkx.drawing.nx_pylab.draw_networkx_nodes.html
@@ -42,8 +43,8 @@ def test_timeseries_fig_ax_attribute():
     timeseries.show()
     fig, ax = timeseries.fig_ax
 
-    assert type(fig) == matplotlib.figure.Figure
-    assert type(ax) == matplotlib.axes.Subplot
+    assert type(fig) == figure.Figure
+    assert type(ax) == axes.Subplot
 
 
 def test_timeseries_fig_ax_attribute_before_show():
@@ -356,8 +357,8 @@ def test_schedule_fig_ax_attribute():
     schedule.show()
     fig, ax = schedule.fig_ax
 
-    assert type(fig) == matplotlib.figure.Figure
-    assert type(ax) == matplotlib.axes.Subplot
+    assert type(fig) == figure.Figure
+    assert type(ax) == axes.Subplot
 
 
 def test_schedule_fig_ax_attribute_before_show():
@@ -419,7 +420,7 @@ def test_schedule_show_bar():
     )  # np.array([start_times1[0] + (time_length1[0] / 2), workers1[0]])
     success_show_bar_1 = False
     for obj in ax.get_children():
-        if type(obj) == matplotlib.patches.Rectangle:
+        if type(obj) == patches.Rectangle:
             actual_center_1 = obj.get_center()
             if (np.abs(actual_center_1 - expect_center_1) < 0.0001).all():
                 success_show_bar_1 = True
@@ -430,7 +431,7 @@ def test_schedule_show_bar():
     )  # np.array([start_times1[1] + (time_length1[1] / 2), workers1[1]])
     success_show_bar_2 = False
     for obj in ax.get_children():
-        if type(obj) == matplotlib.patches.Rectangle:
+        if type(obj) == patches.Rectangle:
             actual_center_2 = obj.get_center()
             if (np.abs(actual_center_2 - expect_center_2) < 0.0001).all():
                 success_show_bar_2 = True
@@ -441,7 +442,7 @@ def test_schedule_show_bar():
     )  # np.array([start_times2[0] + (time_length2[0] / 2), workers2[0]])
     success_show_bar_3 = False
     for obj in ax.get_children():
-        if type(obj) == matplotlib.patches.Rectangle:
+        if type(obj) == patches.Rectangle:
             actual_center_3 = obj.get_center()
             if (np.abs(actual_center_3 - expect_center_3) < 0.0001).all():
                 success_show_bar_3 = True
@@ -514,7 +515,7 @@ def test_schedule_show_arg_color_list():
     )  # np.array([start_times1[0] + (time_length1[0] / 2), workers1[0]])
     success_coloring_1 = False
     for obj in ax.get_children():
-        if type(obj) == matplotlib.patches.Rectangle:
+        if type(obj) == patches.Rectangle:
             actual_color_1 = obj.get_facecolor()[:-1]
             actual_center_1 = obj.get_center()
             if not (actual_color_1 == expect_color_1).all():
@@ -530,7 +531,7 @@ def test_schedule_show_arg_color_list():
     )  # np.array([start_times2[0] + (time_length2[0] / 2), workers2[0]])
     success_coloring_2 = False
     for obj in ax.get_children():
-        if type(obj) == matplotlib.patches.Rectangle:
+        if type(obj) == patches.Rectangle:
             actual_color_2 = obj.get_facecolor()[:-1]
             actual_center_2 = obj.get_center()
             if not (actual_color_2 == expect_color_2).all():
@@ -579,7 +580,7 @@ def test_schedule_show_arg_alpha_list(alpha_list, expect_alpha_1, expect_alpha_2
     )  # np.array([start_times1[0] + (time_length1[0] / 2), workers1[0]])
     success_alpha_1 = False
     for obj in ax.get_children():
-        if type(obj) == matplotlib.patches.Rectangle:
+        if type(obj) == patches.Rectangle:
             actual_alpha_1 = obj.get_alpha()
             actual_center_1 = obj.get_center()
             if not actual_alpha_1 == expect_alpha_1:
@@ -594,7 +595,7 @@ def test_schedule_show_arg_alpha_list(alpha_list, expect_alpha_1, expect_alpha_2
     )  # np.array([start_times1[0] + (time_length1[0] / 2), workers1[0]])
     success_alpha_2 = False
     for obj in ax.get_children():
-        if type(obj) == matplotlib.patches.Rectangle:
+        if type(obj) == patches.Rectangle:
             actual_alpha_2 = obj.get_alpha()
             actual_center_2 = obj.get_center()
             if not actual_alpha_2 == expect_alpha_2:
@@ -733,8 +734,8 @@ def test_graph_fig_ax_attribute():
     graph.show()
     fig, ax = graph.fig_ax
 
-    assert type(fig) == matplotlib.figure.Figure
-    assert type(ax) == matplotlib.axes.Subplot
+    assert type(fig) == figure.Figure
+    assert type(ax) == axes.Subplot
 
 
 def test_graph_fig_ax_attribute_before_show():
@@ -790,7 +791,7 @@ def test_graph_show_node():
     expect_node_num = 3
     success_show_node = False
     for obj in ax.get_children():
-        if type(obj) == matplotlib.collections.PathCollection:
+        if type(obj) == collections.PathCollection:
             actual_node_num = obj.get_offsets().data.shape[0]
             if (np.abs(actual_node_num - expect_node_num) < 0.0001).all():
                 success_show_node = True
@@ -810,7 +811,7 @@ def test_graph_show_arg_node_pos():
     expect_pos = np.vstack([pos1, pos2])
     success_set_pos = False
     for obj in ax.get_children():
-        if type(obj) == matplotlib.collections.PathCollection:
+        if type(obj) == collections.PathCollection:
             actual_pos = obj.get_offsets().data
             if (np.abs(actual_pos - expect_pos) < 0.0001).all():
                 success_set_pos = True
@@ -827,7 +828,7 @@ def test_graph_show_arg_node_pos_default():
     expect_pos = np.vstack(list(default_pos.values()))
     success_set_pos = False
     for obj in ax.get_children():
-        if type(obj) == matplotlib.collections.PathCollection:
+        if type(obj) == collections.PathCollection:
             actual_pos = obj.get_offsets().data
             if (np.abs(actual_pos - expect_pos) < 0.0001).all():
                 success_set_pos = True
@@ -845,7 +846,7 @@ def test_graph_show_arg_node_color():
     expect_color_node1 = np.array(matplotlib.colors.to_rgb("r"))
     success_coloring_node1 = False
     for obj in ax.get_children():
-        if type(obj) == matplotlib.collections.PathCollection:
+        if type(obj) == collections.PathCollection:
             actual_color_node1 = obj.get_facecolor()[0][:-1]
             if (np.abs(actual_color_node1 - expect_color_node1) < 0.0001).all():
                 success_coloring_node1 = True
@@ -854,7 +855,7 @@ def test_graph_show_arg_node_color():
     expect_color_node2 = np.array(matplotlib.colors.to_rgb("b"))
     success_coloring_node2 = False
     for obj in ax.get_children():
-        if type(obj) == matplotlib.collections.PathCollection:
+        if type(obj) == collections.PathCollection:
             actual_color_node2 = obj.get_facecolor()[1][:-1]
             if (np.abs(actual_color_node2 - expect_color_node2) < 0.0001).all():
                 success_coloring_node2 = True
@@ -873,7 +874,7 @@ def test_graph_show_arg_node_color_default():
     # Check that the children of ax contain the expected node color information
     success_coloring = False
     for obj in ax.get_children():
-        if type(obj) == matplotlib.collections.PathCollection:
+        if type(obj) == collections.PathCollection:
             actual_color = obj.get_facecolor()[0][:-1]
             if (np.abs(actual_color - expect_color) < 0.0001).all():
                 success_coloring = True
@@ -945,7 +946,7 @@ def test_graph_show_arg_edge():
     # Check that the children of ax contain the expected edge information
     success_show_edge = False
     for obj in ax.get_children():
-        if type(obj) == matplotlib.collections.LineCollection:
+        if type(obj) == collections.LineCollection:
             actual_edge_num = len(obj.get_paths())
             if actual_edge_num == expect_edge_num:
                 success_show_edge = True
@@ -964,7 +965,7 @@ def test_graph_show_arg_edge_color():
     # Check that the children of ax contain the expected edge color information
     success_coloring = False
     for obj in ax.get_children():
-        if type(obj) == matplotlib.collections.LineCollection:
+        if type(obj) == collections.LineCollection:
             actual_color = obj.get_color()[0][:-1]
             if (actual_color == expect_color).all():
                 success_coloring = True
@@ -981,7 +982,7 @@ def test_graph_show_arg_edge_color_default():
     # Check that the children of ax contain the expected edge color information
     success_coloring = False
     for obj in ax.get_children():
-        if type(obj) == matplotlib.collections.LineCollection:
+        if type(obj) == collections.LineCollection:
             actual_color = obj.get_color()[0][:-1]
             if (actual_color == expect_color).all():
                 success_coloring = True
