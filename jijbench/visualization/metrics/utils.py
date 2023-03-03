@@ -192,6 +192,8 @@ def _df_has_number_array_column_target_name(df: pd.DataFrame, column_name: str) 
         element = x[column_name]
         if not isinstance(element, (list, np.ndarray)):
             return False
+        if np.array_equal(element, np.asarray(None)):
+            return False
         for num in element:
             if not isinstance(num, Number):
                 return False

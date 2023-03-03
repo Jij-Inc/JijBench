@@ -249,23 +249,24 @@ params = {
     "no_obj_no_constraint_sampleset": (solve_no_obj_no_constraint, None),
 }
 
+
 # TODO 後で直す
-# @pytest.mark.parametrize(
-#     "solver, expect",
-#     list(params.values()),
-#     ids=list(params.keys()),
-# )
-# def test_metrics_plot_parallelplot_arg_color_column_default(mocker, solver, expect):
-#     # Without this mock, the browser will launch and display the visualization results
-#     mocker.patch("plotly.io.show")
-#     bench = jb.Benchmark(
-#         params={},
-#         solver=[solver],
-#     )
-#     result = bench()
-#     mplot = MetricsPlot(result)
-#     fig = mplot.parallelplot_experiment()
-#     assert fig.layout.coloraxis.colorbar.title.text == expect
+@pytest.mark.parametrize(
+    "solver, expect",
+    list(params.values()),
+    ids=list(params.keys()),
+)
+def test_metrics_plot_parallelplot_arg_color_column_default(mocker, solver, expect):
+    # Without this mock, the browser will launch and display the visualization results
+    mocker.patch("plotly.io.show")
+    bench = jb.Benchmark(
+        params={},
+        solver=[solver],
+    )
+    result = bench()
+    mplot = MetricsPlot(result)
+    fig = mplot.parallelplot_experiment()
+    assert fig.layout.coloraxis.colorbar.title.text == expect
 
 
 def test_metrics_plot_parallelplot_arg_color_column(mocker):
@@ -434,6 +435,24 @@ params = {
     "give_fontsize_case": (20, 20),
     "default_case": (None, None),
 }
+
+
+def test_metrics_plot_parallelplot_arg_axis_label_pos_invalid_value(mocker):
+    # Without this mock, the browser will launch and display the visualization results
+    mocker.patch("plotly.io.show")
+    bench = jb.Benchmark(
+        params={},
+        solver=[solve],
+    )
+    result = bench()
+    mplot = MetricsPlot(result)
+    with pytest.raises(ValueError) as e:
+        mplot.parallelplot_experiment(axis_label_pos="INVALID_VALUE")
+
+    assert (
+        str(e.value)
+        == "axis_label_pos must be 'top' or 'bottom', but INVALID_VALUE is given."
+    )
 
 
 @pytest.mark.parametrize(

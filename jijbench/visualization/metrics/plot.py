@@ -11,7 +11,7 @@ import re
 
 import plotly
 import plotly.express as px
-from typing import Callable, cast
+from typing import Callable, cast, Literal
 
 import jijbench as jb
 from jijbench.exceptions.exceptions import UserFunctionFailedError
@@ -21,6 +21,8 @@ from jijbench.visualization.metrics.utils import (
     _df_has_number_array_column_target_name,
     _df_has_number_column_target_name,
 )
+
+AXIS_LABEL_POS = Literal["top", "bottom"]
 
 
 def _get_violations_dict(x: pd.Series) -> dict:
@@ -398,7 +400,7 @@ class MetricsPlot:
         additional_axes_created_by_function: dict[str, Callable] | None = None,
         display_axes_list: list[str] | None = None,
         rename_map: dict[str, str] | None = None,
-        axis_label_pos: str | None = None,
+        axis_label_pos: AXIS_LABEL_POS | None = None,
         axis_label_fontsize: Number | None = None,
         title: str | None = None,
         height: Number | None = None,
@@ -422,7 +424,7 @@ class MetricsPlot:
             rename_map (dict[str, str] | None): A dictionary where the key is the original axis label and the value is the user-specified axis label.
                 Check the original axis labels in the `parallelplot_axes_list` attribute.
                 Defaults is None, the original axis labels is displayed.
-            axis_label_pos (str | None): the position of the axis label. Only "top" or "bottom" are accepted. Defaults to top.
+            axis_label_pos (AXIS_LABEL_POS | None): the position of the axis label. Only "top" or "bottom" are accepted. Defaults to top.
             axis_label_fontsize (Number | None): the fontsize of the axis label. Defaults to None.
             title (str | None): the title of the plot. Defaults to None.
             height (Number | None): the height of the plot. Defaults to None.
@@ -552,6 +554,10 @@ class MetricsPlot:
             additional_axes_created_by_function = {}
         if axis_label_pos is None:
             axis_label_pos = "top"
+        if not (axis_label_pos in ["top", "bottom"]):
+            raise ValueError(
+                f"axis_label_pos must be 'top' or 'bottom', but {axis_label_pos} is given."
+            )
 
         result_table = self.result.table
 
@@ -653,7 +659,7 @@ class MetricsPlot:
             color_midpoint = df_parallelplot_displayed[color_column_name].mean()
 
         fig = px.parallel_coordinates(
-            df_parallelplot_displayed.reset_index(),
+            df_parallelplot_displayed.reset_index(drop=True),
             color=color_column_name,
             labels=rename_map,
             color_continuous_scale=px.colors.diverging.Tealrose,
