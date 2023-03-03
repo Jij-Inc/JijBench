@@ -97,7 +97,7 @@ class Concat(FunctionNode[DataNodeT, DataNodeT]):
         """Concatenates the given list of mapping type objects.
 
         Args:
-            inputs (MappingListTypes): A list of artifacts, experiments, records, or tables. The type of elements in 'inputs' must be unified either 'Artifact', 'Experiment', 'Record' or 'Table'.
+            inputs (DataNodeT): A list of artifacts, experiments, records, or tables. The type of elements in 'inputs' must be unified either 'Artifact', 'Experiment', 'Record' or 'Table'.
             name (tp.Hashable, optional): A name for the resulting data. Defaults to None.
             autosave (bool, optional): A flag indicating whether to save the result to disk. Defaults to True.
             savedir (str | pathlib.Path, optional): The directory to save the result in. Defaults to DEFAULT_RESULT_DIR.
@@ -108,7 +108,7 @@ class Concat(FunctionNode[DataNodeT, DataNodeT]):
             TypeError: If the type of elements in 'inputs' is not unified either 'Artifact', 'Experiment', 'Record' or 'Table'.
 
         Returns:
-            MappingTypes: The resulting artifact, experiment, record, or table object.
+            DataNode: The resulting Artifact, Experiment, Record, Table or Sampleset object.
         """
         if _is_datanode_list(inputs):
             return super().__call__(
@@ -189,7 +189,11 @@ class Concat(FunctionNode[DataNodeT, DataNodeT]):
         if _is_artifact_list(inputs):
             data = {}
             for node in inputs:
-                data.update(node.data.copy())
+                for k, v in node.data.items():
+                    if k in data:
+                        data[k].update(v.copy())
+                    else:
+                        data[k] = v.copy()
             return type(inputs[0])(data, name)
         elif _is_experiment_list(inputs):
             concat_a: Concat[Artifact] = Concat()

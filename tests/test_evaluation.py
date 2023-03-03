@@ -96,20 +96,22 @@ def test_residual_energy(jm_sampleset: jm.SampleSet):
 
 
 def test_evaluate_benchmark_results(sample_model):
-    bench = jb.Benchmark({"num_reads": [1, 2]}, solver=sample_model)    
+    bench = jb.Benchmark({"num_reads": [1, 2]}, solver=sample_model)
     res = bench(autosave=False)
-    
+
     from icecream import ic
-    #print()
-    #ic(res)
+
+    # print()
+    # ic(res)
 
     opt_value = 3.0
     pr = 0.7
     evaluation = jb.Evaluation()
     res = evaluation([res], opt_value=opt_value, pr=pr)
-    
+
     print()
-    # ic(res.table)
+    ic(res.table)
+
 
 #
 #
