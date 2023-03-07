@@ -8,7 +8,6 @@ import typing as tp
 from jijbench.consts.path import DEFAULT_RESULT_DIR
 from jijbench.elements.id import ID
 from jijbench.node.base import DataNode, FunctionNode
-from jijbench.solver.jijzept import SampleSet
 from jijbench.typing import DataNodeT
 from typing_extensions import TypeGuard
 
@@ -61,6 +60,8 @@ class Concat(FunctionNode[DataNodeT, DataNodeT]):
         *,
         autosave: bool = True,
         savedir: str | pathlib.Path = DEFAULT_RESULT_DIR,
+        axis: tp.Literal[0, 1] = 0,
+        index_name: str | None = None,
     ) -> Experiment:
         ...
 
@@ -127,7 +128,6 @@ class Concat(FunctionNode[DataNodeT, DataNodeT]):
     def operate(self, inputs: list[Artifact], name: tp.Hashable = None) -> Artifact:
         ...
 
-class Concat(FunctionNode[Mapping]):
     @tp.overload
     def operate(
         self,
@@ -201,7 +201,9 @@ class Concat(FunctionNode[Mapping]):
             inputs_a = [n.data[0] for n in inputs]
             inputs_t = [n.data[1] for n in inputs]
             artifact = inputs_a[0].apply(concat_a, inputs_a[1:])
-            table = inputs_t[0].apply(concat_t, inputs_t[1:])
+            table = inputs_t[0].apply(
+                concat_t, inputs_t[1:], axis=axis, index_name=index_name
+            )
 
             if name is None:
                 name = ID().data
@@ -227,5 +229,5 @@ class Concat(FunctionNode[Mapping]):
             return type(inputs[0])(data, str(name))
         else:
             raise TypeError(
-                "Type of elements of 'inputs' must be unified with either 'Table' or 'Artifact'."
+                "Type of elements in 'inputs' must be unified either 'Artifact', 'Experiment', 'Record' or 'Table'."
             )

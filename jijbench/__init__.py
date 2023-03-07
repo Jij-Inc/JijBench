@@ -1,4 +1,9 @@
+from pkgutil import extend_path
+
+__path__ = extend_path(__path__, __name__)
+
 import jijbench.functions as functions
+import jijbench.node as node
 
 from jijbench.benchmark.benchmark import Benchmark, construct_benchmark_for
 from jijbench.datasets.instance_data import get_instance_data
@@ -18,6 +23,7 @@ from jijbench.solver.jijzept import InstanceData, UserDefinedModel, SampleSet
 __all__ = [
     "construct_benchmark_for",
     "functions",
+    "node",
     "get_instance_data",
     "get_problem",
     "load",
@@ -33,6 +39,7 @@ __all__ = [
     "InstanceData",
     "UserDefinedModel",
     "Number",
+    "Parameter",
     "Record",
     "Response",
     "SampleSet",

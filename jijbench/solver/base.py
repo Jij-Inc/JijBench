@@ -99,12 +99,9 @@ class Solver(FunctionNode[Parameter, Record]):
         from jijbench.solver.jijzept import SampleSet
 
         parameters = inspect.signature(self.function).parameters
-        is_kwargs = any([p.kind == 4 for p in parameters.values()])
-        solver_args = (
-            solver_args
-            if is_kwargs
-            else {k: v for k, v in solver_args.items() if k in parameters}
-        )
+        solver_args = {
+            node.name: node.data for node in inputs if node.name in parameters
+        }
         try:
             rets = self.function(**solver_args)
             if not isinstance(rets, tuple):

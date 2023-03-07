@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import jijmodeling as jm
+import pandas as pd
 import typing as tp
 import inspect
 import itertools
@@ -10,6 +11,7 @@ import pathlib
 from jijbench.consts.path import DEFAULT_RESULT_DIR
 from jijbench.node.base import FunctionNode
 from jijbench.elements.base import Callable
+from jijbench.elements.date import Date
 from jijbench.elements.id import ID
 from jijbench.experiment.experiment import Experiment
 from jijbench.functions.concat import Concat
@@ -40,8 +42,6 @@ class Benchmark(FunctionNode[Experiment, Experiment]):
         params: dict[str, tp.Iterable[tp.Any]],
         solver: tp.Callable | list[tp.Callable],
         name: str | None = None,
-        autosave: bool = True,
-        savedir: str | pathlib.Path = DEFAULT_RESULT_DIR,
     ) -> None:
         """Initializes the benchmark with the given parameters and solvers.
 
@@ -69,9 +69,9 @@ class Benchmark(FunctionNode[Experiment, Experiment]):
         ]
 
         if isinstance(solver, tp.Callable):
-            self.solver = [solver]
+            self.solver = [Solver(solver)]
         else:
-            self.solver = solver
+            self.solver = [Solver(f) for f in solver]
 
     def __call__(
         self,
@@ -160,11 +160,8 @@ class Benchmark(FunctionNode[Experiment, Experiment]):
         for f in self.solver:
             for params in self.params:
                 with experiment:
-                    name = (self.name, experiment.name, ID().data)
-                    fdata = [Callable(f.function, str(f.name))]
-                    record = f(params, is_parsed_sampleset=is_parsed_sampleset)
-                    record = Concat()(
-                        [RecordFactory()(params + fdata), record], name=name
+                    info = RecordFactory()(
+                        [Date(), *params, Callable(f.function, str(f.name))]
                     )
                     ret = f(params)
                     record = Concat()([info, ret])
@@ -186,7 +183,7 @@ def construct_benchmark_for(
     params: dict[str, tp.Iterable],
     name: str | None = None,
 ) -> Benchmark:
-    """ Create a Benchmark object.
+    """Create a Benchmark object.
 
     Args:
         sampler (JijZeptBaseSampler): The sampler to use for creating the benchmark.

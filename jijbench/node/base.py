@@ -23,6 +23,7 @@ class DataNode(tp.Generic[T], metaclass=abc.ABCMeta):
 
     def __post_init__(self) -> None:
         self.operator: FunctionNode | None = None
+        setattr(self, "state", None)
 
     def __setattr__(self, name: str, value: tp.Any) -> None:
         """Set the value of an attribute.
@@ -77,8 +78,10 @@ class DataNode(tp.Generic[T], metaclass=abc.ABCMeta):
             node (DataNode): DataNode object.
         """
         operator = node.__dict__.pop("operator")
+        state = node.__dict__.pop("state")
         self.__init__(**node.__dict__)
         self.operator = operator
+        setattr(self, "state", state)
 
     def apply(
         self,
@@ -99,6 +102,7 @@ class DataNode(tp.Generic[T], metaclass=abc.ABCMeta):
         inputs = [tp.cast("DataNodeT", copy.copy(self))] + (others if others else [])
         node = f(inputs, **kwargs)
         node.operator = f
+        setattr(node, "state", getattr(self, "state"))
         return node
 
 

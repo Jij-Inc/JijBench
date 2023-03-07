@@ -148,10 +148,6 @@ python -m pytest tests/"file name"::"function name"  # 関数を指定して実�
 
 # パラメータのアップデート
 
-`parameter_update(problem: Problem, decode: DecodedSamples, multipliers: Dict[str, float]))`: 問題・解（DecodedSamples）・現在の multiliers を入力として, 次の multipliers を出力してください. 例えば今書かれているスクリプトでは, 制約を守らない項のパラメータを 5 倍にするようにしています.
-
-
-
 # Benchmark Instances
 
 ## Nurse Scheduling Problem

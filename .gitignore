@@ -141,11 +141,7 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-.config.toml
-
 Results/
-
-backup/
 
 .devcontainer/
 .vscode/

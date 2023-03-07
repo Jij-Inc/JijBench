@@ -7,7 +7,6 @@ import jijmodeling as jm
 import typing as tp
 import warnings
 
-from abc import ABCMeta, abstractmethod
 from dataclasses import dataclass, field
 from jijbench.elements.array import Array
 from jijbench.elements.base import Number
@@ -25,6 +24,13 @@ class Mapping(DataNode[T]):
     """An abstract class for all Mapping classes that implements the methods to be
     followed by all child classes.
     """
+
+    @abc.abstractmethod
+    def __len__(self) -> int:
+        """
+        Perform the operation __len__.
+        """
+        pass
 
     @abc.abstractmethod
     def append(self, record: Record) -> None:
@@ -55,6 +61,12 @@ class Record(Mapping[pd.Series]):
 
     data: pd.Series = field(default_factory=lambda: pd.Series(dtype="object"))
     name: tp.Hashable = None
+
+    def __len__(self) -> int:
+        """
+        Perform the operation __len__.
+        """
+        return len(self.data)
 
     @classmethod
     def validate_data(cls, data: pd.Series) -> pd.Series:
@@ -122,6 +134,12 @@ class Artifact(Mapping[ArtifactDataType]):
 
     data: ArtifactDataType = field(default_factory=dict)
     name: tp.Hashable = None
+
+    def __len__(self) -> int:
+        """
+        Perform the operation __len__.
+        """
+        return len(self.data)
 
     @classmethod
     def validate_data(cls, data: ArtifactDataType) -> ArtifactDataType:
@@ -205,6 +223,12 @@ class Table(Mapping[pd.DataFrame]):
 
     data: pd.DataFrame = field(default_factory=pd.DataFrame)
     name: tp.Hashable = None
+
+    def __len__(self) -> int:
+        """
+        Perform the operation __len__.
+        """
+        return len(self.data)
 
     @classmethod
     def validate_data(cls, data: pd.DataFrame) -> pd.DataFrame:

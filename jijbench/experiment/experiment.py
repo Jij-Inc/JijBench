@@ -1,24 +1,22 @@
 from __future__ import annotations
 
+import abc
 import pandas as pd
-import typing as tp
 import pathlib
 import typing as tp
 import uuid
+import warnings
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from jijbench.consts.path import DEFAULT_RESULT_DIR
 from jijbench.elements.base import Callable
+from jijbench.elements.id import ID
 from jijbench.functions.concat import Concat
 from jijbench.functions.factory import ArtifactFactory, TableFactory
 from jijbench.io.io import save
-from jijbench.mappings.mappings import Artifact, Mapping, Table
+from jijbench.mappings.mappings import Artifact, Mapping, Record, Table
 from jijbench.solver.base import Parameter, Response
 from jijbench.typing import ExperimentDataType
-
-
-if tp.TYPE_CHECKING:
-    from jijbench.mappings.mappings import Record
 
 
 @dataclass
@@ -74,6 +72,8 @@ class Experiment(Mapping[ExperimentDataType]):
 
     def __exit__(self, exception_type, exception_value, traceback) -> None:
         """Saves the experiment if autosave is True."""
+        state = getattr(self, "state")
+
         if self.autosave:
             state.save(self)
 
@@ -144,19 +144,8 @@ class Experiment(Mapping[ExperimentDataType]):
         Args:
             record (Record): The record to be appended to the experiment.
         """
-        concat: Concat[Experiment] = Concat()
-        data = (ArtifactFactory()([record]), TableFactory()([record]))
-        other = type(self)(
-            data, self.name, autosave=self.autosave, savedir=self.savedir
-        )
-        node = self.apply(
-            concat,
-            [other],
-            name=self.name,
-            autosave=self.autosave,
-            savedir=self.savedir,
-        )
-        self._init_attrs(node)
+        state = getattr(self, "state")
+        state.append(self, record)
 
     def save(self):
         """Save the experiment."""

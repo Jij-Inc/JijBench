@@ -8,6 +8,10 @@ import pytest
 from jijbench.exceptions.exceptions import SolverFailedError
 
 
+def func1(x):
+    return x
+
+
 OBJECT = "OBJECT"
 UNSUPPORTED_SOLVER = 0
 

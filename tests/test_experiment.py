@@ -21,8 +21,8 @@ def pre_post_process():
     yield
     # postprocess
     norm_path = os.path.normcase("./.jb_results")
-    #if os.path.exists(norm_path):
-    #    shutil.rmtree(norm_path)
+    if os.path.exists(norm_path):
+        shutil.rmtree(norm_path)
 
 
 def test_simple_experiment():
@@ -44,11 +44,10 @@ def test_simple_experiment_with_context_manager():
     def func(i):
         return i**2
 
-    for _ in range(3):
+    for i in range(3):
         with e:
             solver = jb.Solver(func)
-            record = solver([])
-            record.name = jb.ID().data
+            record = solver([jb.Parameter(i, "i")])
             e.append(record)
 
 
@@ -114,7 +113,6 @@ def test_construct_experiment():
 #     "energy" in cols
 #     "energy_min" in # #
 
-
 # 以下のテストコードが通るように修正してください。
 def test_jijmodeling(
     sample_model: MagicMock,
@@ -125,8 +123,8 @@ def test_jijmodeling(
 
     with experiment:
         solver = jb.Solver(sample_model)
-        x1 = jb.Parameter(knapsack_problem, name="")
-        x2 = jb.Parameter(knapsack_instance_data)
+        x1 = jb.Parameter(knapsack_problem, name="model")
+        x2 = jb.Parameter(knapsack_instance_data, name="feed_dict")
         record = solver([x1, x2])
         record.name = jb.ID().data
         experiment.append(record)

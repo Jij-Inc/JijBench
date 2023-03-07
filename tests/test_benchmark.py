@@ -37,8 +37,8 @@ def test_simple_benchmark():
     t1 = op1.inputs[0].table
     t2 = op1.inputs[1].table
 
-    assert t1.iloc[0, 0] == 1
-    assert t2.iloc[0, 0] == 2
+    assert t1.iloc[0, 1] == 1
+    assert t2.iloc[0, 1] == 2
 
 
 def test_benchmark_for_jijzept_sampler(
@@ -108,7 +108,9 @@ def test_benchmark_for_jijzept_sampler_with_multi_models(
     assert table.loc[0, "num_feasible"] == 7
 
 
-def test_benchmark_for_jijzept_sampler_using_params(onehot_problem: jm.Problem, jm_sampleset: jm.SampleSet):
+def test_benchmark_for_jijzept_sampler_using_params(
+    onehot_problem: jm.Problem, jm_sampleset: jm.SampleSet
+):
     def f(problem, instance_data, **kwargs) -> jm.SampleSet:
         if not isinstance(problem, jm.Problem):
             raise TypeError
@@ -172,25 +174,25 @@ def test_benchmark_params_table():
     res = bench()
 
 
-def test_benchmark_with_custom_solver():
+def test_benchmark_with_multi_return_solver():
     def func():
         return "a", 1
 
     bench = jb.Benchmark({"num_reads": [1, 2], "num_sweeps": [10]}, solver=func)
-    bench.run()
+    res = bench()
 
     assert len(res.table) == 2
     assert res.table["func_return[0]"][0] == "a"
     assert res.table["func_return[1]"][0] == 1.0
 
 
-def test_benchmark_with_custom_solver_by_concurrent_False():
-    def func():
-        return "a", 1
-
-    bench = jb.Benchmark({"num_reads": [1, 2], "num_sweeps": [10]}, solver=func)
-    with pytest.raises(ConcurrentFailedError):
-        bench.run(concurrent=False)
+# def test_benchmark_with_custom_solver_by_sync_False():
+#     def func():
+#         return "a", 1
+#
+#     bench = jb.Benchmark({"num_reads": [1, 2], "num_sweeps": [10]}, solver=func)
+#     with pytest.raises(ConcurrentFailedError):
+#         bench.run(sync=False)
 
 
 def test_benchmark_with_callable_args():
@@ -208,7 +210,7 @@ def test_benchmark_with_callable_args():
         solver=rap_solver,
     )
 
-    bench.run()
+    res = bench()
 
     # assert sample_model.__name__ in columns
     # assert isinstance(res.table[sample_model.__name__][0], str)

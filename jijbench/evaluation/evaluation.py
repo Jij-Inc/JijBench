@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 
-import numpy as np
 import pandas as pd
-import typing as tp
 
 
 from jijbench.experiment.experiment import Experiment

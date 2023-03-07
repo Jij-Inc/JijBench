@@ -57,7 +57,7 @@ def save(
         obj (Artifact | Experiment | Table): The object to be saved.
         savedir (str | pathlib.Path, optional): The directory where the object will be saved. Defaults to DEFAULT_RESULT_DIR.
         mode (Literal[&quot;w&quot;, &quot;a&quot;], optional): The write mode for the file. Must be 'w' or 'a'. Defaults to "w".
-        index_col (int | list[int] | None, optional): Index column(s) to set as index while saving the table. Defaults to None. Defaults to None.
+        index_col (int | list[int] | None, optional): Index column(s) to set as index while saving the table. Defaults to None.
 
     Raises:
         ValueError: If the mode is not 'w' or 'a'.
@@ -119,12 +119,12 @@ def save(
             index_col=index_col,
         )
     elif isinstance(obj, Table):
-        p = savedir / "table.csv"
+        p_csv = savedir / "table.csv"
         p_dill = savedir / "table.dill"
         p_meta = savedir / "meta.dill"
         concat_t: Concat[Table] = Concat()
         if mode == "a":
-            if p.exists() and p_meta.exists():
+            if p_csv.exists() and p_meta.exists():
                 obj = concat_t(
                     [
                         load(
@@ -135,7 +135,7 @@ def save(
                         obj,
                     ]
                 )
-        obj.view().to_csv(p)
+        obj.view().to_csv(p_csv)
         meta = {
             "dtype": obj.data.iloc[0].apply(lambda x: x.__class__).to_dict(),
             "name": obj.data.applymap(lambda x: x.name).to_dict(),
