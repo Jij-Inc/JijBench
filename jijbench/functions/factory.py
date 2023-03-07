@@ -12,16 +12,20 @@ from jijbench.data.mapping import Artifact, Table
 from jijbench.data.record import Record
 from jijbench.data.elements.array import Array
 from jijbench.data.elements.values import Number
+from jijbench.typing import DataNodeT, DataNodeT2
 
 
-class Factory(FunctionNode[DNodeT_co]):
+
+class Factory(FunctionNode[DataNodeT, DataNodeT2]):
     @abc.abstractmethod
-    def create(self, inputs: list[DataNode], name: str | None = None) -> DNodeT_co:
+    def create(
+        self, inputs: list[DataNodeT], name: str | None = None
+    ) -> DataNodeT2:
         pass
 
     def operate(
-        self, inputs: list[DataNode], name: str | None = None, **kwargs: tp.Any
-    ) -> DNodeT_co:
+        self, inputs: list[DataNodeT], name: str | None = None, **kwargs: tp.Any
+    ) -> DataNodeT2:
         return self.create(inputs, name, **kwargs)
 
 

@@ -108,9 +108,18 @@ def test_concat():
 
     t1 = factory([r1])
     t2 = factory([r2])
-    
-    # node = jb.Table([t1, t2])
-    # table = node.apply(concat)
-    # print()
-    # print(table.data)
-    
+
+    e1 = jb.Experiment((a1, t1), name="test1")
+    e2 = jb.Experiment((a2, t2), name="test2")
+
+    concat = jb.functions.Concat()
+    e = concat([e1, e2])
+    print()
+    print(e.artifact)
+    print(e.table)
+
+
+# def test_t():
+#     from jijbench.typing import DataNodeT
+# 
+#     print(DataNodeT)
