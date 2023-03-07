@@ -58,14 +58,6 @@ def test_benchmark_for_jijzept_sampler(
     )
     res = bench(autosave=False)
 
-    from icecream import ic
-
-    print()
-    ic(res.data[1].columns)
-    ic(res.data[1])
-    ic(res.table)
-    # ic(res.artifact)
-
     assert sample_model.call_count == 2
     assert len(sample_model.call_args_list) == 2
     sample_model.assert_called_with(
