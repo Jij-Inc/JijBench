@@ -16,7 +16,7 @@ from jijbench.typing import T, ArtifactDataType
 
 @dataclass
 class Container(DataNode[T]):
-    """An abstract class for all Mapping classes that implements the methods to be
+    """An abstract class for all Container classes that implements the methods to be
     followed by all child classes.
     """
 
@@ -208,7 +208,7 @@ class Artifact(Container[ArtifactDataType]):
 class Table(Container[pd.DataFrame]):
     """Data structure that maps data onto a `pandas.DataFrame`.
 
-    This class is one of Mapping. The element in the each cell is a DataNode.
+    This class is one of Container. The element in the each cell is a DataNode.
     Table class extends the basic functionality of a `pandas.DataFrame` with the ability to store and manipulate `DataNode` objects.
 
     Attributes:

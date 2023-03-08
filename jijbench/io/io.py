@@ -75,7 +75,7 @@ def save(
             return False
 
     if mode not in ["a", "w"]:
-        raise ValueError("Argument mode must be 'a' or 'b'.")
+        raise ValueError("Argument mode must be 'a' or 'w'.")
 
     savedir = savedir if isinstance(savedir, pathlib.Path) else pathlib.Path(savedir)
     if not savedir.exists():
