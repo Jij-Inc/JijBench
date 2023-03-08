@@ -13,7 +13,7 @@ from jijbench.functions.metrics import (
     FeasibleRate,
     ResidualEnergy,
 )
-from jijbench.mappings.mappings import Artifact, Table
+from jijbench.containers.containers import Artifact, Table
 from jijbench.node.base import FunctionNode
 from jijbench.solver.jijzept import SampleSet
 

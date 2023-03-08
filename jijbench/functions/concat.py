@@ -13,7 +13,7 @@ from typing_extensions import TypeGuard
 
 if tp.TYPE_CHECKING:
     from jijbench.experiment.experiment import Experiment
-    from jijbench.mappings.mappings import Artifact, Record, Table
+    from jijbench.containers.containers import Artifact, Record, Table
     from jijbench.solver.jijzept import SampleSet
 
 

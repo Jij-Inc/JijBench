@@ -15,7 +15,7 @@ from jijbench.elements.base import Callable, Number, String
 from jijbench.evaluation.evaluation import Evaluation
 from jijbench.experiment.experiment import Experiment
 from jijbench.io.io import load, save
-from jijbench.mappings.mappings import Artifact, Record, Table
+from jijbench.containers.containers import Artifact, Record, Table
 from jijbench.solver.base import Parameter, Response, Solver
 from jijbench.solver.jijzept import InstanceData, UserDefinedModel, SampleSet
 

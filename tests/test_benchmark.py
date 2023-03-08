@@ -1,4 +1,4 @@
-import os, shutil, time
+import os, shutil
 
 import jijmodeling as jm
 import jijzept as jz

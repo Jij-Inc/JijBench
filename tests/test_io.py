@@ -6,7 +6,7 @@ import pytest
 import shutil
 
 
-SAVEDIR = "./results"
+SAVEDIR = "./jb_results"
 
 
 @pytest.fixture(scope="function", autouse=True)

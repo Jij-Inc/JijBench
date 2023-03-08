@@ -9,8 +9,6 @@ import jijzept as jz
 
 from jijbench.exceptions import SolverFailedError
 
-__all__ = []
-
 
 class CallableSolver:
     def __init__(self, solver):

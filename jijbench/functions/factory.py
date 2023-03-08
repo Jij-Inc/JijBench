@@ -1,20 +1,14 @@
 from __future__ import annotations
 
 import abc
-import numpy as np
 import pandas as pd
-import jijmodeling as jm
 import typing as tp
-import warnings
 
 from jijbench.node.base import FunctionNode
-from jijbench.elements.array import Array
-from jijbench.elements.base import Number
 from jijbench.typing import DataNodeT, DataNodeT2
 
 if tp.TYPE_CHECKING:
-    from jijbench.mappings.mappings import Artifact, Record, Table
-    from jijbench.solver.base import Response
+    from jijbench.containers.containers import Artifact, Record, Table
 
 
 class Factory(FunctionNode[DataNodeT, DataNodeT2]):
@@ -88,7 +82,7 @@ class RecordFactory(Factory[DataNodeT, "Record"]):
         Returns:
             Record: A Record object created from the processed input DataNode objects.
         """
-        from jijbench.mappings.mappings import Record
+        from jijbench.containers.containers import Record
 
         data = pd.Series({node.name: node for node in inputs})
         return Record(data, name)
@@ -107,7 +101,7 @@ class ArtifactFactory(Factory["Record", "Artifact"]):
         Returns:
             Artifact: The created `Artifact` object.
         """
-        from jijbench.mappings.mappings import Artifact
+        from jijbench.containers.containers import Artifact
 
         data = {
             node.name
@@ -137,7 +131,7 @@ class TableFactory(Factory["Record", "Table"]):
         Returns:
             Table: The created `Table` object.
         """
-        from jijbench.mappings.mappings import Table
+        from jijbench.containers.containers import Table
 
         data = pd.DataFrame({node.name: node.data for node in inputs}).T
         data.index.name = index_name

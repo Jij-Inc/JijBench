@@ -1,3 +1,4 @@
+import os, shutil
 import jijmodeling as jm
 from matplotlib import axes, figure
 
@@ -8,6 +9,16 @@ import pytest
 import jijbench as jb
 
 from jijbench.visualization.metrics.plot import _get_violations_dict, MetricsPlot
+
+
+@pytest.fixture(scope="function", autouse=True)
+def pre_post_process():
+    # preprocess
+    yield
+    # postprocess
+    norm_path = os.path.normcase("./.jb_results")
+    if os.path.exists(norm_path):
+        shutil.rmtree(norm_path)
 
 
 def solve():

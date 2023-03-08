@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import jijmodeling as jm
-import pandas as pd
 import typing as tp
 import inspect
 import itertools

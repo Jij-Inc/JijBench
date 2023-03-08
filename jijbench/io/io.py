@@ -5,7 +5,7 @@ import pathlib
 import typing as tp
 
 from jijbench.consts.path import DEFAULT_RESULT_DIR
-from jijbench.mappings.mappings import Artifact, Table
+from jijbench.containers.containers import Artifact, Table
 from jijbench.functions.concat import Concat
 
 if tp.TYPE_CHECKING:

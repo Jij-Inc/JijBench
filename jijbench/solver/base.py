@@ -7,7 +7,7 @@ import jijmodeling as jm
 from dataclasses import dataclass
 from jijbench.exceptions.exceptions import SolverFailedError
 from jijbench.node.base import DataNode, FunctionNode
-from jijbench.mappings.mappings import Record
+from jijbench.containers.containers import Record
 from jijbench.functions.factory import RecordFactory
 from jijbench.typing import T
 

@@ -14,13 +14,13 @@ from jijbench.elements.id import ID
 from jijbench.functions.concat import Concat
 from jijbench.functions.factory import ArtifactFactory, TableFactory
 from jijbench.io.io import save
-from jijbench.mappings.mappings import Artifact, Mapping, Record, Table
+from jijbench.containers.containers import Artifact, Container, Record, Table
 from jijbench.solver.base import Parameter, Response
 from jijbench.typing import ExperimentDataType
 
 
 @dataclass
-class Experiment(Mapping[ExperimentDataType]):
+class Experiment(Container[ExperimentDataType]):
     data: tuple[Artifact, Table] = field(default_factory=lambda: (Artifact(), Table()))
     name: str = field(default_factory=lambda: str(uuid.uuid4()))
     autosave: bool = field(default=True, repr=False)
