@@ -9,8 +9,6 @@
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | <a href="https://codecov.io/gh/Jij-Inc/JijBenchmark"><img src="https://codecov.io/gh/Jij-Inc/JijBenchmark/branch/main/graphs/sunburst.svg?token=55341HSOIB" width="100%"/></a> | <a href="https://codecov.io/gh/Jij-Inc/JijBenchmark"><img src="https://codecov.io/gh/Jij-Inc/JijBenchmark/branch/main/graphs/tree.svg?token=55341HSOIB" width="100%"/></a> | <a href="https://codecov.io/gh/Jij-Inc/JijBenchmark"><img src="https://codecov.io/gh/Jij-Inc/JijBenchmark/branch/main/graphs/icicle.svg?token=55341HSOIB" width="100%"/></a> |
 
-JijModelingRust is a modeler for a constrained optimization problem written in Rust to replace for the core logic of [JijModeling](https://github.com/Jij-Inc/JijModeling) written in Nim (or [jijnimod](https://github.com/Jij-Inc/JijModeling/tree/master/jijnimod)).
-
 # How to use
 
 ## Install from JFrog
