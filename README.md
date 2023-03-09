@@ -11,12 +11,6 @@
 
 # How to use
 
-## Install from JFrog
-
-```shell
-pip install jijbench --extra-index-url https://jij.jfrog.io/artifactory/api/pypi/Jij-Private/simple
-```
-
 ## For Contributor
 
 Use `pre-commit` for auto chech before git commit.
@@ -131,52 +125,3 @@ python -m lizard --verbose -l python jijbench
 
 You could use Pylight.
 https://github.com/microsoft/pyright
-
-### pytest を使ってテストを書いています
-
-以下のいずれかでテストを実行することができます。
-
-```shell
-python -m pytest tests # 全てのテストの実行
-python -m pytest tests/"file name" # テストファイルを指定して実行
-python -m pytest tests/"file name"::"function name"  # 関数を指定して実行
-```
-
-# 実行方法
-
-# パラメータのアップデート
-
-# Benchmark Instances
-
-## Nurse Scheduling Problem
-
-使用インスタンス: http://www.schedulingbenchmarks.org/nrp/
-
-問題サイズ
-
-| Instance   | Weeks | Employees | Shift types | Best known lower bound | Best known solution |
-| ---------- | ----: | --------: | ----------: | ---------------------: | ------------------: |
-| Instance1  |     2 |         8 |           1 |                    607 |                 607 |
-| Instance2  |     2 |        14 |           2 |                    828 |                 828 |
-| Instance3  |     2 |        20 |           3 |                   1001 |                1001 |
-| Instance4  |     4 |        10 |           2 |                   1716 |                1716 |
-| Instance5  |     4 |        16 |           2 |                   1143 |                1143 |
-| Instance6  |     4 |        18 |           3 |                   1950 |                1950 |
-| Instance7  |     4 |        20 |           3 |                   1056 |                1056 |
-| Instance8  |     4 |        30 |           4 |                   1300 |                1300 |
-| Instance9  |     4 |        36 |           4 |                    439 |                 439 |
-| Instance10 |     4 |        40 |           5 |                   4631 |                4631 |
-| Instance11 |     4 |        50 |           6 |                   3443 |                3443 |
-| Instance12 |     4 |        60 |          10 |                   4040 |                4040 |
-| Instance13 |     4 |       120 |          18 |                   1348 |                1348 |
-| Instance14 |     6 |        32 |           4 |                   1278 |                1278 |
-| Instance15 |     6 |        45 |           6 |                   3829 |                3831 |
-| Instance16 |     8 |        20 |           3 |                   3225 |                3225 |
-| Instance17 |     8 |        32 |           4 |                   5746 |                5746 |
-| Instance18 |    12 |        22 |           3 |                   4459 |                4459 |
-| Instance19 |    12 |        40 |           5 |                   3149 |                3149 |
-| Instance20 |    26 |        50 |           6 |                   4769 |                4769 |
-| Instance21 |    26 |       100 |           8 |                  21133 |               21133 |
-| Instance22 |    52 |        50 |          10 |                  30240 |               30244 |
-| Instance23 |    52 |       100 |          16 |                  16990 |               17428 |
-| Instance24 |    52 |       150 |          32 |                  26571 |               42463 |
